@@ -8,6 +8,8 @@ const { Client } = pkg;
 let client;
 
 export async function connectDB() {
+    if (client) return client;
+
     client = new Client({
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,

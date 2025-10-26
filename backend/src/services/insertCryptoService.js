@@ -57,5 +57,6 @@ export async function insertCryptoData() {
         logInfo(" Insertion terminée !");
     } catch (err) {
         logError(" Erreur lors de l’insertion :", err.message);
+        console.error(err);
     }
 }

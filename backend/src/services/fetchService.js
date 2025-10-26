@@ -17,7 +17,7 @@ export async function fetchCryptoData() {
         data.forEach((c) => {
             console.log(`   ${c.name.padEnd(12)} → ${c.current_price.toFixed(2)} USD`);
         });
-        if (returnData) return data;
+        if (data) return data;
     } catch (err) {
         logError(" Erreur lors de la récupération des données :", err.message);
     }

@@ -40,14 +40,24 @@ export async function insertCryptoData() {
 
             await client.query(
                 `INSERT INTO crypto_prices
-                 (crypto_id, price_usd, volume_usd_24h, market_cap_usd, change_percent_24h, fetched_at)
-                 VALUES ($1, $2, $3, $4, $5, NOW())`,
+                 (crypto_id, price_usd, volume_usd_24h, market_cap_usd, change_percent_24h, high_24h, low_24h,  circulating_supply, total_supply,
+                  ath, ath_change_percent,
+                  atl, atl_change_percent, fetched_at)
+                 VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9,$10,$11,$12,$13, NOW())`,
                 [
                     cryptoId,
                     c.current_price,
                     c.total_volume,
                     c.market_cap,
                     c.price_change_percentage_24h,
+                    c.high_24h,
+                    c.low_24h,
+                    c.circulating_supply,
+                    c.total_supply,
+                    c.ath,
+                    c.ath_change_percentage,
+                    c.atl,
+                    c.atl_change_percentage,
                 ]
             );
 

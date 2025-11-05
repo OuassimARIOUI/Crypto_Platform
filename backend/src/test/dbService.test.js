@@ -19,7 +19,7 @@ vi.mock("../utils/logger.js", () => ({
     logError: vi.fn(),
 }));
 
-import {connectDB} from "../services/dbService.js";
+import {connectDB, saveCrypto} from "../services/dbService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 
@@ -40,4 +40,23 @@ describe("----DB TEST---", () => {
         await connectDB();
         expect(logError);
     })
+    test("Fonction SaveCrypto", async () => {
+        const { default: { Client } } = await import("pg");
+        const mockClient = Client();
+
+        mockClient.query.mockResolvedValueOnce({});
+        await saveCrypto("BTC", 50000);
+
+        expect(logInfo).toHaveBeenCalled();
+    });
+    test("Returns error the query fails ", async () => {
+        const {default : {Client}} = await import("pg");
+        const mockClient =  Client();
+
+        mockClient.connect.mockResolvedValueOnce({});
+        mockClient.query.mockRejectedValueOnce(new Error("Echec Insertion"));
+        await connectDB();
+        await saveCrypto("BTC", 50000);
+        expect(logError);
+    });
 });

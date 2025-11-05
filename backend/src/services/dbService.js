@@ -32,7 +32,8 @@ export async function saveCrypto(name, price) {
             "INSERT INTO crypto (name, price, timestamp) VALUES ($1, $2, NOW())",
             [name, price]
         );
+        logInfo("Insertion fait avec succée!");
     } catch (err) {
-        logError(" Erreur lors de l’insertion :", err.message);
+        logError("Erreur lors de l’insertion :", err.message);
     }
 }

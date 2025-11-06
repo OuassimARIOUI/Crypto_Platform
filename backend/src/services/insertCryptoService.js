@@ -1,4 +1,3 @@
-// insertService.js
 import { connectDB } from "./dbService.js";
 import { fetchCryptoData } from "./fetchService.js";
 import { logInfo, logError } from "../utils/logger.js";

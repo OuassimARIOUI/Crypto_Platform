@@ -1,4 +1,4 @@
-import { vi, describe, test, expect } from "vitest";
+import { vi, describe, test, expect,beforeEach  } from "vitest";
 import { insertCryptoData } from "../services/insertCryptoService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
@@ -16,6 +16,10 @@ vi.mock("../services/dbService.js", () => ({
 vi.mock("../services/fetchService.js", () => ({
     fetchCryptoData: vi.fn(),
 }));
+
+beforeEach(() => {
+    vi.clearAllMocks();
+});
 
 describe("Sécurité : TestInsertion à la DB", () => {
     //test Insertion
@@ -75,5 +79,51 @@ describe("Sécurité : TestInsertion à la DB", () => {
         expect(logError).not.toHaveBeenCalledWith(
             expect.stringContaining("syntax error")
         );
-    })
+    });
+
+    test("Performance : Insertion complète en moins de 3 secondes", async () => {
+        const { connectDB } = await import("../services/dbService.js");
+        const { fetchCryptoData } = await import("../services/fetchService.js");
+
+        const fakeData = Array.from({ length: 5 }).map((_, i) => ({
+            symbol: `c${i}`,
+            name: `Crypto${i}`,
+            current_price: 1000,
+            total_volume: 2000,
+            market_cap: 50000,
+            price_change_percentage_24h: 2.5,
+            high_24h: 1200,
+            low_24h: 800,
+            circulating_supply: 1000000,
+            total_supply: 2000000,
+            ath: 5000,
+            ath_change_percentage: -10,
+            atl: 100,
+            atl_change_percentage: 900,
+        }));
+
+        const fakeClient = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+        connectDB.mockResolvedValue(fakeClient);
+        fetchCryptoData.mockResolvedValue(fakeData);
+
+        const start = performance.now();
+        await insertCryptoData();
+        const duration = performance.now() - start;
+
+        console.log(` Temps total d’insertion simulée : ${duration.toFixed(2)} ms`);
+        expect(duration).toBeLessThan(3000);
+    });
+    test("Performance : Supporte 50 insertions simultanées sans crash", async () => {
+        const { saveCrypto } = await import("../services/dbService.js");
+
+        saveCrypto.mockResolvedValue({});
+        const promises = [];
+
+        for (let i = 0; i < 50; i++) {
+            promises.push(saveCrypto(`crypto${i}`, Math.random() * 10000));
+        }
+
+        await Promise.all(promises);
+        expect(saveCrypto).toHaveBeenCalledTimes(50);
+    });
 });

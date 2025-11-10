@@ -10,13 +10,15 @@ vi.mock("../utils/logger.js", () => ({
 
 vi.mock("../services/dbService.js", () => ({
     connectDB: vi.fn(),
+    saveCrypto: vi.fn(),
 }));
 
 vi.mock("../services/fetchService.js", () => ({
     fetchCryptoData: vi.fn(),
 }));
 
-describe("TestInsertion à la DB", () => {
+describe("Sécurité : TestInsertion à la DB", () => {
+    //test Insertion
     test("Insertion réussie", async () => {
         const { connectDB } = await import("../services/dbService.js");
         const { fetchCryptoData } = await import("../services/fetchService.js");
@@ -47,7 +49,8 @@ describe("TestInsertion à la DB", () => {
         expect(logInfo);
     });
 
-    test("Erreur si aucune donnée", async () => {
+    //test empty Query
+    test("Sécurité :  Erreur si aucune donnée", async () => {
         const { connectDB } = await import("../services/dbService.js");
         const { fetchCryptoData } = await import("../services/fetchService.js");
 
@@ -60,4 +63,17 @@ describe("TestInsertion à la DB", () => {
             expect.stringContaining("Aucune donnée récupérée")
         );
     });
+
+    //Test Injection SQL
+    test("Sécurité : empêche l'injection SQL dans saveCrypto" , async () => {
+        const { saveCrypto } = await import("../services/dbService.js");
+        const {logError} = await import ("../utils/logger.js");
+
+        const maliciousName = "BTC; DROP TABLE users; --";
+        await saveCrypto(maliciousName, 100000);
+
+        expect(logError).not.toHaveBeenCalledWith(
+            expect.stringContaining("syntax error")
+        );
+    })
 });

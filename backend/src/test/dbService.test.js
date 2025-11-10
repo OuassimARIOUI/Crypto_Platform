@@ -24,14 +24,14 @@ import { logInfo, logError } from "../utils/logger.js";
 
 
 describe("----DB TEST---", () => {
-    test("Connextion reussie a la DB ", async () => {
+    test("Sécurité : Connextion reussie a la DB ", async () => {
         const {default : {Client}} = await import("pg");
         const mockClient = new Client();
         mockClient.connect.mockResolvedValueOnce({});
         await connectDB();
         expect(logInfo).toHaveBeenCalledWith(expect.stringContaining("Connexion "));
     });
-        test("returns error if there is no connection to db", async () => {
+        test("Sécurité : returns error if there is no connection to db", async () => {
         const { default: { Client } } = await import("pg");
         Client.mockImplementation(() => ({
             connect: vi.fn().mockRejectedValueOnce(new Error("Echec Connection")),
@@ -49,7 +49,7 @@ describe("----DB TEST---", () => {
 
         expect(logInfo).toHaveBeenCalled();
     });
-    test("Returns error the query fails ", async () => {
+    test("Sécurité : Returns error the query fails ", async () => {
         const {default : {Client}} = await import("pg");
         const mockClient =  Client();
 
@@ -59,4 +59,15 @@ describe("----DB TEST---", () => {
         await saveCrypto("BTC", 50000);
         expect(logError);
     });
+
+    test("Sécurité : aucune variable sensible ne doit apparaître dans les logs", async () => {
+        process.env.DB_PASSWORD = "mySuperSecret";
+        const { logInfo } = await import("../utils/logger.js");
+
+        logInfo(`Connexion avec user=${process.env.DB_USER} password=${process.env.DB_PASSWORD}`);
+
+        const message = logInfo.mock.calls[0][0];
+        expect(message).not.toContain("mySuperSecret");
+    });
+
 });

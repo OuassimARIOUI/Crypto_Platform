@@ -4,7 +4,7 @@ import { fetchCryptoData } from "./services/fetchService.js";
 import { connectDB } from "./services/dbService.js";
 import { logInfo } from "./utils/logger.js";
 import {insertCryptoData} from "./services/insertCryptoService.js";
-
+import {computeAllIndicators} from "./services/indicatorService.js"
 dotenv.config();
 
 (async () => {
@@ -12,9 +12,12 @@ dotenv.config();
     logInfo(" CryptoPlatform Console App started...");
 
     //server is collecting every 30 seconds
-    cron.schedule("*/30 * * * * *", async () => {
+    cron.schedule("* * * * *", async () => {
         await fetchCryptoData();
         await insertCryptoData();
     });
-
+    cron.schedule("* * * * *", async () => {
+        console.log(" Running indicators calculation...");
+        await computeAllIndicators();
+    });
 })();

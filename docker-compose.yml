@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:16
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: post1234
+      POSTGRES_DB: crypto
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: always
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "3001:3000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: post1234
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: crypto
+    restart: always
+
+volumes:
+  pgdata:
+  redisdata:

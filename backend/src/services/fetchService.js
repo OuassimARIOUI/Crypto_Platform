@@ -11,6 +11,11 @@ export async function fetchCryptoData() {
                 page: 1,
                 sparkline: false,
             },
+            headers:{
+                "User-Agent": "Mozilla/5.0(compatible; CryptoPlatform/1.0)",
+                "Accept": "application/json",
+            },
+            timeout: 10000
         });
         const data = response.data;
         logInfo(` ${new Date().toLocaleTimeString()} — Données crypto :`);

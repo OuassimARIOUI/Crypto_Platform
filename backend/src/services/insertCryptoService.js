@@ -1,12 +1,9 @@
-import { connectDB } from "./dbService.js";
+import { prisma } from "./dbService.js";
 import { fetchCryptoData } from "./fetchService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 export async function insertCryptoData() {
     try {
-        // --- Connexion à la DB ---
-        const client = await connectDB();
-        logInfo("Connexion à la base établie depuis insertService.js");
 
         // --- Récupération des données ---
         const data = await fetchCryptoData();
@@ -17,48 +14,46 @@ export async function insertCryptoData() {
 
         // --- Insertion ---
         for (const c of data) {
-            const result = await client.query(
-                "SELECT id FROM cryptos WHERE symbol = $1",
-                [c.symbol]
-            );
+            //verifier si la crypto existe
+            const existing = await prisma.cryptos.findUnique({
+                where : {symbol : c.symbol},
+            });
 
             let cryptoId;
-
-            if (result.rows.length === 0) {
-                const insertCrypto = await client.query(
-                    `INSERT INTO cryptos (symbol, name, created_at)
-                     VALUES ($1, $2, NOW())
-                         RETURNING id`,
-                    [c.symbol, c.name]
-                );
-                cryptoId = insertCrypto.rows[0].id;
-                logInfo(` Nouvelle crypto ajoutée : ${c.name}`);
-            } else {
-                cryptoId = result.rows[0].id;
+            //si elle existe pas
+            if(!existing) {
+                const insertCrypto = await prisma.cryptos.create({
+                    data : {
+                        symbol : c.symbol,
+                        name: c.symbol,
+                        created_at : new Date(),
+                    }
+                });
+                cryptoId = insertCrypto.id;
+                logInfo("new Crypto created: ", cryptoId);
             }
-
-            await client.query(
-                `INSERT INTO crypto_prices
-                 (crypto_id, price_usd, volume_usd_24h, market_cap_usd, change_percent_24h, high_24h, low_24h,  circulating_supply, total_supply,
-                  ath, ath_change_percent,
-                  atl, atl_change_percent, fetched_at)
-                 VALUES ($1, $2, $3, $4, $5,$6,$7,$8,$9,$10,$11,$12,$13, NOW())`,
-                [
-                    cryptoId,
-                    c.current_price,
-                    c.total_volume,
-                    c.market_cap,
-                    c.price_change_percentage_24h,
-                    c.high_24h,
-                    c.low_24h,
-                    c.circulating_supply,
-                    c.total_supply,
-                    c.ath,
-                    c.ath_change_percentage,
-                    c.atl,
-                    c.atl_change_percentage,
-                ]
-            );
+            else{
+                cryptoId= existing.id;
+            }
+            // Insérer les données dans crypto_prices
+            await prisma.crypto_prices.create({
+                data: {
+                    crypto_id: cryptoId,
+                    price_usd: c.current_price,
+                    volume_usd_24h: c.total_volume,
+                    market_cap_usd: c.market_cap,
+                    change_percent_24h: c.price_change_percentage_24h,
+                    high_24h: c.high_24h,
+                    low_24h: c.low_24h,
+                    circulating_supply: c.circulating_supply,
+                    total_supply: c.total_supply,
+                    ath: c.ath,
+                    ath_change_percent: c.ath_change_percentage,
+                    atl: c.atl,
+                    atl_change_percent: c.atl_change_percentage,
+                    fetched_at: new Date()
+                }
+            });
 
             logInfo(` ${c.name.padEnd(12)} → ${c.current_price.toFixed(2)} USD`);
         }

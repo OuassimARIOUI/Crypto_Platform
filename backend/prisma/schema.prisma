@@ -1,0 +1,58 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model alerts {
+  id           Int       @id @default(autoincrement())
+  crypto_id    Int
+  alert_type   String    @db.VarChar(20)
+  threshold    Decimal   @db.Decimal(18, 8)
+  is_triggered Boolean?  @default(false)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  cryptos      cryptos   @relation(fields: [crypto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model crypto_prices {
+  id                 Int       @id @default(autoincrement())
+  crypto_id          Int
+  price_usd          Decimal   @db.Decimal(18, 8)
+  volume_usd_24h     Decimal?  @db.Decimal(20, 2)
+  market_cap_usd     Decimal?  @db.Decimal(20, 2)
+  change_percent_24h Decimal?  @db.Decimal(10, 4)
+  fetched_at         DateTime? @default(now()) @db.Timestamp(6)
+  high_24h           Decimal?  @db.Decimal
+  low_24h            Decimal?  @db.Decimal
+  circulating_supply Decimal?  @db.Decimal
+  total_supply       Decimal?  @db.Decimal
+  ath                Decimal?  @db.Decimal
+  ath_change_percent Decimal?  @db.Decimal
+  atl                Decimal?  @db.Decimal
+  atl_change_percent Decimal?  @db.Decimal
+  cryptos            cryptos   @relation(fields: [crypto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model cryptos {
+  id                 Int                  @id @default(autoincrement())
+  symbol             String               @unique @db.VarChar(10)
+  name               String               @db.VarChar(50)
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  alerts             alerts[]
+  crypto_prices      crypto_prices[]
+  indicators_history indicators_history[]
+}
+
+model indicators_history {
+  id            Int      @id @default(autoincrement())
+  crypto_id     Int?
+  fetched_at    DateTime @db.Timestamp(6)
+  sma7          Decimal? @db.Decimal
+  sma30         Decimal? @db.Decimal
+  variation_24h Decimal? @db.Decimal
+  cryptos       cryptos? @relation(fields: [crypto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}

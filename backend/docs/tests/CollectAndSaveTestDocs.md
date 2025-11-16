@@ -142,6 +142,7 @@ saveCrypto called 50 times
 
 ---
 
-**Auteur :** ARIOUI Mohamed Achraf Ouassim
----
-**Dernière mise à jour :** 13 Novembre 2025  
+------------------------------------------------------------------------
+
+**Auteur :** Arioui Mohamed Achraf Ouassim\
+**Dernière mise à jour :** 16 Novembre 2025

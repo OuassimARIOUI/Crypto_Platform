@@ -12,7 +12,7 @@ dotenv.config();
     logInfo(" CryptoPlatform Console App started...");
 
     //server is collecting every 30 seconds
-    cron.schedule("* * * * *", async () => {
+    cron.schedule("*/3 * * * *", async () => {
         await fetchCryptoData();
         await insertCryptoData();
     });

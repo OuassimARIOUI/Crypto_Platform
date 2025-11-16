@@ -39,7 +39,7 @@ services:
         condition: service_started
     environment:
       DB_USER: postgres
-      DB_PASSWORD: post1234
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: crypto

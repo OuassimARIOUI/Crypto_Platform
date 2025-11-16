@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import cron from "node-cron";
-import { fetchCryptoData } from "./services/fetchService.js";
 import { connectDB } from "./services/dbService.js";
 import { logInfo } from "./utils/logger.js";
 import {insertCryptoData} from "./services/insertCryptoService.js";

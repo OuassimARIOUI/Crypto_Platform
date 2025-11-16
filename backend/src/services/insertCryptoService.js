@@ -1,12 +1,9 @@
-import { connectDB } from "./dbService.js";
+import { prisma } from "./dbService.js";
 import { fetchCryptoData } from "./fetchService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
 export async function insertCryptoData() {
     try {
-        // --- Connexion à la DB ---
-        const prisma = await connectDB();
-        logInfo("Connexion à la base établie depuis insertService.js");
 
         // --- Récupération des données ---
         const data = await fetchCryptoData();
@@ -25,11 +22,11 @@ export async function insertCryptoData() {
             let cryptoId;
             //si elle existe pas
             if(!existing) {
-                const insertCrypto = await prisma.cyrptos.create({
+                const insertCrypto = await prisma.cryptos.create({
                     data : {
                         symbol : c.symbol,
                         name: c.symbol,
-                        createdAt : new Date(),
+                        created_at : new Date(),
                     }
                 });
                 cryptoId = insertCrypto.id;

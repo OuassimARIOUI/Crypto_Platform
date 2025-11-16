@@ -1,10 +1,10 @@
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+import { prisma } from "./dbService.js";
+
 
 /**
  * Calcule la moyenne mobile simple
  */
-async function calculateSMA(cryptoId, n) {
+export async function calculateSMA(cryptoId, n) {
     const prices = await prisma.crypto_prices.findMany({
         where: { crypto_id: cryptoId },
         orderBy: { fetched_at: "desc" },
@@ -20,7 +20,7 @@ async function calculateSMA(cryptoId, n) {
 /**
  * Récupère la variation 24h
  */
-async function getVariation24h(cryptoId) {
+export async function getVariation24h(cryptoId) {
     const last = await prisma.crypto_prices.findFirst({
         where: { crypto_id: cryptoId },
         orderBy: { fetched_at: "desc" }
@@ -32,14 +32,16 @@ async function getVariation24h(cryptoId) {
 /**
  * Calcule SMA7, SMA30 et variation 24h puis insère dans indicators_history
  */
-async function computeIndicatorsForCrypto(cryptoId) {
-    const sma7 = await calculateSMA(cryptoId, 7);
-    const sma30 = await calculateSMA(cryptoId, 30);
-    const variation24h = await getVariation24h(cryptoId);
+export async function computeIndicatorsForCrypto(cryptoId) {
+    const safeId = Number(cryptoId);
+
+    const sma7 = await calculateSMA(safeId, 7);
+    const sma30 = await calculateSMA(safeId, 30);
+    const variation24h = await getVariation24h(safeId);
 
     await prisma.indicators_history.create({
         data: {
-            crypto_id: cryptoId,
+            crypto_id: safeId,
             sma7,
             sma30,
             variation_24h: variation24h,
@@ -47,7 +49,7 @@ async function computeIndicatorsForCrypto(cryptoId) {
         }
     });
 
-    console.log(`Indicators saved for crypto ${cryptoId}`);
+    console.log(`Indicators saved for crypto ${safeId}`);
 }
 
 /**

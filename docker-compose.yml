@@ -3,16 +3,19 @@ version: '3.9'
 services:
   db:
     image: postgres:16
-    container_name: postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: post1234
       POSTGRES_DB: crypto
-      PGDATA: /var/lib/postgresql/data
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
     restart: always
 
   redis:
@@ -30,14 +33,17 @@ services:
     ports:
       - "3001:3000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       DB_USER: postgres
       DB_PASSWORD: post1234
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: crypto
+      DATABASE_URL: "postgresql://postgres:post1234@db:5432/crypto?schema=public"
     restart: always
 
 volumes:

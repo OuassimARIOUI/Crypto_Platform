@@ -13,11 +13,17 @@ dotenv.config();
 
     //server is collecting every 30 seconds
     cron.schedule("*/3 * * * *", async () => {
-        await fetchCryptoData();
         await insertCryptoData();
     });
     cron.schedule("* * * * *", async () => {
-        console.log(" Running indicators calculation...");
-        await computeAllIndicators();
+        try {
+            console.log("Running indicators calculation...");
+            await computeAllIndicators();
+        } catch (err) {
+            console.error("Cron error:", err);
+        }
+    }, {
+        scheduled: true,
+        recoverMissedExecutions: true,
     });
 })();

@@ -1,4 +1,4 @@
-import { getAllCryptos } from "../services/cryptosService.js";
+import { getAllCryptos } from "../services/getCryptosService.js";
 
 export async function getAllCryptosController(req, res) {
     try {

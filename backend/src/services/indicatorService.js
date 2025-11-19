@@ -53,6 +53,30 @@ export async function computeIndicatorsForCrypto(cryptoId) {
 }
 
 /**
+ * function that gett the indicators sma7 ans sma30 by symbol
+ * */
+
+export async function getIndicatorsBySymbol(symbol){
+    const crypto = await prisma.cryptos.findUnique({
+        where: {symbol}
+    });
+
+    if(!crypto) return null;
+
+    const id = crypto.id;
+    const sma7 = await calculateSMA(id,7);
+    const sma30 = await calculateSMA(id,30);
+    const variation24h = await getVariation24h(id);
+
+    return {
+        symbol,
+        sma7,
+        sma30,
+        variation_24h: variation24h,
+    };
+}
+
+/**
  * Calcule les indicateurs pour toutes les cryptos
  */
 export async function computeAllIndicators() {

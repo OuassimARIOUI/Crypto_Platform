@@ -3,18 +3,18 @@ import cron from "node-cron";
 import { connectDB } from "./services/dbService.js";
 import { logInfo } from "./utils/logger.js";
 import {insertCryptoData} from "./services/insertCryptoService.js";
-import {computeAllIndicators} from "./services/indicatorService.js"
+import {computeAllIndicators} from "./services/indicatorService.js";
 dotenv.config();
 
 (async () => {
     await connectDB();
     logInfo(" CryptoPlatform Console App started...");
 
-    //server is collecting every 30 seconds
-    cron.schedule("*/3 * * * *", async () => {
+    //server is collecting every hour
+    cron.schedule("0 * * * *", async () => {
         await insertCryptoData();
     });
-    cron.schedule("* * * * *", async () => {
+    cron.schedule("0 * * * *", async () => {
         try {
             console.log("Running indicators calculation...");
             await computeAllIndicators();

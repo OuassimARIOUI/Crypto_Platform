@@ -1,2 +1,2 @@
 import "./src/main.js"
-import "./server.js"
+import "./src/server.js"

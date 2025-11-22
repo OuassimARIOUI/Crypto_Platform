@@ -30,6 +30,8 @@ services:
   backend:
     build: ./backend
     container_name: backend
+    env_file:
+      - ./backend/.env
     ports:
       - "3001:3000"
     depends_on:
@@ -37,13 +39,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    environment:
-      DB_USER: postgres
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: crypto
-      DATABASE_URL: "postgresql://postgres:post1234@db:5432/crypto?schema=public"
     restart: always
 
 volumes:

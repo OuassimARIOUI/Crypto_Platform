@@ -38,13 +38,14 @@ model crypto_prices {
 }
 
 model cryptos {
-  id                 Int                  @id @default(autoincrement())
-  symbol             String               @unique @db.VarChar(10)
-  name               String               @db.VarChar(50)
-  created_at         DateTime?            @default(now()) @db.Timestamp(6)
-  alerts             alerts[]
-  crypto_prices      crypto_prices[]
-  indicators_history indicators_history[]
+  id                     Int                      @id @default(autoincrement())
+  symbol                 String                   @unique @db.VarChar(10)
+  name                   String                   @db.VarChar(50)
+  created_at             DateTime?                @default(now()) @db.Timestamp(6)
+  alerts                 alerts[]
+  crypto_prices          crypto_prices[]
+  indicators_history     indicators_history[]
+  portfolio_transactions portfolio_transactions[]
 }
 
 model indicators_history {
@@ -55,4 +56,38 @@ model indicators_history {
   sma30         Decimal? @db.Decimal
   variation_24h Decimal? @db.Decimal
   cryptos       cryptos? @relation(fields: [crypto_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id         Int      @id @default(autoincrement())
+  pseudo     String   @unique
+  email      String   @unique
+  password   String
+  role       String   @default("user")
+  created_at DateTime @default(now())
+
+  portfolio portfolios?
+}
+
+model portfolios {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @unique
+  balance    Float    @default(0)
+  created_at DateTime @default(now())
+
+  user         users                    @relation(fields: [user_id], references: [id])
+  transactions portfolio_transactions[]
+}
+
+model portfolio_transactions {
+  id           Int      @id @default(autoincrement())
+  portfolio_id Int
+  crypto_id    Int
+  type         String // buy / sell
+  quantity     Float
+  price_usd    Float
+  timestamp    DateTime @default(now())
+
+  portfolio portfolios @relation(fields: [portfolio_id], references: [id])
+  crypto    cryptos    @relation(fields: [crypto_id], references: [id])
 }

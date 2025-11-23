@@ -25,11 +25,26 @@ export async function loginController(req, res) {
             return res.status(400).json({ error: "Identifiants incorrects" });
         }
 
+
+        res.cookie("token", result.token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
         logInfo(`User login: ${email}`);
-        return res.json(result);
+        return res.json({
+            success: true,
+            user: result.user
+        });
 
     } catch (err) {
         console.error("LOGIN ERROR =>", err);
         return res.status(500).json({ error: "Erreur serveur" });
     }
+}
+
+export function logoutController(req, res) {
+    res.clearCookie("token");
+    return res.json({ success: true });
 }

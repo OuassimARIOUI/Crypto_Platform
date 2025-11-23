@@ -11,10 +11,10 @@ dotenv.config();
     logInfo(" CryptoPlatform Console App started...");
 
     //server is collecting every hour
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("*/5 * * * *", async () => {
         await insertCryptoData();
     });
-    cron.schedule("0 * * * *", async () => {
+    cron.schedule("*/5 * * * *", async () => {
         try {
             console.log("Running indicators calculation...");
             await computeAllIndicators();

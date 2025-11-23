@@ -1,7 +1,5 @@
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import TradingChart from "@/components/trading/TradingChart";
-import TradingBuy from "@/components/trading/TradingBuy";
-import TradingSell from "@/components/trading/TradingSell";
+import TradingBuyCard from "@/components/trading/TradingBuyCard";
 
 export default function TradingPage() {
     return (
@@ -9,11 +7,11 @@ export default function TradingPage() {
             <div className="p-6 lg:p-10 space-y-10">
                 <h1 className="text-4xl font-black text-white mb-6">Trading</h1>
 
-                <TradingChart />
+                <p className="text-white">Trading chart coming soon...</p>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <TradingBuy />
-                    <TradingSell />
+                    <TradingBuyCard />
+                    <p className="text-white">Trading Sell coming soon...</p>
                 </div>
             </div>
         </DashboardLayout>

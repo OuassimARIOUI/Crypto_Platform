@@ -41,6 +41,17 @@ services:
         condition: service_started
     restart: always
 
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: always
+
+
 volumes:
   pgdata:
   redisdata:

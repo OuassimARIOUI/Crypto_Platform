@@ -54,9 +54,15 @@ export default function LoginPage() {
             <div className="relative z-10 max-w-md w-full glassmorphism p-8 rounded-xl">
                 {/* Logo */}
                 <div className="flex justify-center items-center gap-3 mb-8">
-          <span className="material-symbols-outlined text-primary text-4xl">
-            currency_bitcoin
-          </span>
+          <span
+              className="material-symbols-outlined text-[90px] text-[#3BB1FF] font-bold"
+              style={{
+                fontVariationSettings: "'wght' 700"
+              }}
+            >
+              currency_bitcoin
+            </span>
+            
                     <h1 className="text-white text-3xl font-bold">CryptoTrade</h1>
                 </div>
 

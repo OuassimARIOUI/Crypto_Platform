@@ -1,4 +1,5 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,6 +10,10 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+const manrope = Manrope({
+    subsets: ["latin"],
+    weight: ["200","300","400","500","600","700","800"],
 });
 
 
@@ -26,7 +31,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body className={`${manrope.className} bg-[#0A0E23]`} > {children}</body>
     </html>
   );
 }

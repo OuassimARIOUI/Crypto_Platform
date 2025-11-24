@@ -1,12 +1,37 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Cookies from "js-cookie";
+
 export default function DashboardLayout({ children }) {
+    const [user, setUser] = useState(null);
+
+    // Charger l'utilisateur depuis le backend grâce au token
+    useEffect(() => {
+        const token = Cookies.get("token");
+        if (!token) return;
+
+        fetch("http://localhost:3004/auth/me", {
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data?.error) return;
+                setUser(data);
+            })
+            .catch((err) => console.error("ME ERROR:", err));
+    }, []);
+
     return (
         <div className="flex min-h-screen w-full bg-background-dark text-white">
             {/* SIDEBAR */}
             <aside className="flex h-screen w-64 flex-col border-r border-white/10 bg-background-dark p-4">
                 <div className="flex items-center gap-3 px-3 py-2">
-          <span className="material-symbols-outlined text-[#0da6f2] text-5xl">
-            currency_bitcoin
-          </span>
+                    <span className="material-symbols-outlined text-[#0da6f2] text-5xl">
+                        currency_bitcoin
+                    </span>
                     <h2 className="text-lg font-bold tracking-tight">CryptoApp</h2>
                 </div>
 
@@ -27,9 +52,9 @@ export default function DashboardLayout({ children }) {
                                     : "text-gray-400 hover:bg-white/5 hover:text-white"
                             }`}
                         >
-              <span className="material-symbols-outlined text-xl">
-                {item.icon}
-              </span>
+                            <span className="material-symbols-outlined text-xl">
+                                {item.icon}
+                            </span>
                             <p className="text-sm font-medium">{item.label}</p>
                         </a>
                     ))}
@@ -37,10 +62,16 @@ export default function DashboardLayout({ children }) {
 
                 {/* Logout */}
                 <div className="mt-auto">
-                    <a className="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white">
+                    <button
+                        onClick={() => {
+                            Cookies.remove("token");
+                            window.location.href = "/login";
+                        }}
+                        className="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white"
+                    >
                         <span className="material-symbols-outlined text-xl">logout</span>
                         <p className="text-sm">Logout</p>
-                    </a>
+                    </button>
                 </div>
             </aside>
 
@@ -54,6 +85,7 @@ export default function DashboardLayout({ children }) {
                         </button>
 
                         <div className="flex items-center gap-3">
+                            {/* Avatar */}
                             <div
                                 className="size-10 rounded-full bg-center bg-cover"
                                 style={{
@@ -61,9 +93,15 @@ export default function DashboardLayout({ children }) {
                                         'url("https://i.pravatar.cc/100?img=12")',
                                 }}
                             ></div>
+
+                            {/* USER INFO */}
                             <div className="text-right">
-                                <h1 className="text-sm font-medium">Alex Doe</h1>
-                                <p className="text-xs text-gray-400">user@email.com</p>
+                                <h1 className="text-sm font-medium">
+                                    {user ? user.pseudo : "..."}
+                                </h1>
+                                <p className="text-xs text-gray-400">
+                                    {user ? user.email : ""}
+                                </p>
                             </div>
                         </div>
                     </div>

@@ -9,7 +9,7 @@ export default function TopCryptosTable() {
     useEffect(() => {
         async function loadCryptos() {
             try {
-                const res = await fetch("http://localhost:3001/cryptos");
+                const res = await fetch("http://localhost:3004/cryptos");
                 const data = await res.json();
                 setCryptos(data);
             } catch (err) {

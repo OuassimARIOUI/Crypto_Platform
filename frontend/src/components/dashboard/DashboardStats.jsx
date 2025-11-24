@@ -7,7 +7,7 @@ export default function DashboardStats() {
     useEffect(() => {
         async function loadStats() {
             try {
-                const res = await fetch("http://localhost:3001/cryptos");
+                const res = await fetch("http://localhost:3004/cryptos");
                 const data = await res.json();
 
                 if (!data || data.length === 0) return;

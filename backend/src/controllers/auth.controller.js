@@ -1,5 +1,7 @@
 import { register, login } from "../services/authService.js";
 import { logError, logInfo } from "../utils/logger.js";
+import jwt from "jsonwebtoken";
+import {prisma} from "../services/dbService.js";
 
 export async function registerController(req, res) {
     const { email, password, pseudo } = req.body;

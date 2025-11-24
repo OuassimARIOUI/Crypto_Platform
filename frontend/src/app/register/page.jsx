@@ -14,7 +14,8 @@ export default function RegisterPage() {
         e.preventDefault();
 
         try {
-            const res = await fetch("http://localhost:3001/auth/register", {
+            console.log("ENVOI JSON FRONT:", JSON.stringify({ pseudo, email, password }));
+            const res = await fetch("http://localhost:3004/auth/register", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

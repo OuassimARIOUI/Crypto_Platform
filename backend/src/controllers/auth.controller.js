@@ -3,6 +3,7 @@ import { logError, logInfo } from "../utils/logger.js";
 
 export async function registerController(req, res) {
     const { email, password, pseudo } = req.body;
+    console.log("REQ BODY FRONT:", req.body);
 
     try {
         const user = await register(email, password, pseudo);
@@ -17,6 +18,7 @@ export async function registerController(req, res) {
 
 export async function loginController(req, res) {
     const { email, password } = req.body;
+    console.log("REQ BODY FRONT:", req.body);
 
     try {
         const result = await login(email, password);
@@ -32,4 +34,5 @@ export async function loginController(req, res) {
         console.error("LOGIN ERROR =>", err);
         return res.status(500).json({ error: "Erreur serveur" });
     }
+
 }

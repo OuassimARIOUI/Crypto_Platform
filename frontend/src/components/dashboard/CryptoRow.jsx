@@ -30,9 +30,7 @@ export default function CryptoRow({ crypto }) {
         </span>
             </td>
 
-            <td className="px-4 py-3">
-                <img src={crypto.sparkline} className="h-8 w-24" />
-            </td>
+
         </tr>
     );
 }

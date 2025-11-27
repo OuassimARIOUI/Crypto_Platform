@@ -1,9 +1,8 @@
-version: '3.9'
+version: "3.9"
 
 services:
   db:
     image: postgres:16
-    container_name: db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: post1234
@@ -20,7 +19,7 @@ services:
     restart: always
 
   redis:
-    image: redis:7
+    image: redis:alpine
     container_name: redis
     ports:
       - "6379:6379"
@@ -31,7 +30,6 @@ services:
   backend:
     build: ./backend
     container_name: backend
-    command: ["node", "src/server.js"]
     env_file:
       - ./backend/.env
     ports:
@@ -46,14 +44,14 @@ services:
   worker:
     build: ./backend
     container_name: worker
-    command: ["node", "src/workers/crypto.worker.js"]
     env_file:
       - ./backend/.env
+    command: ["node", "src/workers/crypto.worker.js"]
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_started
+      db:
+        condition: service_healthy
     restart: always
 
 volumes:

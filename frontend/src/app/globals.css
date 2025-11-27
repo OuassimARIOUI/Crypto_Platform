@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
+/* ============
+   CSS VARIABLES
+   ============ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0A0E23;
+  --foreground: #ffffff;
+
+  /* Figma colors */
+  --primary: #0da6f2;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --input-bg: rgba(255, 255, 255, 0.08);
+
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
+/* ============
+   DARK MODE
+   ============ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0A0E23;
+    --foreground: #ffffff;
+  }
+}
+
+/* ============
+   THEME OVERRIDE
+   (Tailwind @theme inline)
+   ============ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ============
+   GLOBALS
+   ============ */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============
+   GLASSMORPHISM UTILITIES
+   ============ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+.input-glass {
+  background: var(--input-bg);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #0c94d4;
+}
+
+.shadow-primary {
+  box-shadow: 0 0 25px rgba(13, 166, 242, 0.55);
+}
+
+.glassmorphism {
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.form-input:focus {
+    border-color: #0da6f2 !important;
+    box-shadow: 0 0 0 2px rgba(13, 166, 242, 0.3) !important;
+}
+

@@ -3,14 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=500 WATCHPACK_POLLING=true next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "apexcharts": "^5.3.6",
+    "js-cookie": "^3.0.5",
     "next": "16.0.3",
     "react": "19.2.0",
+    "react-apexcharts": "^1.8.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {

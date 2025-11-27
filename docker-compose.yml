@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 
 services:
   db:
@@ -12,7 +12,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 3s
       timeout: 3s
       retries: 5
@@ -33,12 +33,25 @@ services:
     env_file:
       - ./backend/.env
     ports:
-      - "3001:3000"
+      - "3004:3004"
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
+    restart: always
+
+  worker:
+    build: ./backend
+    container_name: worker
+    env_file:
+      - ./backend/.env
+    command: ["node", "src/workers/crypto.worker.js"]
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
     restart: always
 
 volumes:

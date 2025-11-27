@@ -2,9 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+
+
 
 export default function DashboardLayout({ children }) {
     const [user, setUser] = useState(null);
+    const pathname = usePathname();
 
     // Charger l'utilisateur depuis le backend grâce au token
     useEffect(() => {
@@ -37,28 +42,40 @@ export default function DashboardLayout({ children }) {
 
                 <nav className="mt-8 flex flex-col gap-2">
                     {[
-                        { icon: "dashboard", label: "Dashboard", active: true },
-                        { icon: "account_balance_wallet", label: "Portfolio" },
-                        { icon: "candlestick_chart", label: "Trading" },
-                        { icon: "show_chart", label: "Indicators" },
-                        { icon: "person", label: "Profile" },
-                    ].map((item) => (
-                        <a
-                            key={item.label}
-                            href="#"
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg ${
-                                item.active
-                                    ? "bg-primary/20 text-primary"
-                                    : "text-gray-400 hover:bg-white/5 hover:text-white"
-                            }`}
-                        >
-                            <span className="material-symbols-outlined text-xl">
-                                {item.icon}
-                            </span>
-                            <p className="text-sm font-medium">{item.label}</p>
-                        </a>
-                    ))}
+                        { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
+                        { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
+                        { icon: "candlestick_chart", label: "Trading", href: "/trading" },
+                        { icon: "show_chart", label: "Indicators", href: "/indicators" },
+                        { icon: "person", label: "Profile", href: "/profile" },
+                    ].map((item) => {
+                        const isActive = pathname.startsWith(item.href);
+
+                        return (
+                            <Link
+                                key={item.label}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
+                    ${
+                                    isActive
+                                        ? "bg-primary/20 text-primary"
+                                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                }
+                `}
+                            >
+                <span
+                    className={`material-symbols-outlined text-xl ${
+                        isActive ? "text-primary" : ""
+                    }`}
+                >
+                    {item.icon}
+                </span>
+                                <p className="text-sm font-medium">{item.label}</p>
+                            </Link>
+                        );
+                    })}
                 </nav>
+
+
 
                 {/* Logout */}
                 <div className="mt-auto">

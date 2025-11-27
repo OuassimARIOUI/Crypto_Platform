@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Chart from "react-apexcharts";
+import dynamic from "next/dynamic";
 
 export default function IndicatorsPanel() {
     const [cryptos, setCryptos] = useState([]);
@@ -15,6 +15,10 @@ export default function IndicatorsPanel() {
     const [smaVisible, setSmaVisible] = useState({ sma7: true, sma30: true });
 
     const [loading, setLoading] = useState(true);
+
+    const Chart = dynamic(() => import("react-apexcharts"), {
+        ssr: false
+    });
 
     // LOAD CRYPTOS LIST
     useEffect(() => {
@@ -137,7 +141,7 @@ export default function IndicatorsPanel() {
                     className="h-10 rounded-lg bg-white/10 border border-white/20 text-white px-3"
                 >
                     {cryptos.map(c => (
-                        <option key={c.id} value={c.symbol}>
+                        <option key={c.id} value={c.symbol}  className="bg-[#0f0f1a] text-white">
                             {c.symbol.toUpperCase()}
                         </option>
                     ))}

@@ -4,6 +4,8 @@ import {
     sellCrypto
 } from "../services/portfolioService.js";
 
+import {addFunds} from "../services/addFundsService.js";
+
 import { logError } from "../utils/logger.js";
 
 export async function getMyPortfolioController(req, res) {
@@ -43,5 +45,25 @@ export async function sellCryptoController(req, res) {
     } catch (err) {
         console.error("SELL ERROR:", err);
         return res.status(500).json({ error: "Erreur serveur" });
+    }
+}
+
+export async function addFundsController(req, res) {
+    try {
+        const { amount } = req.body;
+        const userId = req.user.id;
+
+        const newBalance = await addFunds(userId, Number(amount));
+
+        return res.json({
+            success: true,
+            balance: newBalance
+        });
+
+    } catch (err) {
+        console.error("ADD FUNDS ERROR:", err);
+        return res.status(400).json({
+            error: err.message || "Erreur interne serveur"
+        });
     }
 }

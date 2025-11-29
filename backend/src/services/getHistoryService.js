@@ -18,11 +18,11 @@ export async function getHistoryService(symbol, timeframe = "24h") {
 
     const prices = await prisma.crypto_prices.findMany({
         where: { crypto_id: crypto.id },
-        orderBy: { fetched_at: "asc" },
+        orderBy: { fetched_at: "desc" },
         take: hours,
     });
 
-    return prices.map(p => ({
+    return prices.reverse().map(p => ({
         time: p.fetched_at,
         price: Number(p.price_usd),
     }));

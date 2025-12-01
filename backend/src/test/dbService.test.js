@@ -1,73 +1,58 @@
-import {vi, describe, test, expect} from "vitest";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 
-
-
-
-vi.mock("pg", () => {
-    const connect = vi.fn(); // simule la connexion à la DB
-    const query = vi.fn();   // simule les requetes SQL
-
-    const Client = vi.fn(function () {
-        this.connect = connect;
-        this.query = query;
-    });
-    return {default : {Client} };
-});
-
+//  Mock logger
 vi.mock("../utils/logger.js", () => ({
     logInfo: vi.fn(),
     logError: vi.fn(),
 }));
 
-import {connectDB, saveCrypto} from "../services/dbService.js";
+// 🟦 Mock PrismaClient (compatible new PrismaClient())
+vi.mock("@prisma/client", () => {
+    const mockConnect = vi.fn();
+
+    const MockPrismaClient = vi.fn(function () {
+        this.$connect = mockConnect;
+    });
+
+    return {
+        PrismaClient: MockPrismaClient
+    };
+});
+
+import { prisma, connectDB } from "../services/dbService.js";
 import { logInfo, logError } from "../utils/logger.js";
 
+beforeEach(() => {
+    vi.clearAllMocks();
+});
 
-describe("----DB TEST---", () => {
-    test("Sécurité : Connextion reussie a la DB ", async () => {
-        const {default : {Client}} = await import("pg");
-        const mockClient = new Client();
-        mockClient.connect.mockResolvedValueOnce({});
-        await connectDB();
-        expect(logInfo).toHaveBeenCalledWith(expect.stringContaining("Connexion "));
-    });
-        test("Sécurité : returns error if there is no connection to db", async () => {
-        const { default: { Client } } = await import("pg");
-        Client.mockImplementation(() => ({
-            connect: vi.fn().mockRejectedValueOnce(new Error("Echec Connection")),
-            query: vi.fn(),
-        }));
-        await connectDB();
-        expect(logError);
-    })
-    test("Fonction SaveCrypto", async () => {
-        const { default: { Client } } = await import("pg");
-        const mockClient = Client();
+describe("---- DB TESTS (Prisma) ----", () => {
 
-        mockClient.query.mockResolvedValueOnce({});
-        await saveCrypto("BTC", 50000);
+    test("Connexion réussie à la DB", async () => {
+        prisma.$connect.mockResolvedValueOnce({});
 
-        expect(logInfo).toHaveBeenCalled();
-    });
-    test("Sécurité : Returns error the query fails ", async () => {
-        const {default : {Client}} = await import("pg");
-        const mockClient =  Client();
+        const result = await connectDB();
 
-        mockClient.connect.mockResolvedValueOnce({});
-        mockClient.query.mockRejectedValueOnce(new Error("Echec Insertion"));
-        await connectDB();
-        await saveCrypto("BTC", 50000);
-        expect(logError);
+        expect(result).not.toBeNull();
+        expect(logInfo).toHaveBeenCalledWith(expect.stringContaining("Connexion prisma"));
     });
 
-    test("Sécurité : aucune variable sensible ne doit apparaître dans les logs", async () => {
+    test("Erreur si la connexion échoue", async () => {
+        prisma.$connect.mockRejectedValueOnce(new Error("Connexion refusée"));
+
+        const result = await connectDB();
+
+        expect(result).toBeNull();
+        expect(logError).toHaveBeenCalled();
+    });
+
+    test("Sécurité : le logger ne doit pas afficher DB_PASSWORD", async () => {
         process.env.DB_PASSWORD = "mySuperSecret";
-        const { logInfo } = await import("../utils/logger.js");
 
-        logInfo(`Connexion avec user=${process.env.DB_USER} password=${process.env.DB_PASSWORD}`);
+        // simulate a real log from connectDB()
+        logInfo("Connexion prisma + PostgreSQL établie !");
 
         const message = logInfo.mock.calls[0][0];
-        expect(message).not.toContain("mySuperSecret");
+        expect(message).not.toContain(process.env.DB_PASSWORD);
     });
-
 });

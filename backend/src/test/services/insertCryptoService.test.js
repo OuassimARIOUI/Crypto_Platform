@@ -1,6 +1,6 @@
 import { vi, describe, test, expect,beforeEach  } from "vitest";
-import { insertCryptoData } from "../services/insertCryptoService.js";
-import { logInfo, logError } from "../utils/logger.js";
+import { insertCryptoData } from "../../services/insertCryptoService.js";
+import { logInfo, logError } from "../../utils/logger.js";
 
 
 vi.mock("../utils/logger.js", () => ({
@@ -24,8 +24,8 @@ beforeEach(() => {
 describe("Sécurité : TestInsertion à la DB", () => {
     //test Insertion
     test("Insertion réussie", async () => {
-        const { connectDB } = await import("../services/dbService.js");
-        const { fetchCryptoData } = await import("../services/fetchService.js");
+        const { connectDB } = await import("../../services/dbService.js");
+        const { fetchCryptoData } = await import("../../services/fetchService.js");
         const fakeData = [
             {
                 symbol: "btc",
@@ -55,8 +55,8 @@ describe("Sécurité : TestInsertion à la DB", () => {
 
     //test empty Query
     test("Sécurité :  Erreur si aucune donnée", async () => {
-        const { connectDB } = await import("../services/dbService.js");
-        const { fetchCryptoData } = await import("../services/fetchService.js");
+        const { connectDB } = await import("../../services/dbService.js");
+        const { fetchCryptoData } = await import("../../services/fetchService.js");
 
         connectDB.mockResolvedValue({ query: vi.fn() });
         fetchCryptoData.mockResolvedValue([]); // vide
@@ -70,8 +70,8 @@ describe("Sécurité : TestInsertion à la DB", () => {
 
     //Test Injection SQL
     test("Sécurité : empêche l'injection SQL dans saveCrypto" , async () => {
-        const { saveCrypto } = await import("../services/dbService.js");
-        const {logError} = await import ("../utils/logger.js");
+        const { saveCrypto } = await import("../../services/dbService.js");
+        const {logError} = await import ("../../utils/logger.js");
 
         const maliciousName = "BTC; DROP TABLE users; --";
         await saveCrypto(maliciousName, 100000);
@@ -82,8 +82,8 @@ describe("Sécurité : TestInsertion à la DB", () => {
     });
 
     test("Performance : Insertion complète en moins de 3 secondes", async () => {
-        const { connectDB } = await import("../services/dbService.js");
-        const { fetchCryptoData } = await import("../services/fetchService.js");
+        const { connectDB } = await import("../../services/dbService.js");
+        const { fetchCryptoData } = await import("../../services/fetchService.js");
 
         const fakeData = Array.from({ length: 5 }).map((_, i) => ({
             symbol: `c${i}`,
@@ -114,7 +114,7 @@ describe("Sécurité : TestInsertion à la DB", () => {
         expect(duration).toBeLessThan(3000);
     });
     test("Performance : Supporte 50 insertions simultanées sans crash", async () => {
-        const { saveCrypto } = await import("../services/dbService.js");
+        const { saveCrypto } = await import("../../services/dbService.js");
 
         saveCrypto.mockResolvedValue({});
         const promises = [];

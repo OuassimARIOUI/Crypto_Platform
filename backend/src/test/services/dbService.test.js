@@ -19,8 +19,8 @@ vi.mock("@prisma/client", () => {
     };
 });
 
-import { prisma, connectDB } from "../services/dbService.js";
-import { logInfo, logError } from "../utils/logger.js";
+import { prisma, connectDB } from "../../services/dbService.js";
+import { logInfo, logError } from "../../utils/logger.js";
 
 beforeEach(() => {
     vi.clearAllMocks();

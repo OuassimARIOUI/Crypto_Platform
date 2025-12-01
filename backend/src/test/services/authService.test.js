@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { register, login } from "../services/authService.js";
-import { prisma } from "../services/dbService.js";
+import { register, login } from "../../services/authService.js";
+import { prisma } from "../../services/dbService.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 

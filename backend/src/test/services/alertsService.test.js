@@ -15,8 +15,8 @@ vi.mock("../utils/logger.js", () => ({
 }));
 
 // 🟦 IMPORT SERVICE APRÈS LE MOCK
-import { prisma } from "../services/dbService.js";
-import { checkAlert } from "../services/alertsService.js";
+import { prisma } from "../../services/dbService.js";
+import { checkAlert } from "../../services/alertsService.js";
 
 beforeEach(() => {
     vi.clearAllMocks();

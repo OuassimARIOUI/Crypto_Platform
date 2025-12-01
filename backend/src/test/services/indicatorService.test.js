@@ -15,8 +15,8 @@ vi.mock("../services/dbService.js", () => ({
     }
 }));
 
-import { prisma } from "../services/dbService.js";
-import { computeAllIndicators } from "../services/indicatorService.js";
+import { prisma } from "../../services/dbService.js";
+import { computeAllIndicators } from "../../services/indicatorService.js";
 
 // Re-import functions privées
 const modulePath = "../services/indicatorService.js";

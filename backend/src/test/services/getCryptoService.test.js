@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { getAllCryptos } from "../services/getCryptosService.js";
-import { prisma } from "../services/dbService.js";
+import { getAllCryptos } from "../../services/getCryptosService.js";
+import { prisma } from "../../services/dbService.js";
 
 // Mock Prisma
 vi.mock("../services/dbService.js", () => ({

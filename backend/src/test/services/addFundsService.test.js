@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { addFunds } from "../services/addFundsService.js";
+import { addFunds } from "../../services/addFundsService.js";
 
 // Mock Prisma
-import { prisma } from "../services/dbService.js";
+import { prisma } from "../../services/dbService.js";
 
 vi.mock("../services/dbService.js", () => ({
     prisma: {

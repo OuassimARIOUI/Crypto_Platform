@@ -58,23 +58,43 @@ export async function computeIndicatorsForCrypto(cryptoId) {
 
 export async function getIndicatorsBySymbol(symbol){
     const crypto = await prisma.cryptos.findUnique({
-        where: {symbol}
+        where: { symbol }
     });
 
-    if(!crypto) return null;
+    if (!crypto) return null;
 
     const id = crypto.id;
-    const sma7 = await calculateSMA(id,7);
-    const sma30 = await calculateSMA(id,30);
-    const variation24h = await getVariation24h(id);
+
+    // récupération de 200 dernières heures par sécurité
+    const history = await prisma.crypto_prices.findMany({
+        where: { crypto_id: id },
+        orderBy: { fetched_at: "desc" },
+        take: 200
+    });
+
+    const prices = history.map(p => Number(p.price_usd)).reverse();
+    const times = history.map(p => p.fetched_at).reverse();
+
+    // GENERER LES SERIES SMA
+    function movingAverage(arr, window){
+        return arr.map((_, i) =>
+            i < window ? null :
+                (arr.slice(i - window, i).reduce((s, x) => s + x, 0) / window)
+        );
+    }
 
     return {
         symbol,
-        sma7,
-        sma30,
-        variation_24h: variation24h,
+        sma7: await calculateSMA(id, 7),
+        sma30: await calculateSMA(id, 30),
+        variation_24h: await getVariation24h(id),
+        prices,
+        times,
+        sma7Series: movingAverage(prices, 7),
+        sma30Series: movingAverage(prices, 30),
     };
 }
+
 
 /**
  * Calcule les indicateurs pour toutes les cryptos

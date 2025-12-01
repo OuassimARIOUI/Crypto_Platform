@@ -12,35 +12,43 @@ export default function IndicatorsPanel() {
     const [variation, setVariation] = useState(null);
     const [indicators, setIndicators] = useState(null);
     const [history, setHistory] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [smaVisible, setSmaVisible] = useState({ sma7: true, sma30: true });
 
-    const [loading, setLoading] = useState(true);
+    const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
-    const Chart = dynamic(() => import("react-apexcharts"), {
-        ssr: false
-    });
+    function filterTimeframe(data, timeframe) {
+        const now = new Date();
+        const cutoff = new Date();
 
-    // LOAD CRYPTOS LIST
+        if (timeframe === "6m") cutoff.setMonth(cutoff.getMonth() - 6);
+        if (timeframe === "1y") cutoff.setFullYear(cutoff.getFullYear() - 1);
+
+        if (!["6m", "1y"].includes(timeframe)) return data;
+        return data.filter(p => new Date(p.time) >= cutoff);
+    }
+
     useEffect(() => {
-        async function loadCryptos() {
-            const res = await fetch("http://localhost:3004/cryptos");
-            const data = await res.json();
-            setCryptos(data || []);
-        }
-        loadCryptos();
+        fetch("http://localhost:3004/cryptos")
+            .then(res => res.json())
+            .then(data => setCryptos(data || []))
+            .catch(() => {});
     }, []);
 
-    // LOAD PRICE + INDICATORS + HISTORY
     useEffect(() => {
+        if (cryptos.length === 0) return;
+
         async function loadData() {
             setLoading(true);
 
             try {
-                // LATEST PRICE
                 const priceRes = await fetch("http://localhost:3004/prices");
                 const priceData = await priceRes.json();
+
+                const crypto = cryptos.find(c => c.symbol === symbol);
+
                 const latest = priceData
-                    .filter(p => p.crypto_id === cryptos.find(c => c.symbol === symbol)?.id)
+                    .filter(p => p.crypto_id === crypto?.id)
                     .sort((a, b) => new Date(b.fetched_at) - new Date(a.fetched_at))[0];
 
                 if (latest) {
@@ -48,26 +56,25 @@ export default function IndicatorsPanel() {
                     setVariation(latest.change_percent_24h);
                 }
 
-                // INDICATORS
-                const indRes = await fetch(
-                    `http://localhost:3004/indicators/${symbol}`
-                );
-                setIndicators(await indRes.json());
-
-                // HISTORY
                 const histRes = await fetch(
                     `http://localhost:3004/prices/history/${symbol}?timeframe=${timeframe}`
                 );
-                setHistory(await histRes.json());
+                const rawHistory = await histRes.json();
+                const filtered = filterTimeframe(rawHistory, timeframe);
+                setHistory(filtered);
+
+                const indRes = await fetch(`http://localhost:3004/indicators/${symbol}`);
+                const indData = await indRes.json();
+                setIndicators(indData);
+            } catch (err) {
             } finally {
                 setLoading(false);
             }
         }
 
-        if (cryptos.length > 0) loadData();
+        loadData();
     }, [symbol, timeframe, cryptos]);
 
-    // --------------------- CHART DATA ---------------------
     const series = [
         {
             name: "Price",
@@ -77,20 +84,20 @@ export default function IndicatorsPanel() {
             })),
             color: "#ffffff"
         },
+
         smaVisible.sma7 && indicators?.sma7Series && {
-            name: "SMA7",
-            data: indicators.sma7Series.map((p, i) => ({
-                x: new Date(history[i]?.time),
-                y: p
-            })),
+            name: "SMA 7",
+            data: indicators.sma7Series
+                .map((v, i) => history[i] ? ({ x: new Date(history[i].time), y: v }) : null)
+                .filter(Boolean),
             color: "#FF00FF"
         },
+
         smaVisible.sma30 && indicators?.sma30Series && {
-            name: "SMA30",
-            data: indicators.sma30Series.map((p, i) => ({
-                x: new Date(history[i]?.time),
-                y: p
-            })),
+            name: "SMA 30",
+            data: indicators.sma30Series
+                .map((v, i) => history[i] ? ({ x: new Date(history[i].time), y: v }) : null)
+                .filter(Boolean),
             color: "#FFFF00"
         }
     ].filter(Boolean);
@@ -98,28 +105,26 @@ export default function IndicatorsPanel() {
     const options = {
         chart: {
             type: "line",
-            toolbar: { show: false },
-            animations: { enabled: true, easing: "easeinout" }
+            toolbar: { show: false }
         },
         stroke: {
             curve: "smooth",
-            width: [3, 2, 2],
+            width: 2
         },
-        grid: {
-            borderColor: "rgba(255,255,255,0.15)",
-            strokeDashArray: 0,
-            row: { opacity: 0.3 }
+        xaxis: {
+            type: "datetime",
         },
-        xaxis: { type: "datetime", labels: { style: { colors: "#aaa" } } },
-        yaxis: { labels: { style: { colors: "#aaa" }, formatter: v => "$" + v.toFixed(2) } },
+        yaxis: {
+            labels: {
+                formatter: v => (isNaN(v) ? "" : "$" + v.toFixed(2))
+            }
+        },
         tooltip: {
             theme: "dark",
             x: { format: "dd MMM HH:mm" }
-        },
-        legend: { show: false }
+        }
     };
 
-    // --------------------- UI ---------------------
     return (
         <div className="rounded-xl border border-white/10 bg-black/40 p-6 space-y-8">
 

@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 //  MOCKS
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         users: {
             create: vi.fn(),

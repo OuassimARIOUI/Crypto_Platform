@@ -3,17 +3,17 @@ import { insertCryptoData } from "../../services/insertCryptoService.js";
 import { logInfo, logError } from "../../utils/logger.js";
 
 
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../../utils/logger.js", () => ({
     logInfo: vi.fn(),
     logError: vi.fn(),
 }));
 
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     connectDB: vi.fn(),
     saveCrypto: vi.fn(),
 }));
 
-vi.mock("../services/fetchService.js", () => ({
+vi.mock("../../services/fetchService.js", () => ({
     fetchCryptoData: vi.fn(),
 }));
 

@@ -4,7 +4,7 @@ import { addFunds } from "../../services/addFundsService.js";
 // Mock Prisma
 import { prisma } from "../../services/dbService.js";
 
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         portfolios: {
             update: vi.fn()

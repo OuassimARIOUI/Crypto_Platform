@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 
 //  Mock logger
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../../utils/logger.js", () => ({
     logInfo: vi.fn(),
     logError: vi.fn(),
 }));

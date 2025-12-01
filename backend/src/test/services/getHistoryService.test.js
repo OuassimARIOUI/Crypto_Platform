@@ -4,7 +4,7 @@ import { getHistoryService } from "../../services/getHistoryService.js";
 import { prisma } from "../../services/dbService.js";
 
 // Mock Prisma
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         cryptos: {
             findUnique: vi.fn(),

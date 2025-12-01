@@ -1,12 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { register, login } from "../services/authService.js";
-import { prisma } from "../services/dbService.js";
+import { register, login } from "../../services/authService.js";
+import { prisma } from "../../services/dbService.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 //  MOCKS
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         users: {
             create: vi.fn(),

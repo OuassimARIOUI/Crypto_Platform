@@ -1,5 +1,5 @@
 import { vi, describe, test, expect } from "vitest";
-import { fetchCryptoData } from "../services/fetchService.js";
+import { fetchCryptoData } from "../../services/fetchService.js";
 
 vi.mock("axios", () => ({
     default: {

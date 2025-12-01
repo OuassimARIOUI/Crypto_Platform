@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 
 //  Mock logger
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../../utils/logger.js", () => ({
     logInfo: vi.fn(),
     logError: vi.fn(),
 }));
@@ -19,8 +19,8 @@ vi.mock("@prisma/client", () => {
     };
 });
 
-import { prisma, connectDB } from "../services/dbService.js";
-import { logInfo, logError } from "../utils/logger.js";
+import { prisma, connectDB } from "../../services/dbService.js";
+import { logInfo, logError } from "../../utils/logger.js";
 
 beforeEach(() => {
     vi.clearAllMocks();

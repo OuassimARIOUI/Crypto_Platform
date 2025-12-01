@@ -1,6 +1,6 @@
 import { vi, describe, test, expect, beforeEach } from "vitest";
 
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         crypto_prices: {
             findMany: vi.fn(),
@@ -15,11 +15,11 @@ vi.mock("../services/dbService.js", () => ({
     }
 }));
 
-import { prisma } from "../services/dbService.js";
-import { computeAllIndicators } from "../services/indicatorService.js";
+import { prisma } from "../../services/dbService.js";
+import { computeAllIndicators } from "../../services/indicatorService.js";
 
 // Re-import functions privées
-const modulePath = "../services/indicatorService.js";
+const modulePath = "../../services/indicatorService.js";
 const { default: calculateSMA } = await import(modulePath).then(m => ({ default: m.calculateSMA }));
 const { default: getVariation24h } = await import(modulePath).then(m => ({ default: m.getVariation24h }));
 

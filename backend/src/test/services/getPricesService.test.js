@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 
-import { getLatestPrices } from "../services/getPricesService.js";
-import { prisma } from "../services/dbService.js";
+import { getLatestPrices } from "../../services/getPricesService.js";
+import { prisma } from "../../services/dbService.js";
 
 // Mock Prisma
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         crypto_prices: {
             findMany: vi.fn()

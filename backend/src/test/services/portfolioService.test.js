@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { getMyPortfolio, buyCrypto, sellCrypto } from "../services/portfolioService.js";
-import { prisma } from "../services/dbService.js";
+import { getMyPortfolio, buyCrypto, sellCrypto } from "../../services/portfolioService.js";
+import { prisma } from "../../services/dbService.js";
 
 // Mock Prisma
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         portfolios: {
             findUnique: vi.fn(),
@@ -23,7 +23,7 @@ vi.mock("../services/dbService.js", () => ({
 }));
 
 // Mock du logger (optionnel)
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../../utils/logger.js", () => ({
     logError: vi.fn()
 }));
 

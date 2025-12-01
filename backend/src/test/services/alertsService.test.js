@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 
 // 🟦 MOCK PRISMA (avant import du service)
-vi.mock("../services/dbService.js", () => ({
+vi.mock("../../services/dbService.js", () => ({
     prisma: {
         cryptos: { findUnique: vi.fn() },
         crypto_prices: { findFirst: vi.fn() }
@@ -9,14 +9,14 @@ vi.mock("../services/dbService.js", () => ({
 }));
 
 // 🟦 MOCK LOGGER
-vi.mock("../utils/logger.js", () => ({
+vi.mock("../../utils/logger.js", () => ({
     logInfo: vi.fn(),
     logError: vi.fn(),
 }));
 
 // 🟦 IMPORT SERVICE APRÈS LE MOCK
-import { prisma } from "../services/dbService.js";
-import { checkAlert } from "../services/alertsService.js";
+import { prisma } from "../../services/dbService.js";
+import { checkAlert } from "../../services/alertsService.js";
 
 beforeEach(() => {
     vi.clearAllMocks();

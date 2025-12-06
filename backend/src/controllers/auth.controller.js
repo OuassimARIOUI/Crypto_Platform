@@ -1,4 +1,4 @@
-import { register, login } from "../services/authService.js";
+import {register, login, sendResetEmail, updatePasswordWithGoogle} from "../services/authService.js";
 import { logError, logInfo } from "../utils/logger.js";
 import jwt from "jsonwebtoken";
 import {prisma} from "../services/dbService.js";
@@ -56,3 +56,44 @@ export async function meController(req, res) {
     }
 }
 
+export async function resetPasswordController(req, res) {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({ error: "Email required" });
+    }
+
+    try {
+        const response = await sendResetEmail(email);
+        logInfo(`Reset password email sent to: ${email}`);
+        return res.json({ success: true, message: "Reset link sent" });
+    } catch (err) {
+        console.error("RESET ERROR =>", err.message);
+        return res.status(500).json({ error: err.message });
+
+    }
+}
+
+
+
+export async function updatePasswordController(req, res) {
+    const { oobCode, newPassword } = req.body;
+
+    if (!oobCode || !newPassword) {
+        return res.status(400).json({ error: "oobCode and password are required" });
+    }
+
+    try {
+        const result = await updatePasswordWithGoogle(oobCode, newPassword);
+
+        return res.json({
+            success: true,
+            message: "Password updated successfully",
+            result
+        });
+
+    } catch (err) {
+        console.error("UPDATE PASSWORD ERROR =>", err);
+        return res.status(500).json({ error: err.message || "Failed to update password" });
+    }
+}

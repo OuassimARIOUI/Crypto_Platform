@@ -35,3 +35,54 @@ export async function login(email, password) {
     return { token, user };
 }
 
+export async function sendResetEmail(email) {
+    const API_GOOGLE_KEY = process.env.API_GOOGLE_KEY;
+
+    const payload = {
+        requestType: "PASSWORD_RESET",
+        email
+    };
+
+    const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${API_GOOGLE_KEY}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }
+    );
+
+    const data = await response.json();
+    if (data.error) {
+        throw new Error(data.error.message);
+    }
+
+    return data;
+}
+
+export async function updatePasswordWithGoogle(oobCode, newPassword) {
+    const API_GOOGLE_KEY = process.env.API_GOOGLE_KEY;
+
+    const payload = {
+        oobCode,
+        newPassword
+    };
+
+    const response = await fetch(
+        `https://identitytoolkit.googleapis.com/v1/accounts:resetPassword?key=${API_GOOGLE_KEY}`,
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        }
+    );
+
+    const data = await response.json();
+
+    if (data.error) {
+        console.log("Firebase password reset error:", data.error);
+        throw new Error(data.error.message);
+    }
+
+    return data;
+}

@@ -5,38 +5,46 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
+import { auth } from "../../../lib/firebase";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+
 export default function RegisterPage() {
     const [pseudo, setPseudo] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        setLoading(true);
 
         try {
-            console.log("ENVOI JSON FRONT:", JSON.stringify({ pseudo, email, password }));
-            const res = await fetch("http://localhost:3004/auth/register", {
+            // 1️⃣ Création du compte Firebase Auth
+            const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+            // 2️⃣ Envoi de l'email de vérification Firebase
+            await sendEmailVerification(userCred.user);
+
+            // 3️⃣ Sync avec ton backend (PostgreSQL)
+            await fetch("http://localhost:3004/auth/firebase-sync", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ pseudo, email, password }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    firebaseUid: userCred.user.uid,
+                    email,
+                    pseudo,
+                }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                alert(data.error || "Register failed");
-                return;
-            }
-
-            alert("Account created !");
+            alert("Account created! Please verify your email before logging in.");
             window.location.href = "/login";
 
         } catch (err) {
             console.error(err);
-            alert("Erreur serveur");
+            alert(err.message);
         }
+
+        setLoading(false);
     };
 
     return (
@@ -75,7 +83,9 @@ export default function RegisterPage() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
-                    <Button type="submit">Create Account</Button>
+                    <Button type="submit" disabled={loading}>
+                        {loading ? "Creating..." : "Create Account"}
+                    </Button>
                 </form>
 
                 <p className="mt-4 text-center text-white/60 text-sm">

@@ -139,3 +139,5 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .idea
 ./idea/vcs.xml
+
+/backend/firebase-service-account.json

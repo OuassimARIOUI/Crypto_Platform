@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "apexcharts": "^5.3.6",
+    "firebase": "^12.6.0",
     "js-cookie": "^3.0.5",
     "next": "16.0.3",
     "react": "19.2.0",

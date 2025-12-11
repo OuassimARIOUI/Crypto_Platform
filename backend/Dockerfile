@@ -8,6 +8,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+COPY firebase-service-account.json ./firebase-service-account.json
 
 RUN npx prisma generate
 

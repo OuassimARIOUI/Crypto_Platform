@@ -97,3 +97,55 @@ export async function updatePasswordController(req, res) {
         return res.status(500).json({ error: err.message || "Failed to update password" });
     }
 }
+
+export async function firebaseSyncController(req, res) {
+    const { firebaseUid, email, pseudo } = req.body;
+
+    try {
+        let user = await prisma.users.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            user = await prisma.users.create({
+                data: {
+                    firebase_uid: firebaseUid,
+                    email,
+                    pseudo,
+                },
+            });
+
+            await prisma.portfolios.create({
+                data: {
+                    user_id: user.id,
+                    balance: 0,
+                },
+            });
+        }
+
+        return res.json({ success: true, user });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Sync error" });
+    }
+}
+
+
+
+export async function loginFirebase(req, res) {
+    const { token } = req.body;
+
+    try {
+        const decoded = await admin.auth().verifyIdToken(token);
+
+        const user = await prisma.user.findUnique({
+            where: { firebase_uid: decoded.uid }
+        });
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        return res.json({ success: true, user });
+    } catch (err) {
+        return res.status(401).json({ error: "Invalid token" });
+    }
+}

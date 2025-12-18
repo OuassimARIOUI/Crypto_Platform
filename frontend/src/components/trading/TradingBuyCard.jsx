@@ -12,19 +12,14 @@ export default function TradingBuyCard() {
     const [holding, setHolding] = useState(0);
     const [cryptos, setCryptos] = useState([]);
 
-    const cryptoIds = {
-        btc: 1,
-        eth: 2,
-        sol: 3,
-        usdt: 4,
-        xrp: 5
-    };
-
     useEffect(() => {
         async function loadData() {
             try {
                 const token = Cookies.get("token");
-                if (!token) return;
+                if (!token) {
+                    setLoading(false);
+                    return;
+                }
 
                 const [portfolioRes, pricesRes] = await Promise.all([
                     fetch("http://localhost:3004/portfolio/me", {
@@ -37,7 +32,6 @@ export default function TradingBuyCard() {
                 const portfolio = await portfolioRes.json();
                 const prices = await pricesRes.json();
 
-                const transactions = portfolio.transactions || [];
                 const holdings = portfolio.holdings || {};
 
                 // Quantité détenue
@@ -55,6 +49,8 @@ export default function TradingBuyCard() {
                     } else {
                         setCurrentPrice(null);
                     }
+                } else {
+                    setCurrentPrice(null);
                 }
 
 
@@ -66,8 +62,8 @@ export default function TradingBuyCard() {
             }
         }
 
-        loadData();
-    }, [symbol]);
+        if (cryptos.length > 0) loadData();
+    }, [symbol, cryptos]);
 
     useEffect(() => {
         fetch("http://localhost:3004/cryptos")

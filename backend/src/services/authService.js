@@ -22,6 +22,7 @@ export async function login(email, password) {
     });
 
     if (!user) return null;
+    if (!user.password) return null;
 
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return null;

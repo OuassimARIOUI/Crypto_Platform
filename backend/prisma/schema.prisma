@@ -62,7 +62,7 @@ model users {
   id         Int      @id @default(autoincrement())
   pseudo     String   @unique
   email      String   @unique
-  password   String
+  password   String?
   role       String   @default("user")
   created_at DateTime @default(now())
 

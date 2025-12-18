@@ -17,6 +17,47 @@ export default function IndicatorsPanel() {
 
     const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+    function formatXAxisLabel(timeframe, ts) {
+        if (!ts) return "";
+
+        const date = new Date(ts);
+        if (Number.isNaN(date.getTime())) return "";
+
+        const locale = "fr-FR";
+
+        if (timeframe === "24h") {
+            return new Intl.DateTimeFormat(locale, {
+                hour: "2-digit",
+                minute: "2-digit",
+            }).format(date);
+        }
+
+        if (timeframe === "7d" || timeframe === "1m") {
+            return new Intl.DateTimeFormat(locale, {
+                day: "2-digit",
+                month: "short",
+            }).format(date);
+        }
+
+        if (timeframe === "6m") {
+            return new Intl.DateTimeFormat(locale, {
+                month: "short",
+            }).format(date);
+        }
+
+        if (timeframe === "1y") {
+            return new Intl.DateTimeFormat(locale, {
+                month: "short",
+                year: "2-digit",
+            }).format(date);
+        }
+
+        return new Intl.DateTimeFormat(locale, {
+            day: "2-digit",
+            month: "short",
+        }).format(date);
+    }
+
     function filterTimeframe(data, timeframe) {
         const now = new Date();
         const cutoff = new Date();
@@ -113,6 +154,20 @@ export default function IndicatorsPanel() {
         },
         xaxis: {
             type: "datetime",
+            tickAmount:
+                timeframe === "24h"
+                    ? 6
+                    : timeframe === "7d"
+                        ? 7
+                        : timeframe === "1m"
+                            ? 8
+                            : timeframe === "6m"
+                                ? 6
+                                : 6,
+            labels: {
+                formatter: (value, timestamp) =>
+                    formatXAxisLabel(timeframe, timestamp ?? value),
+            },
         },
         yaxis: {
             labels: {
@@ -121,7 +176,27 @@ export default function IndicatorsPanel() {
         },
         tooltip: {
             theme: "dark",
-            x: { format: "dd MMM HH:mm" }
+            x: {
+                formatter: (value) => {
+                    const date = new Date(value);
+                    if (Number.isNaN(date.getTime())) return "";
+
+                    if (timeframe === "24h") {
+                        return new Intl.DateTimeFormat("fr-FR", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        }).format(date);
+                    }
+
+                    return new Intl.DateTimeFormat("fr-FR", {
+                        day: "2-digit",
+                        month: "short",
+                        year: timeframe === "1y" ? "2-digit" : undefined,
+                    }).format(date);
+                },
+            },
         }
     };
 
@@ -198,11 +273,15 @@ export default function IndicatorsPanel() {
                 <div className="flex items-start gap-4 mt-4">
                     <div>
                         <p className="text-white text-[32px] font-bold">
-                            ${price?.toLocaleString()}
+                            {price !== null && price !== undefined
+                                ? `$${Number(price).toLocaleString()}`
+                                : "-"}
                         </p>
                         <div className="flex gap-2">
                             <p className={`${variation >= 0 ? "text-green-400" : "text-red-400"} text-base font-medium`}>
-                                {variation}
+                                {variation !== null && variation !== undefined
+                                    ? `${Number(variation) >= 0 ? "+" : ""}${Number(variation).toFixed(2)}%`
+                                    : "-"}
                             </p>
                             <p className="text-white/50 text-sm">Today</p>
                         </div>

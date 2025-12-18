@@ -1,16 +1,23 @@
 import {prisma} from "./dbService.js";
 
 export async function addFunds(userId, amount) {
+    if (!userId) {
+        throw new Error("User id manquant");
+    }
+
     if (!amount || amount <= 0) {
         throw new Error("Montant invalide");
     }
 
-    // Mise à jour du portefeuille
-    const portfolio = await prisma.portfolios.update({
+    const portfolio = await prisma.portfolios.upsert({
         where: { user_id: userId },
-        data: {
-            balance: { increment: Number(amount) }
-        }
+        update: {
+            balance: { increment: Number(amount) },
+        },
+        create: {
+            user_id: userId,
+            balance: Number(amount),
+        },
     });
 
     return portfolio.balance; // Retourner le nouveau solde

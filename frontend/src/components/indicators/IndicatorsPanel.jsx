@@ -146,11 +146,24 @@ export default function IndicatorsPanel() {
     const options = {
         chart: {
             type: "line",
-            toolbar: { show: false }
+            toolbar: { show: false },
+            background: "transparent",
+            foreColor: "rgba(255,255,255,0.8)",
         },
         stroke: {
             curve: "smooth",
             width: 2
+        },
+        grid: {
+            borderColor: "rgba(255,255,255,0.10)",
+            strokeDashArray: 0,
+            padding: {
+                left: 8,
+                right: 8,
+            },
+        },
+        legend: {
+            show: false,
         },
         xaxis: {
             type: "datetime",
@@ -167,11 +180,21 @@ export default function IndicatorsPanel() {
             labels: {
                 formatter: (value, timestamp) =>
                     formatXAxisLabel(timeframe, timestamp ?? value),
+                style: {
+                    colors: "rgba(255,255,255,0.50)",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                },
             },
         },
         yaxis: {
             labels: {
-                formatter: v => (isNaN(v) ? "" : "$" + v.toFixed(2))
+                formatter: v => (isNaN(v) ? "" : "$" + Number(v).toFixed(2)),
+                style: {
+                    colors: "rgba(255,255,255,0.50)",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                },
             }
         },
         tooltip: {
@@ -201,101 +224,156 @@ export default function IndicatorsPanel() {
     };
 
     return (
-        <div className="rounded-xl border border-white/10 bg-black/40 p-6 space-y-8">
-
-            {/* HEADER */}
-            <div className="flex justify-between items-start mb-6">
-                <div>
-                    <p className="text-white text-4xl font-black">Technical Indicators</p>
-                    <p className="text-white/60">Analyze market trends with SMA overlays</p>
+        <div className="space-y-6">
+            {/* Page heading (style from design) */}
+            <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col gap-2">
+                    <p className="text-white text-4xl font-black leading-tight tracking-[-0.033em]">
+                        Technical Indicators
+                    </p>
+                    <p className="text-white/60 text-base font-normal leading-normal">
+                        Analyze market trends with SMA and other overlays
+                    </p>
                 </div>
             </div>
 
-            {/* CONTROLS */}
-            <div className="flex justify-between flex-wrap gap-4">
-
-                {/* CRYPTO SELECT */}
-                <select
-                    value={symbol}
-                    onChange={e => setSymbol(e.target.value)}
-                    className="h-10 rounded-lg bg-white/10 border border-white/20 text-white px-3"
-                >
-                    {cryptos.map(c => (
-                        <option key={c.id} value={c.symbol}  className="bg-[#0f0f1a] text-white">
-                            {c.symbol.toUpperCase()}
-                        </option>
-                    ))}
-                </select>
-
-                {/* TIMEFRAME */}
-                <div className="flex gap-2">
-                    {["24h", "7d", "1m", "6m", "1y"].map(tf => (
-                        <button
-                            key={tf}
-                            onClick={() => setTimeframe(tf)}
-                            className={`px-3 py-1 rounded-lg text-sm ${
-                                timeframe === tf
-                                    ? "bg-primary text-white"
-                                    : "bg-white/10 text-gray-300 hover:bg-white/20"
-                            }`}
+            {/* Main chart area */}
+            <div className="rounded-xl border border-white/10 bg-black/30 p-6">
+                {/* Controls */}
+                <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
+                    {/* Crypto selector */}
+                    <div className="flex gap-3">
+                        <select
+                            value={symbol}
+                            onChange={(e) => setSymbol(e.target.value)}
+                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white/10 pl-4 pr-3 text-white hover:bg-white/20 transition-colors duration-200 border border-white/10"
                         >
-                            {tf}
-                        </button>
-                    ))}
+                            {cryptos.map((c) => (
+                                <option key={c.id} value={c.symbol} className="bg-black text-white">
+                                    {c.symbol.toUpperCase()}/USD
+                                </option>
+                            ))}
+                        </select>
+
+                        {/* Timeframe chips */}
+                        <div className="flex flex-wrap gap-2">
+                            {["24h", "7d", "1m", "6m", "1y"].map((tf) => (
+                                <button
+                                    key={tf}
+                                    onClick={() => setTimeframe(tf)}
+                                    className={`h-10 px-4 rounded-lg text-sm font-medium transition-colors duration-200 border ${
+                                        timeframe === tf
+                                            ? "bg-primary/20 text-primary border-primary/30"
+                                            : "bg-black/30 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
+                                    }`}
+                                >
+                                    {tf}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Indicator toggles */}
+                    <div className="flex items-center gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-white/80">
+                            <input
+                                type="checkbox"
+                                checked={smaVisible.sma7}
+                                onChange={() =>
+                                    setSmaVisible({
+                                        ...smaVisible,
+                                        sma7: !smaVisible.sma7,
+                                    })
+                                }
+                                className="form-checkbox rounded-sm bg-black/40 border-white/20 text-primary focus:ring-primary focus:ring-offset-black"
+                            />
+                            SMA (7)
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-white/80">
+                            <input
+                                type="checkbox"
+                                checked={smaVisible.sma30}
+                                onChange={() =>
+                                    setSmaVisible({
+                                        ...smaVisible,
+                                        sma30: !smaVisible.sma30,
+                                    })
+                                }
+                                className="form-checkbox rounded-sm bg-black/40 border-white/20 text-[#FFFF00] focus:ring-[#FFFF00] focus:ring-offset-black"
+                            />
+                            SMA (30)
+                        </label>
+                    </div>
                 </div>
 
-                {/* SMA toggles */}
-                <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer text-white/80">
-                        <input
-                            type="checkbox"
-                            checked={smaVisible.sma7}
-                            onChange={() => setSmaVisible({ ...smaVisible, sma7: !smaVisible.sma7 })}
-                            className="form-checkbox text-[#FF00FF]"
-                        />
-                        SMA (7)
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer text-white/80">
-                        <input
-                            type="checkbox"
-                            checked={smaVisible.sma30}
-                            onChange={() => setSmaVisible({ ...smaVisible, sma30: !smaVisible.sma30 })}
-                            className="form-checkbox text-[#FFFF00]"
-                        />
-                        SMA (30)
-                    </label>
-                </div>
-
-            </div>
-
-            {/* PRICE + VARIATION */}
-            {!loading && (
-                <div className="flex items-start gap-4 mt-4">
-                    <div>
-                        <p className="text-white text-[32px] font-bold">
-                            {price !== null && price !== undefined
-                                ? `$${Number(price).toLocaleString()}`
-                                : "-"}
-                        </p>
-                        <div className="flex gap-2">
-                            <p className={`${variation >= 0 ? "text-green-400" : "text-red-400"} text-base font-medium`}>
-                                {variation !== null && variation !== undefined
-                                    ? `${Number(variation) >= 0 ? "+" : ""}${Number(variation).toFixed(2)}%`
+                {/* Chart & legend */}
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-start gap-4">
+                        <div className="flex flex-col">
+                            <p className="text-white tracking-light text-[32px] font-bold leading-tight truncate">
+                                {!loading && price !== null && price !== undefined
+                                    ? `$${Number(price).toLocaleString()}`
                                     : "-"}
                             </p>
-                            <p className="text-white/50 text-sm">Today</p>
+                            <div className="flex gap-2 items-center">
+                                <p
+                                    className={`${
+                                        Number(variation) >= 0
+                                            ? "text-green-400"
+                                            : "text-red-400"
+                                    } text-base font-medium leading-normal`}
+                                >
+                                    {!loading && variation !== null && variation !== undefined
+                                        ? `${Number(variation) >= 0 ? "+" : ""}${Number(
+                                            variation
+                                        ).toFixed(2)}%`
+                                        : "-"}
+                                </p>
+                                <p className="text-white/50 text-sm font-normal leading-normal">
+                                    Today
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                                <div className="w-3 h-0.5 bg-white rounded-full" />
+                                <span className="text-white/80">Price</span>
+                            </div>
+                            {smaVisible.sma7 && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-0.5 bg-[#FF00FF] rounded-full" />
+                                    <span className="text-white/80">SMA7</span>
+                                </div>
+                            )}
+                            {smaVisible.sma30 && (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-3 h-0.5 bg-[#FFFF00] rounded-full" />
+                                    <span className="text-white/80">SMA30</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="relative h-[400px] w-full rounded-xl border border-white/10 bg-black/20 overflow-hidden">
+                        {/* Decorative grid lines (style only) */}
+                        <div className="absolute inset-0 grid grid-rows-5 pointer-events-none">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <div key={i} className="border-t border-white/10" />
+                            ))}
+                        </div>
+
+                        <div className="absolute inset-0">
+                            {loading ? (
+                                <div className="h-full w-full flex items-center justify-center">
+                                    <p className="text-white/80">Loading chart...</p>
+                                </div>
+                            ) : (
+                                <Chart options={options} series={series} height={400} />
+                            )}
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* THE CHART */}
-            <div className="rounded-xl bg-black/30 border border-white/10 p-4">
-                {loading ? (
-                    <p className="text-white">Loading chart...</p>
-                ) : (
-                    <Chart options={options} series={series} height={400} />
-                )}
             </div>
         </div>
     );

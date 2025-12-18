@@ -3,6 +3,8 @@ import { logError } from "../utils/logger.js";
 
 // Récupérer le portefeuille complet
 export async function getMyPortfolio(userId) {
+    if (!userId) throw new Error("User id manquant");
+
     const portfolio = await prisma.portfolios.findUnique({
         where: { user_id: userId },
         include: {
@@ -13,7 +15,20 @@ export async function getMyPortfolio(userId) {
         }
     });
 
-    if (!portfolio) return null;
+    if (!portfolio) {
+        await prisma.portfolios.create({
+            data: {
+                user_id: userId,
+                balance: 0,
+            },
+        });
+
+        return {
+            balance: 0,
+            holdings: {},
+            transactions: [],
+        };
+    }
 
     // Calcul des holdings (quantités actuelles)
     const holdings = {};

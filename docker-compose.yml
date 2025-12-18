@@ -32,6 +32,7 @@ services:
     container_name: backend
     env_file:
       - ./backend/.env
+    command: ["sh", "-c", "npx prisma db push && node index.js"]
     ports:
       - "3004:3004"
     depends_on:
@@ -46,7 +47,7 @@ services:
     container_name: worker
     env_file:
       - ./backend/.env
-    command: ["node", "src/workers/crypto.worker.js"]
+    command: ["sh", "-c", "npx prisma db push && node src/workers/crypto.worker.js"]
     depends_on:
       redis:
         condition: service_started

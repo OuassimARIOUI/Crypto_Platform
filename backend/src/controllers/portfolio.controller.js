@@ -10,7 +10,7 @@ import { logError } from "../utils/logger.js";
 
 export async function getMyPortfolioController(req, res) {
     try {
-        const result = await getMyPortfolio(req.user.id);
+        const result = await getMyPortfolio(req.userId);
         return res.json(result);
     } catch (err) {
         logError("Error getMyPortfolioController", err);
@@ -25,7 +25,7 @@ export async function buyCryptoController(req, res) {
         if (!symbol || !quantity)
             return res.status(400).json({ error: "symbol & quantity requis" });
 
-        const result = await buyCrypto(req.user.id, symbol, Number(quantity));
+        const result = await buyCrypto(req.userId, symbol, Number(quantity));
         return res.json(result);
     } catch (err) {
         console.error("BUY ERROR:", err);
@@ -40,7 +40,7 @@ export async function sellCryptoController(req, res) {
         if (!symbol || !quantity)
             return res.status(400).json({ error: "symbol & quantity requis" });
 
-        const result = await sellCrypto(req.user.id, symbol, Number(quantity));
+        const result = await sellCrypto(req.userId, symbol, Number(quantity));
         return res.json(result);
     } catch (err) {
         console.error("SELL ERROR:", err);
@@ -51,7 +51,11 @@ export async function sellCryptoController(req, res) {
 export async function addFundsController(req, res) {
     try {
         const { amount } = req.body;
-        const userId = req.user.id;
+        const userId = req.userId;
+
+        if (amount === undefined || amount === null) {
+            return res.status(400).json({ error: "amount requis" });
+        }
 
         const newBalance = await addFunds(userId, Number(amount));
 

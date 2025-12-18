@@ -1,43 +1,58 @@
 "use client";
 
 import { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../../lib/firebase";
 import Link from "next/link";
 import Cookies from "js-cookie";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setLoading(true);
 
         try {
-            const res = await fetch("http://localhost:3004/auth/login", {
+            // 1️⃣ LOGIN FIREBASE
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+            const token = await userCred.user.getIdToken();
+
+            // 2️⃣ SYNC AVEC TON BACKEND
+            const res = await fetch("http://localhost:3004/auth/firebase-login", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ token }),
             });
 
             const data = await res.json();
-            console.log("Login response:", data);
+            console.log("Firebase login backend response:", data);
 
             if (!res.ok) {
-                alert(data.error || "Login failed");
+                alert(data.error || "Login failed.");
+                setLoading(false);
                 return;
             }
 
-            Cookies.set("token", data.token, { expires: 7 });
+            // 3️⃣ STOCK TOKEN ET REDIRECT
+            Cookies.set("token", token, { expires: 7 });
             window.location.href = "/dashboard";
         } catch (err) {
-            console.error(err);
-            alert("Erreur serveur");
+            console.error("LOGIN ERROR:", err);
+            alert(err.message || "Erreur serveur");
         }
+
+        setLoading(false);
     };
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
 
-            {/* Background Image */}
+            {/* Background */}
             <div
                 className="absolute inset-0 w-full h-full bg-center bg-cover opacity-30"
                 style={{
@@ -46,10 +61,9 @@ export default function LoginPage() {
                 }}
             ></div>
 
-            {/* MAIN CARD */}
+            {/* CARD */}
             <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-md">
 
-                {/* Logo */}
                 <div className="flex items-center gap-3 mb-4">
                     <span className="material-symbols-outlined text-primary text-4xl">
                         currency_bitcoin
@@ -59,17 +73,15 @@ export default function LoginPage() {
                     </span>
                 </div>
 
-                {/* Form Card */}
                 <div className="glassmorphism flex w-full flex-col gap-6 rounded-xl p-8">
 
-                    {/* Title */}
                     <h2 className="text-white text-4xl font-black leading-tight tracking-tight">
                         Welcome Back
                     </h2>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-                        {/* Email */}
+                        {/* EMAIL */}
                         <label className="flex flex-col">
                             <p className="text-[#EAEAEA] text-base font-medium pb-2">Email</p>
                             <input
@@ -81,7 +93,7 @@ export default function LoginPage() {
                             />
                         </label>
 
-                        {/* Password */}
+                        {/* PASSWORD */}
                         <label className="flex flex-col">
                             <p className="text-[#EAEAEA] text-base font-medium pb-2">Password</p>
                             <input
@@ -93,7 +105,7 @@ export default function LoginPage() {
                             />
                         </label>
 
-                        {/* Forgot Link */}
+                        {/* LINK */}
                         <Link
                             href="/forgot-password"
                             className="text-primary underline text-sm hover:text-primary/80 transition-colors"
@@ -101,15 +113,15 @@ export default function LoginPage() {
                             Forgot Password?
                         </Link>
 
-                        {/* Button */}
+                        {/* BUTTON */}
                         <button
                             type="submit"
                             className="w-full h-14 rounded-lg bg-primary text-white text-base font-bold shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all duration-300"
                         >
-                            Login
+                            {loading ? "Logging in..." : "Login"}
                         </button>
 
-                        {/* Register Link */}
+                        {/* REGISTER */}
                         <p className="text-center text-[#888888] text-sm">
                             Need an account?{" "}
                             <Link href="/register" className="text-primary font-bold underline hover:text-primary/80">

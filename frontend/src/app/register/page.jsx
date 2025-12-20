@@ -12,6 +12,7 @@ export default function RegisterPage() {
     const [pseudo, setPseudo] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [discordUsername, setDiscordUsername] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleRegister = async (e) => {
@@ -33,6 +34,7 @@ export default function RegisterPage() {
                     firebaseUid: userCred.user.uid,
                     email,
                     pseudo,
+                    discordUsername,
                 }),
             });
 
@@ -81,6 +83,13 @@ export default function RegisterPage() {
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    <Input
+                        label="Discord Username (optional)"
+                        placeholder="ex: mydiscord"
+                        value={discordUsername}
+                        onChange={(e) => setDiscordUsername(e.target.value)}
                     />
 
                     <Button type="submit" disabled={loading}>

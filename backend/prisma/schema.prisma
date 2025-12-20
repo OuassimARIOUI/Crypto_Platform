@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "windows"]
 }
 
 datasource db {
@@ -10,12 +10,15 @@ datasource db {
 
 model alerts {
   id           Int       @id @default(autoincrement())
+  user_id      Int?
   crypto_id    Int
   alert_type   String    @db.VarChar(20)
   threshold    Decimal   @db.Decimal(18, 8)
   is_triggered Boolean?  @default(false)
   created_at   DateTime? @default(now()) @db.Timestamp(6)
+  triggered_at DateTime?
   cryptos      cryptos   @relation(fields: [crypto_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         users?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model crypto_prices {
@@ -68,6 +71,12 @@ model users {
 
   portfolio    portfolios?
   firebase_uid String?     @unique
+
+  discord_username   String?
+  discord_user_id    String?  @unique
+  discord_connected_at DateTime?
+
+  alerts alerts[]
 }
 
 model portfolios {

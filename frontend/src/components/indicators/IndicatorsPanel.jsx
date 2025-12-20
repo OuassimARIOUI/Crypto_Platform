@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Cookies from "js-cookie";
 
 export default function IndicatorsPanel() {
     const [cryptos, setCryptos] = useState([]);
@@ -14,6 +15,10 @@ export default function IndicatorsPanel() {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
     const [smaVisible, setSmaVisible] = useState({ sma7: true, sma30: true });
+
+    const [alertType, setAlertType] = useState("PERCENT_UP");
+    const [alertThreshold, setAlertThreshold] = useState("5");
+    const [alertStatus, setAlertStatus] = useState("");
 
     const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
@@ -223,6 +228,38 @@ export default function IndicatorsPanel() {
         }
     };
 
+    async function createAlert() {
+        const token = Cookies.get("token");
+        if (!token) {
+            setAlertStatus("You must be logged in to create alerts.");
+            return;
+        }
+
+        setAlertStatus("");
+
+        try {
+            const res = await fetch("http://localhost:3004/alerts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token,
+                },
+                body: JSON.stringify({
+                    symbol,
+                    type: alertType,
+                    threshold: alertThreshold,
+                }),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to create alert");
+
+            setAlertStatus("Alert created.");
+        } catch (e) {
+            setAlertStatus(e.message || "Failed to create alert");
+        }
+    }
+
     return (
         <div className="space-y-6">
             {/* Page heading (style from design) */}
@@ -374,6 +411,54 @@ export default function IndicatorsPanel() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Alerts */}
+            <div className="rounded-xl border border-white/10 bg-black/30 p-6">
+                <div className="flex flex-col gap-2 mb-4">
+                    <p className="text-white text-xl font-bold">Discord Alerts</p>
+                    <p className="text-white/60 text-sm">
+                        Create an alert for {symbol.toUpperCase()}. When triggered, you’ll receive a Discord DM if your account is connected.
+                    </p>
+                </div>
+
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-end">
+                    <label className="flex flex-col gap-2 flex-1">
+                        <p className="text-white/80 text-sm">Type</p>
+                        <select
+                            value={alertType}
+                            onChange={(e) => setAlertType(e.target.value)}
+                            className="h-12 rounded-lg bg-white/10 border border-white/20 text-white px-3"
+                        >
+                            <option value="PERCENT_UP" className="bg-black text-white">24h % up </option>
+                            <option value="PERCENT_DOWN" className="bg-black text-white">24h % down </option>
+                            <option value="PRICE_ABOVE" className="bg-black text-white">Price above </option>
+                            <option value="PRICE_BELOW" className="bg-black text-white">Price below </option>
+                        </select>
+                    </label>
+
+                    <label className="flex flex-col gap-2 flex-1">
+                        <p className="text-white/80 text-sm">Threshold</p>
+                        <input
+                            value={alertThreshold}
+                            onChange={(e) => setAlertThreshold(e.target.value)}
+                            placeholder={alertType.startsWith("PERCENT") ? "ex: 5" : "ex: 42000"}
+                            className="h-12 rounded-lg bg-white/10 border border-white/20 text-white px-3"
+                        />
+                    </label>
+
+                    <button
+                        type="button"
+                        onClick={createAlert}
+                        className="h-12 px-5 rounded-lg bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
+                    >
+                        Create Alert
+                    </button>
+                </div>
+
+                {alertStatus && (
+                    <p className="mt-3 text-white/70 text-sm">{alertStatus}</p>
+                )}
             </div>
         </div>
     );

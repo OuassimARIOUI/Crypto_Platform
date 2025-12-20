@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { connectDB } from "../services/dbService.js";
 import { insertCryptoData } from "../services/insertCryptoService.js";
 import { computeAllIndicators } from "../services/indicatorService.js";
+import { processPendingAlerts } from "../services/alertsService.js";
 
 dotenv.config();
 await connectDB();
@@ -21,6 +22,10 @@ new Worker(
 
         if (job.name === "compute-indicators") {
             await computeAllIndicators();
+        }
+
+        if (job.name === "check-alerts") {
+            await processPendingAlerts();
         }
 
         console.log(" Job terminé :", job.name);

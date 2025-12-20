@@ -1,4 +1,4 @@
 import chalk from "chalk";
 
-export const logInfo = (msg) => console.log(chalk.blueBright(msg));
-export const logError = (msg) => console.log(chalk.redBright(msg));
+export const logInfo = (...args) => console.log(chalk.blueBright(args[0] ?? ""), ...args.slice(1));
+export const logError = (...args) => console.error(chalk.redBright(args[0] ?? ""), ...args.slice(1));

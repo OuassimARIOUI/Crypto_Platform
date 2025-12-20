@@ -15,3 +15,9 @@ setInterval(() => {
     console.log(" ENVOI JOB → compute-indicators");
     queue.add("compute-indicators", {});
 }, 5 * 60 * 1000);
+
+// Toutes les 1 minute: check user alerts + send Discord notifications
+setInterval(() => {
+    console.log(" ENVOI JOB → check-alerts");
+    queue.add("check-alerts", {});
+}, 60 * 1000);

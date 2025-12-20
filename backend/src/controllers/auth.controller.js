@@ -120,7 +120,7 @@ export async function updatePasswordController(req, res) {
 }
 
 export async function firebaseSyncController(req, res) {
-    const { firebaseUid, email, pseudo } = req.body;
+    const { firebaseUid, email, pseudo, discordUsername } = req.body;
 
     try {
         if (!firebaseUid || !email || !pseudo) {
@@ -133,12 +133,14 @@ export async function firebaseSyncController(req, res) {
             update: {
                 firebase_uid: firebaseUid,
                 pseudo,
+                discord_username: discordUsername ?? undefined,
             },
             create: {
                 firebase_uid: firebaseUid,
                 email,
                 pseudo,
                 password: null,
+                discord_username: discordUsername ?? null,
             },
         });
 
@@ -212,5 +214,29 @@ export async function loginFirebase(req, res) {
         return res.json({ success: true, user });
     } catch (err) {
         return res.status(401).json({ error: "Invalid token" });
+    }
+}
+
+
+export async function updateMeController(req, res) {
+    const { pseudo, discordUsername } = req.body || {};
+
+    try {
+        const data = {};
+        if (typeof pseudo === "string" && pseudo.trim()) data.pseudo = pseudo.trim();
+        if (typeof discordUsername === "string") data.discord_username = discordUsername.trim() || null;
+
+        if (Object.keys(data).length === 0) {
+            return res.status(400).json({ error: "No updatable fields provided" });
+        }
+
+        const user = await prisma.users.update({
+            where: { id: req.userId },
+            data,
+        });
+
+        return res.json({ success: true, user });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || "Failed to update profile" });
     }
 }

@@ -8,6 +8,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum user_role {
+  user
+  moderator
+  admin
+}
+
+enum account_status {
+  active
+  suspended
+  banned
+}
+
+enum report_status {
+  open
+  under_review
+  resolved
+  rejected
+}
+
+enum report_reason_category {
+  fraud
+  abuse
+  spam
+  other
+}
+
 model alerts {
   id           Int       @id @default(autoincrement())
   user_id      Int?
@@ -66,8 +92,16 @@ model users {
   pseudo     String   @unique
   email      String   @unique
   password   String?
-  role       String   @default("user")
+  role       user_role      @default(user)
+  status     account_status @default(active)
+  banned_until DateTime?
+  banned_at    DateTime?
+  ban_reason   String?
+  banned_by_id Int?
   created_at DateTime @default(now())
+
+  banned_by     users?  @relation("user_banned_by", fields: [banned_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  banned_users  users[] @relation("user_banned_by")
 
   portfolio    portfolios?
   firebase_uid String?     @unique
@@ -77,16 +111,70 @@ model users {
   discord_connected_at DateTime?
 
   alerts alerts[]
+
+  reports_received reports[] @relation("reported_user")
+  reports_made     reports[] @relation("reported_by")
+  reports_decided  reports[] @relation("admin_decision_by")
+
+  audit_logs_actor  audit_logs[] @relation("audit_actor")
+  audit_logs_target audit_logs[] @relation("audit_target")
 }
 
 model portfolios {
   id         Int      @id @default(autoincrement())
   user_id    Int      @unique
   balance    Float    @default(0)
+  total_deposited Float @default(0)
   created_at DateTime @default(now())
 
   user         users                    @relation(fields: [user_id], references: [id])
   transactions portfolio_transactions[]
+}
+
+model reports {
+  id                   Int                   @id @default(autoincrement())
+  reported_user_id     Int
+  reported_by_id       Int
+  reason_category      report_reason_category
+  reason_text          String
+  evidence             String?
+  status               report_status         @default(open)
+
+  admin_decision_by_id Int?
+  admin_decision_at    DateTime?
+  admin_decision_note  String?
+
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @updatedAt
+
+  reported_user        users                 @relation("reported_user", fields: [reported_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reported_by          users                 @relation("reported_by", fields: [reported_by_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  admin_decision_by    users?                @relation("admin_decision_by", fields: [admin_decision_by_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  audit_logs           audit_logs[]          @relation("audit_report")
+
+  @@index([reported_user_id])
+  @@index([status])
+  @@index([created_at])
+}
+
+model audit_logs {
+  id             Int      @id @default(autoincrement())
+  actor_id       Int?
+  action         String   @db.VarChar(50)
+  target_user_id Int?
+  report_id      Int?
+  metadata       Json?
+  created_at     DateTime @default(now())
+
+  actor       users?   @relation("audit_actor", fields: [actor_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  target_user users?   @relation("audit_target", fields: [target_user_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  report      reports? @relation("audit_report", fields: [report_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([action])
+  @@index([actor_id])
+  @@index([target_user_id])
+  @@index([created_at])
 }
 
 model portfolio_transactions {

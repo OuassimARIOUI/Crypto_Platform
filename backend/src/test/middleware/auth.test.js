@@ -1,12 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { auth, adminOnly } from "../../middleware/auth.js";
-import jwt from "jsonwebtoken";
 
-// Mock JWT
-vi.mock("jsonwebtoken", () => ({
+const verifyIdTokenMock = vi.fn();
+const prismaMock = {
+    users: {
+        findUnique: vi.fn(),
+        update: vi.fn(),
+    },
+};
+
+vi.mock("../../services/firebaseAdmin.js", () => ({
     default: {
-        verify: vi.fn()
-    }
+        auth: () => ({
+            verifyIdToken: verifyIdTokenMock,
+        }),
+    },
+}));
+
+vi.mock("../../services/dbService.js", () => ({
+    prisma: prismaMock,
 }));
 
 describe("Auth Middleware", () => {
@@ -39,28 +51,68 @@ describe("Auth Middleware", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should return 401 if token invalid", () => {
+        it("should return 401 if token invalid", async () => {
             req.headers.authorization = "Bearer invalidtoken";
 
-            jwt.verify.mockImplementation(() => { throw new Error("invalid"); });
+            verifyIdTokenMock.mockRejectedValue(new Error("invalid"));
 
-            auth(req, res, next);
+            await auth(req, res, next);
 
             expect(res.status).toHaveBeenCalledWith(401);
             expect(res.json).toHaveBeenCalledWith({ error: "Token invalide" });
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should decode token and call next() if valid", () => {
+        it("should decode token and call next() if valid", async () => {
             req.headers.authorization = "Bearer validtoken";
 
-            const mockDecoded = { id: 1, role: "user" };
-            jwt.verify.mockReturnValue(mockDecoded);
+            const mockDecoded = { uid: "firebase-uid", email: "a@b.com" };
+            verifyIdTokenMock.mockResolvedValue(mockDecoded);
+            prismaMock.users.findUnique.mockResolvedValue({
+                id: 1,
+                email: "a@b.com",
+                pseudo: "p",
+                firebase_uid: "firebase-uid",
+                role: "user",
+            });
 
-            auth(req, res, next);
+            await auth(req, res, next);
 
-            expect(jwt.verify).toHaveBeenCalledWith("validtoken", process.env.JWT_SECRET);
+            expect(verifyIdTokenMock).toHaveBeenCalledWith("validtoken");
             expect(req.user).toEqual(mockDecoded);
+            expect(req.dbUser).toMatchObject({ id: 1, role: "user" });
+            expect(req.userId).toBe(1);
+            expect(next).toHaveBeenCalled();
+        });
+
+        it("should resolve by email and link firebase uid", async () => {
+            req.headers.authorization = "Bearer validtoken";
+
+            const mockDecoded = { uid: "firebase-uid", email: "a@b.com" };
+            verifyIdTokenMock.mockResolvedValue(mockDecoded);
+
+            prismaMock.users.findUnique
+                .mockResolvedValueOnce(null)
+                .mockResolvedValueOnce({
+                    id: 2,
+                    email: "a@b.com",
+                    pseudo: "p2",
+                    firebase_uid: null,
+                    role: "user",
+                });
+
+            prismaMock.users.update.mockResolvedValue({
+                id: 2,
+                email: "a@b.com",
+                pseudo: "p2",
+                firebase_uid: "firebase-uid",
+                role: "user",
+            });
+
+            await auth(req, res, next);
+
+            expect(prismaMock.users.update).toHaveBeenCalled();
+            expect(req.userId).toBe(2);
             expect(next).toHaveBeenCalled();
         });
 
@@ -74,7 +126,7 @@ describe("Auth Middleware", () => {
     describe("adminOnly()", () => {
 
         it("should return 403 if user is not admin", () => {
-            req.user = { role: "user" };
+            req.dbUser = { role: "user" };
 
             adminOnly(req, res, next);
 
@@ -84,7 +136,7 @@ describe("Auth Middleware", () => {
         });
 
         it("should call next() if user is admin", () => {
-            req.user = { role: "admin" };
+            req.dbUser = { role: "admin" };
 
             adminOnly(req, res, next);
 

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth.js";
+import { normalizeAccountStatus, requireCanTrade } from "../middleware/accessControl.js";
 import {
     getMyPortfolioController,
     buyCryptoController,
@@ -10,11 +11,11 @@ import {
 const router = Router();
 
 // Toutes les routes nécessitent un token
-router.use(auth);
+router.use(auth, normalizeAccountStatus);
 
 router.get("/me", getMyPortfolioController);
-router.post("/buy", buyCryptoController);
-router.post("/sell", sellCryptoController);
-router.post("/add-funds", addFundsController);
+router.post("/buy", requireCanTrade, buyCryptoController);
+router.post("/sell", requireCanTrade, sellCryptoController);
+router.post("/add-funds", requireCanTrade, addFundsController);
 
 export default router;

@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Notification from "@/components/ui/Notification";
 
 export default function ForgotPasswordForm() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
+    const [notice, setNotice] = useState(null);
 
     async function handleReset(e) {
         e.preventDefault();
         setLoading(true);
-        setMessage("");
+        setNotice(null);
 
         try {
             const res = await fetch("http://localhost:3004/auth/reset-password", {
@@ -20,9 +21,13 @@ export default function ForgotPasswordForm() {
             });
 
             const data = await res.json();
-            setMessage(res.ok ? "A reset link has been sent to your email." : data.error);
+            if (res.ok) {
+                setNotice({ type: "success", message: "A reset link has been sent to your email." });
+            } else {
+                setNotice({ type: "error", message: data?.error || "Server error." });
+            }
         } catch {
-            setMessage("Server error.");
+            setNotice({ type: "error", message: "Server error." });
         } finally {
             setLoading(false);
         }
@@ -37,6 +42,15 @@ export default function ForgotPasswordForm() {
              }}
         >
             <div className="flex flex-col items-center text-center">
+                {notice?.message && (
+                    <div className="w-full mb-4">
+                        <Notification
+                            type={notice.type}
+                            message={notice.message}
+                            onClose={() => setNotice(null)}
+                        />
+                    </div>
+                )}
                 <h1 className="text-white text-[32px] font-bold leading-tight pb-3 pt-2">
                     Reset Your Password
                 </h1>
@@ -81,7 +95,6 @@ export default function ForgotPasswordForm() {
                     </button>
                 </form>
 
-                {message && <p className="text-primary font-medium mt-4">{message}</p>}
             </div>
         </div>
     );

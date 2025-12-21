@@ -83,7 +83,7 @@ export default function PortfolioStats() {
 
             {/* Today's Profit */}
             <div className="flex flex-col gap-2 rounded-xl p-6 border border-white/10 bg-white/5">
-                <p className="text-gray-300 text-base font-medium">Today's Profit</p>
+                <p className="text-gray-300 text-base font-medium">Today&apos;s Profit</p>
                 <p className="text-white text-4xl font-bold">
                     ${stats.todayProfit.toFixed(2)}
                 </p>

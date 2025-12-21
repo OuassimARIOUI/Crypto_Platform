@@ -13,7 +13,7 @@ export default function VerifyEmail() {
         const oobCode = params.get("oobCode");
 
         if (mode !== "verifyEmail" || !oobCode) {
-            setStatus("invalid");
+            Promise.resolve().then(() => setStatus("invalid"));
             return;
         }
 

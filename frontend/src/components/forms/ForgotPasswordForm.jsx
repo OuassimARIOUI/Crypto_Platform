@@ -56,7 +56,7 @@ export default function ForgotPasswordForm() {
                 </h1>
 
                 <p className="text-[#A0A0A0] text-base leading-normal pb-8 pt-1">
-                    No problem. Just enter the email address you used to sign up, and we'll send you a link to reset your password.
+                    No problem. Just enter the email address you used to sign up, and we&apos;ll send you a link to reset your password.
                 </p>
 
                 <form onSubmit={handleReset} className="w-full space-y-6">

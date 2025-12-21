@@ -7,6 +7,8 @@ import indicatorsRoutes from "./routes/indicators.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import portfolioRoutes from "./routes/portfolio.routes.js";
 import discordRoutes from "./routes/discord.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import reportsRoutes from "./routes/reports.routes.js";
 
 const app = express();
 
@@ -28,5 +30,7 @@ app.use("/indicators", indicatorsRoutes);
 app.use("/auth", authRoutes);
 app.use("/portfolio", portfolioRoutes);
 app.use("/discord", discordRoutes);
+app.use("/admin", adminRoutes);
+app.use("/reports", reportsRoutes);
 
 export default app;

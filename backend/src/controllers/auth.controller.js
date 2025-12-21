@@ -48,7 +48,21 @@ export async function meController(req, res) {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await prisma.users.findUnique({
-            where: { id: decoded.id }
+            where: { id: decoded.id },
+            select: {
+                id: true,
+                pseudo: true,
+                email: true,
+                role: true,
+                status: true,
+                banned_until: true,
+                ban_reason: true,
+                created_at: true,
+                discord_username: true,
+                discord_user_id: true,
+                discord_connected_at: true,
+                firebase_uid: true,
+            },
         });
 
         return res.json(user);
@@ -61,11 +75,39 @@ export async function meController(req, res) {
 
         let user = await prisma.users.findUnique({
             where: { firebase_uid: decoded.uid },
+            select: {
+                id: true,
+                pseudo: true,
+                email: true,
+                role: true,
+                status: true,
+                banned_until: true,
+                ban_reason: true,
+                created_at: true,
+                discord_username: true,
+                discord_user_id: true,
+                discord_connected_at: true,
+                firebase_uid: true,
+            },
         });
 
         if (!user && decoded.email) {
             user = await prisma.users.findUnique({
                 where: { email: decoded.email },
+                select: {
+                    id: true,
+                    pseudo: true,
+                    email: true,
+                    role: true,
+                    status: true,
+                    banned_until: true,
+                    ban_reason: true,
+                    created_at: true,
+                    discord_username: true,
+                    discord_user_id: true,
+                    discord_connected_at: true,
+                    firebase_uid: true,
+                },
             });
         }
 

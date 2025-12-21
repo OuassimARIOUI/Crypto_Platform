@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Notification from "@/components/ui/Notification";
 
 
 
@@ -44,21 +45,37 @@ export default function DashboardLayout({ children }) {
                     {[
                         { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
                         { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
-                        { icon: "candlestick_chart", label: "Trading", href: "/trading" },
+                        { icon: "candlestick_chart", label: "Trading", href: "/trading", restricted: true },
                         { icon: "show_chart", label: "Indicators", href: "/indicators" },
                         { icon: "person", label: "Profile", href: "/profile" },
+
+                        ...(user?.role === "admin" || user?.role === "moderator"
+                            ? [{ icon: "group", label: "Users", href: "/users" }]
+                            : []),
+                        ...(user?.role === "admin"
+                            ? [{ icon: "report", label: "Reports", href: "/reports" }]
+                            : []),
                     ].map((item) => {
                         const isActive = pathname.startsWith(item.href);
+                        const isRestricted =
+                            item.restricted && (user?.status === "banned" || user?.status === "suspended");
 
                         return (
                             <Link
                                 key={item.label}
                                 href={item.href}
+                                aria-disabled={isRestricted}
+                                tabIndex={isRestricted ? -1 : 0}
+                                onClick={(e) => {
+                                    if (isRestricted) e.preventDefault();
+                                }}
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
                     ${
                                     isActive
                                         ? "bg-primary/20 text-primary"
-                                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                                        : isRestricted
+                                            ? "text-gray-500 opacity-60 cursor-not-allowed"
+                                            : "text-gray-400 hover:bg-white/5 hover:text-white"
                                 }
                 `}
                             >
@@ -105,10 +122,6 @@ export default function DashboardLayout({ children }) {
                             {/* Avatar */}
                             <div
                                 className="size-10 rounded-full bg-center bg-cover"
-                                style={{
-                                    backgroundImage:
-                                        'url("https://i.pravatar.cc/100?img=12")',
-                                }}
                             ></div>
 
                             {/* USER INFO */}
@@ -123,6 +136,15 @@ export default function DashboardLayout({ children }) {
                         </div>
                     </div>
                 </header>
+
+                {(user?.status === "banned" || user?.status === "suspended") && (
+                    <div className="border-b border-white/10 px-6 py-3">
+                        <Notification
+                            type="error"
+                            message={`${String(user.status).toUpperCase()}: Your account is restricted. Trading and deposits are disabled.`}
+                        />
+                    </div>
+                )}
 
                 {children}
             </main>

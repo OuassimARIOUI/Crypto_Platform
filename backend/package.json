@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "cron": "node src/main.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "set-role": "node src/scripts/setUserRole.js"
   },
   "keywords": [],
   "author": "",

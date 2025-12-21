@@ -13,10 +13,12 @@ export async function addFunds(userId, amount) {
         where: { user_id: userId },
         update: {
             balance: { increment: Number(amount) },
+            total_deposited: { increment: Number(amount) },
         },
         create: {
             user_id: userId,
             balance: Number(amount),
+            total_deposited: Number(amount),
         },
     });
 

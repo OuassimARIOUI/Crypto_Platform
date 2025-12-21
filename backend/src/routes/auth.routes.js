@@ -13,6 +13,8 @@ router.post("/register", registerController);
 router.post("/login", loginController);
 router.get("/me", meController);
 
+router.post("/reset-password", resetPasswordController);
+
 router.post("/update-password", updatePasswordController);
 router.post("/firebase-sync", firebaseSyncController);
 router.post("/firebase-login", loginFirebase);

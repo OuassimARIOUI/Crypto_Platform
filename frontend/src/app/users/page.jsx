@@ -24,6 +24,9 @@ export default function UsersPage() {
     const [error, setError] = useState("");
     const [users, setUsers] = useState([]);
 
+    const [maintenance, setMaintenance] = useState(null);
+    const [maintenanceBusy, setMaintenanceBusy] = useState(false);
+
     const [expandedReportUserId, setExpandedReportUserId] = useState(null);
     const [reportForm, setReportForm] = useState({
         reasonCategory: "other",
@@ -55,12 +58,23 @@ export default function UsersPage() {
         setUsers(data.users ?? []);
     }
 
+    async function fetchMaintenance() {
+        if (!token) return;
+        const res = await fetch(`${API_BASE}/admin/maintenance`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || "Failed to load maintenance status");
+        setMaintenance({ enabled: Boolean(data.enabled) });
+    }
+
     async function refresh() {
         setError("");
         setLoading(true);
         try {
             await fetchMe();
             await fetchUsers();
+            await fetchMaintenance();
         } catch (e) {
             setError(e?.message || "Failed to load users");
         } finally {
@@ -164,6 +178,30 @@ export default function UsersPage() {
     const isAdmin = me?.role === "admin";
     const isModerator = me?.role === "moderator";
 
+    async function toggleMaintenance() {
+        if (!isAdmin) return;
+        setError("");
+        setMaintenanceBusy(true);
+        try {
+            const nextEnabled = !(maintenance?.enabled ?? false);
+            const res = await fetch(`${API_BASE}/admin/maintenance`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ enabled: nextEnabled }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to update maintenance mode");
+            setMaintenance({ enabled: Boolean(data.enabled) });
+        } catch (e) {
+            setError(e?.message || "Failed to update maintenance mode");
+        } finally {
+            setMaintenanceBusy(false);
+        }
+    }
+
     return (
         <DashboardLayout>
             <div className="p-6 lg:p-8 space-y-6">
@@ -176,6 +214,35 @@ export default function UsersPage() {
                         Refresh
                     </button>
                 </div>
+
+                {isAdmin && (
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="text-sm text-gray-300">Maintenance mode</div>
+                                <div className="mt-1 text-xs text-gray-400">
+                                    Status: {maintenance?.enabled ? "ON" : "OFF"}
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={toggleMaintenance}
+                                disabled={maintenanceBusy || loading}
+                                className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${
+                                    maintenance?.enabled
+                                        ? "bg-red-600/30 hover:bg-red-600/40"
+                                        : "bg-white/10 hover:bg-white/15"
+                                }`}
+                            >
+                                {maintenanceBusy
+                                    ? "Updating..."
+                                    : maintenance?.enabled
+                                        ? "Disable maintenance"
+                                        : "Enable maintenance"}
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 {error && (
                     <div className="rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-3 text-sm text-red-200">

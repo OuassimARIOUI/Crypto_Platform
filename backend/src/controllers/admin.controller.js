@@ -1,6 +1,7 @@
 import { prisma } from "../services/dbService.js";
 import { createAuditLog } from "../services/auditLogService.js";
 import { addDurationToNow } from "../utils/dateDuration.js";
+import { getMaintenanceConfig, setMaintenanceConfig } from "../services/appSettingsService.js";
 
 function computeUserSummary(user) {
     const balance = user.portfolio?.balance ?? 0;
@@ -146,4 +147,36 @@ export async function unbanUserController(req, res) {
     });
 
     return res.json({ success: true, user: computeUserSummary(updated) });
+}
+
+export async function getMaintenanceStatusController(req, res) {
+    const cfg = await getMaintenanceConfig({ noCache: true });
+    return res.json({
+        enabled: cfg.enabled,
+        message: cfg.message,
+        updatedAt: cfg.updatedAt,
+    });
+}
+
+export async function setMaintenanceStatusController(req, res) {
+    const { enabled, message } = req.body || {};
+
+    if (typeof enabled !== "boolean") {
+        return res.status(400).json({ error: "enabled must be a boolean" });
+    }
+
+    const cfg = await setMaintenanceConfig({ enabled, message });
+
+    await createAuditLog({
+        actorId: req.userId,
+        action: "SET_MAINTENANCE_MODE",
+        metadata: { enabled: cfg.enabled, message: cfg.message },
+    });
+
+    return res.json({
+        success: true,
+        enabled: cfg.enabled,
+        message: cfg.message,
+        updatedAt: cfg.updatedAt,
+    });
 }

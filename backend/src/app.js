@@ -9,6 +9,7 @@ import portfolioRoutes from "./routes/portfolio.routes.js";
 import discordRoutes from "./routes/discord.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
+import { maintenanceGuard } from "./middleware/maintenance.js";
 
 const app = express();
 
@@ -21,6 +22,9 @@ app.use(cors({
 
 
 app.use(express.json());
+
+// Global maintenance mode (admin can bypass)
+app.use(maintenanceGuard);
 
 // Tes routes
 app.use("/cryptos", cryptosRouter);

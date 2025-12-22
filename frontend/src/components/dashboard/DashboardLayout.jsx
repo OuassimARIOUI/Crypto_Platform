@@ -5,6 +5,7 @@ import Cookies from "js-cookie";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Notification from "@/components/ui/Notification";
+import MessagingDock from "@/components/messaging/MessagingDock";
 
 
 
@@ -147,6 +148,9 @@ export default function DashboardLayout({ children }) {
                 )}
 
                 {children}
+
+                {/* Bottom-right messaging overlay */}
+                <MessagingDock me={user} />
             </main>
         </div>
     );

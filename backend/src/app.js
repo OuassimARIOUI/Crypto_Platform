@@ -9,6 +9,8 @@ import portfolioRoutes from "./routes/portfolio.routes.js";
 import discordRoutes from "./routes/discord.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
+import messagesRoutes from "./routes/messages.routes.js";
+import realtimeRoutes from "./routes/realtime.routes.js";
 import { maintenanceGuard } from "./middleware/maintenance.js";
 
 const app = express();
@@ -36,5 +38,7 @@ app.use("/portfolio", portfolioRoutes);
 app.use("/discord", discordRoutes);
 app.use("/admin", adminRoutes);
 app.use("/reports", reportsRoutes);
+app.use("/messages", messagesRoutes);
+app.use("/realtime", realtimeRoutes);
 
 export default app;

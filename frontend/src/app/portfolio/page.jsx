@@ -2,6 +2,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import PortfolioStats from "@/components/portfolio/PortfolioStats";
 import PortfolioAssets from "@/components/portfolio/PortfolioAssets";
 import PortfolioTransactions from "@/components/portfolio/PortfolioTransactions";
+import TransferFunds from "@/components/portfolio/TransferFunds";
 
 export default function PortfolioPage() {
     return (
@@ -10,6 +11,8 @@ export default function PortfolioPage() {
                 <h1 className="text-4xl font-black text-white">Portfolio</h1>
 
                 <PortfolioStats />
+
+                <TransferFunds />
 
                 <div>
                     <h2 className="text-[22px] font-bold text-white mb-4">My Assets</h2>

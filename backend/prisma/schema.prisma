@@ -34,6 +34,10 @@ enum report_reason_category {
   other
 }
 
+enum conversation_type {
+  direct
+}
+
 model alerts {
   id           Int       @id @default(autoincrement())
   user_id      Int?
@@ -118,6 +122,12 @@ model users {
 
   audit_logs_actor  audit_logs[] @relation("audit_actor")
   audit_logs_target audit_logs[] @relation("audit_target")
+
+  conversation_participants conversation_participants[]
+  messages_sent messages[] @relation("message_sender")
+
+  wallet_transfers_sent     wallet_transfers[] @relation("wallet_transfer_sender")
+  wallet_transfers_received wallet_transfers[] @relation("wallet_transfer_receiver")
 }
 
 model portfolios {
@@ -190,10 +200,68 @@ model portfolio_transactions {
   crypto    cryptos    @relation(fields: [crypto_id], references: [id])
 }
 
+model wallet_transfers {
+  id           Int      @id @default(autoincrement())
+  sender_id    Int
+  receiver_id  Int
+  amount       Float
+  reason       String?
+  created_at   DateTime @default(now())
+
+  sender   users @relation("wallet_transfer_sender", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  receiver users @relation("wallet_transfer_receiver", fields: [receiver_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([created_at])
+}
+
 model app_settings {
   key                 String   @id @db.VarChar(50)
   maintenance_enabled Boolean  @default(false)
   maintenance_message String?  @db.VarChar(200)
   created_at          DateTime @default(now())
   updated_at          DateTime @updatedAt
+}
+
+model conversations {
+  id         Int               @id @default(autoincrement())
+  type       conversation_type @default(direct)
+  direct_key String?           @unique @db.VarChar(100)
+  created_at DateTime          @default(now())
+  updated_at DateTime          @updatedAt
+
+  participants conversation_participants[]
+  messages     messages[]
+
+  @@index([updated_at])
+}
+
+model conversation_participants {
+  id              Int      @id @default(autoincrement())
+  conversation_id Int
+  user_id         Int
+  joined_at       DateTime @default(now())
+  last_read_at    DateTime? @default(now())
+
+  conversation conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user         users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([conversation_id, user_id])
+  @@index([user_id])
+  @@index([conversation_id])
+}
+
+model messages {
+  id              Int      @id @default(autoincrement())
+  conversation_id Int
+  sender_id       Int
+  body            String   @db.VarChar(2000)
+  created_at      DateTime @default(now())
+
+  conversation conversations @relation(fields: [conversation_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sender       users        @relation("message_sender", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([conversation_id, created_at])
+  @@index([sender_id])
 }

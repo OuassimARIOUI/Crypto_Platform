@@ -14,12 +14,41 @@ export default function RegisterPage() {
     const [password, setPassword] = useState("");
     const [discordUsername, setDiscordUsername] = useState("");
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    function validatePseudoLocal(value) {
+        const v = (value ?? "").toString().trim();
+        if (!v) return "Pseudo requis";
+        if (!/^[A-Za-z0-9]+$/.test(v)) return "Pseudo invalide: uniquement lettres et chiffres";
+        if (v.length < 6) return "Pseudo invalide: minimum 6 caractères";
+        const letters = (v.match(/[A-Za-z]/g) || []).length;
+        const digits = (v.match(/[0-9]/g) || []).length;
+        if (letters < 3 || digits < 3) return "Pseudo invalide: minimum 3 lettres et 3 chiffres (ex: abc123)";
+        return "";
+    }
 
     const handleRegister = async (e) => {
         e.preventDefault();
+        setError("");
+
+        const localErr = validatePseudoLocal(pseudo);
+        if (localErr) {
+            setError(localErr);
+            return;
+        }
+
         setLoading(true);
 
         try {
+            // 0️⃣ Vérifie disponibilité du pseudo AVANT Firebase
+            const checkRes = await fetch(
+                `http://localhost:3004/auth/pseudo/check?pseudo=${encodeURIComponent(pseudo.trim())}`
+            );
+            const checkData = await checkRes.json().catch(() => ({}));
+            if (!checkRes.ok) {
+                throw new Error(checkData?.error || "Pseudo invalide ou déjà utilisé");
+            }
+
             // 1️⃣ Création du compte Firebase Auth
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -27,7 +56,7 @@ export default function RegisterPage() {
             await sendEmailVerification(userCred.user);
 
             // 3️⃣ Sync avec ton backend (PostgreSQL)
-            await fetch("http://localhost:3004/auth/firebase-sync", {
+            const syncRes = await fetch("http://localhost:3004/auth/firebase-sync", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -38,12 +67,17 @@ export default function RegisterPage() {
                 }),
             });
 
+            const syncData = await syncRes.json().catch(() => ({}));
+            if (!syncRes.ok) {
+                throw new Error(syncData?.error || "Sync error");
+            }
+
             alert("Account created! Please verify your email before logging in.");
             window.location.href = "/login";
 
         } catch (err) {
             console.error(err);
-            alert(err.message);
+            setError(err?.message || "Erreur lors de l'inscription");
         }
 
         setLoading(false);
@@ -60,6 +94,12 @@ export default function RegisterPage() {
                 <h1 className="text-white text-[32px] font-bold text-center mb-8">
                     Create Your Account
                 </h1>
+
+                {error && (
+                    <div className="mb-4 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-3 text-sm text-red-200">
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleRegister} className="space-y-6">
                     <Input

@@ -180,3 +180,76 @@ export async function setMaintenanceStatusController(req, res) {
         updatedAt: cfg.updatedAt,
     });
 }
+
+export async function getUserActivityController(req, res) {
+    const targetUserId = Number(req.params.id);
+    const limit = Math.min(50, Math.max(5, Number(req.query.limit ?? 20)));
+
+    if (!targetUserId || Number.isNaN(targetUserId)) {
+        return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    const [transactions, auditLogs] = await Promise.all([
+        prisma.portfolio_transactions.findMany({
+            where: { portfolio: { user_id: targetUserId } },
+            include: { crypto: { select: { symbol: true, name: true } } },
+            orderBy: { timestamp: "desc" },
+            take: limit,
+        }),
+        prisma.audit_logs.findMany({
+            where: {
+                OR: [{ actor_id: targetUserId }, { target_user_id: targetUserId }],
+            },
+            include: {
+                actor: { select: { id: true, pseudo: true, role: true } },
+                target_user: { select: { id: true, pseudo: true, role: true } },
+            },
+            orderBy: { created_at: "desc" },
+            take: limit,
+        }),
+    ]);
+
+    const items = [];
+
+    for (const t of transactions) {
+        const type = (t.type || "").toString().toLowerCase();
+        const action = type === "sell" ? "SELL" : "BUY";
+        const symbol = t.crypto?.symbol ?? "";
+        const qty = Number(t.quantity);
+        const price = Number(t.price_usd);
+        const total = Number.isFinite(qty) && Number.isFinite(price) ? qty * price : null;
+
+        items.push({
+            kind: "trade",
+            id: `trade:${t.id}`,
+            at: t.timestamp,
+            action,
+            title: `${action} ${symbol.toUpperCase()}`.trim(),
+            details: {
+                symbol,
+                quantity: Number.isFinite(qty) ? qty : null,
+                priceUsd: Number.isFinite(price) ? price : null,
+                totalUsd: Number.isFinite(total) ? total : null,
+            },
+        });
+    }
+
+    for (const l of auditLogs) {
+        const actorLabel = l.actor?.pseudo ? `@${l.actor.pseudo}` : null;
+        items.push({
+            kind: "audit",
+            id: `audit:${l.id}`,
+            at: l.created_at,
+            action: l.action,
+            title: l.action,
+            actor: l.actor ? { id: l.actor.id, pseudo: l.actor.pseudo, role: l.actor.role } : null,
+            target: l.target_user ? { id: l.target_user.id, pseudo: l.target_user.pseudo, role: l.target_user.role } : null,
+            subtitle: actorLabel,
+            metadata: l.metadata ?? null,
+        });
+    }
+
+    items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+    return res.json({ userId: targetUserId, limit, items: items.slice(0, limit) });
+}

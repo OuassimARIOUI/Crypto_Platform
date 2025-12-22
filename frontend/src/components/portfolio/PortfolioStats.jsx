@@ -7,6 +7,7 @@ export default function PortfolioStats() {
         totalValue: 0,
         todayProfit: 0,
         totalProfit: 0,
+        totalProfitPct: 0,
     });
     const [loading, setLoading] = useState(true);
 
@@ -30,6 +31,49 @@ export default function PortfolioStats() {
                 let totalValue = 0;
                 let todayProfit = 0;
 
+                // Total profit = realized + unrealized
+                // We approximate cost basis using average cost per crypto.
+                const txs = Array.isArray(portfolio.transactions)
+                    ? [...portfolio.transactions].sort(
+                        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+                    )
+                    : [];
+
+                const positions = new Map();
+                let realizedProfit = 0;
+                let totalBuyCost = 0;
+
+                for (const t of txs) {
+                    const symbol = String(t.crypto?.symbol || "");
+                    if (!symbol) continue;
+
+                    const qty = Number(t.quantity);
+                    const px = Number(t.price_usd);
+                    if (!Number.isFinite(qty) || !Number.isFinite(px) || qty <= 0) continue;
+
+                    const key = symbol;
+                    const pos = positions.get(key) || { qty: 0, cost: 0 };
+
+                    if (t.type === "buy") {
+                        pos.qty += qty;
+                        pos.cost += qty * px;
+                        totalBuyCost += qty * px;
+                    } else if (t.type === "sell") {
+                        const sellQty = Math.min(qty, pos.qty);
+                        const avgCost = pos.qty > 0 ? pos.cost / pos.qty : 0;
+                        const costRemoved = sellQty * avgCost;
+                        const proceeds = sellQty * px;
+
+                        pos.qty -= sellQty;
+                        pos.cost = Math.max(0, pos.cost - costRemoved);
+                        realizedProfit += proceeds - costRemoved;
+                    }
+
+                    positions.set(key, pos);
+                }
+
+                let unrealizedProfit = 0;
+
                 for (const [symbol, qty] of Object.entries(portfolio.holdings)) {
                     const tx = portfolio.transactions.find(
                         t => t.crypto?.symbol === symbol
@@ -47,12 +91,24 @@ export default function PortfolioStats() {
 
                     totalValue += value;
                     todayProfit += value * (variation / 100);
+
+                    const pos = positions.get(String(symbol)) || { qty: 0, cost: 0 };
+                    // Use holdings qty as the source of truth for current size.
+                    const currentQty = Number(qty);
+                    if (Number.isFinite(currentQty) && currentQty > 0) {
+                        const costBasis = Number(pos.cost) || 0;
+                        unrealizedProfit += value - costBasis;
+                    }
                 }
+
+                const totalProfit = realizedProfit + unrealizedProfit;
+                const totalProfitPct = totalBuyCost > 0 ? (totalProfit / totalBuyCost) * 100 : 0;
 
                 setStats({
                     totalValue,
                     todayProfit,
-                    totalProfit: 0
+                    totalProfit,
+                    totalProfitPct,
                 });
 
             } catch (e) {
@@ -96,9 +152,11 @@ export default function PortfolioStats() {
             <div className="flex flex-col gap-2 rounded-xl p-6 border border-white/10 bg-white/5">
                 <p className="text-gray-300 text-base font-medium">Total Profit</p>
                 <p className="text-white text-4xl font-bold">
-                    Coming soon
+                    ${stats.totalProfit.toFixed(2)}
                 </p>
-                <p className="text-white/60 text-base">-</p>
+                <p className={stats.totalProfit >= 0 ? "text-green-400" : "text-red-400"}>
+                    {stats.totalProfit >= 0 ? "+" : ""}{stats.totalProfitPct.toFixed(2)}%
+                </p>
             </div>
 
         </div>

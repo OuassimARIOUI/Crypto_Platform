@@ -12,18 +12,20 @@ export default function DashboardStats() {
 
                 if (!Array.isArray(data) || data.length === 0) return;
 
-                //  Utiliser les BONNES propriétés venant du backend
+                // /cryptos renvoie: { price, change } (et pas crypto_prices[])
                 const totalValue = data.reduce((sum, c) => {
-                    const price = c.crypto_prices?.[0]?.price_usd ?? 0;
-                    return sum + price;
+                    const price = Number(c?.price ?? 0);
+                    return sum + (Number.isFinite(price) ? price : 0);
                 }, 0);
 
-                const avgChange = (
-                    data.reduce((sum, c) => {
-                        const change = c.crypto_prices?.[0]?.change_percent_24h ?? 0;
-                        return sum + change;
-                    }, 0) / data.length
-                ).toFixed(2);
+                const changes = data
+                    .map((c) => Number(c?.change))
+                    .filter((v) => Number.isFinite(v));
+
+                const avgChange =
+                    changes.length > 0
+                        ? changes.reduce((sum, v) => sum + v, 0) / changes.length
+                        : 0;
 
                 setStats({
                     totalValue,
@@ -56,7 +58,7 @@ export default function DashboardStats() {
                         stats.avgChange >= 0 ? "text-green-400" : "text-red-400"
                     }`}
                 >
-                    {stats.avgChange}%
+                    {stats.avgChange.toFixed(2)}%
                 </p>
             </div>
 

@@ -189,3 +189,11 @@ model portfolio_transactions {
   portfolio portfolios @relation(fields: [portfolio_id], references: [id])
   crypto    cryptos    @relation(fields: [crypto_id], references: [id])
 }
+
+model app_settings {
+  key                 String   @id @db.VarChar(50)
+  maintenance_enabled Boolean  @default(false)
+  maintenance_message String?  @db.VarChar(200)
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
+}

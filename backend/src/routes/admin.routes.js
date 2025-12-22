@@ -6,6 +6,9 @@ import {
     updateUserRoleController,
     banUserController,
     unbanUserController,
+    getMaintenanceStatusController,
+    setMaintenanceStatusController,
+    getUserActivityController,
 } from "../controllers/admin.controller.js";
 import {
     listReportsController,
@@ -17,6 +20,10 @@ const router = Router();
 router.use(auth, normalizeAccountStatus);
 
 router.get("/users", requireRole("admin", "moderator"), listUsersController);
+router.get("/users/:id/activity", requireRole("admin", "moderator"), getUserActivityController);
+
+router.get("/maintenance", requireRole("admin"), getMaintenanceStatusController);
+router.post("/maintenance", requireRole("admin"), setMaintenanceStatusController);
 
 router.patch("/users/:id/role", requireRole("admin"), updateUserRoleController);
 router.post("/users/:id/ban", requireRole("admin"), banUserController);

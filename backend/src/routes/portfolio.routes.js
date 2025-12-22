@@ -5,7 +5,8 @@ import {
     getMyPortfolioController,
     buyCryptoController,
     sellCryptoController,
-    addFundsController
+    addFundsController,
+    transferFundsController
 } from "../controllers/portfolio.controller.js";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.get("/me", getMyPortfolioController);
 router.post("/buy", requireCanTrade, buyCryptoController);
 router.post("/sell", requireCanTrade, sellCryptoController);
 router.post("/add-funds", requireCanTrade, addFundsController);
+router.post("/transfer", requireCanTrade, transferFundsController);
 
 export default router;

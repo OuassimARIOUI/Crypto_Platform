@@ -1,4 +1,11 @@
-import {register, login, sendResetEmail, updatePasswordWithGoogle} from "../services/authService.js";
+import {
+    register,
+    login,
+    sendResetEmail,
+    updatePasswordWithGoogle,
+    validatePseudoForRegistration,
+    assertPseudoAvailable,
+} from "../services/authService.js";
 import { logError, logInfo } from "../utils/logger.js";
 import jwt from "jsonwebtoken";
 import {prisma} from "../services/dbService.js";
@@ -15,7 +22,22 @@ export async function registerController(req, res) {
     } catch (err) {
         console.log(err);
         logError("Failed to register user", err);
-        return res.status(500).json({ error: "Erreur serveur" });
+        const status = err?.status && Number.isFinite(Number(err.status)) ? Number(err.status) : 500;
+        return res.status(status).json({ error: err?.message || "Erreur serveur" });
+    }
+}
+
+export async function pseudoAvailabilityController(req, res) {
+    const pseudo = (req.query.pseudo ?? "").toString();
+
+    try {
+        await assertPseudoAvailable(pseudo);
+        return res.json({ valid: true, available: true });
+    } catch (err) {
+        const status = err?.status && Number.isFinite(Number(err.status)) ? Number(err.status) : 500;
+        if (status === 400) return res.status(400).json({ valid: false, available: false, error: err.message });
+        if (status === 409) return res.status(409).json({ valid: true, available: false, error: err.message });
+        return res.status(status).json({ error: err?.message || "Erreur serveur" });
     }
 }
 
@@ -169,22 +191,42 @@ export async function firebaseSyncController(req, res) {
             return res.status(400).json({ error: "firebaseUid, email, pseudo are required" });
         }
 
+        const normalizedPseudo = validatePseudoForRegistration(pseudo);
+
+        const existingByEmail = await prisma.users.findUnique({
+            where: { email },
+            select: { id: true },
+        });
+
+        await assertPseudoAvailable(normalizedPseudo, { exceptUserId: existingByEmail?.id });
+
         // Upsert by email: keeps DB in sync with Firebase as source of truth.
-        const user = await prisma.users.upsert({
+        let user;
+        try {
+            user = await prisma.users.upsert({
             where: { email },
             update: {
                 firebase_uid: firebaseUid,
-                pseudo,
+                pseudo: normalizedPseudo,
                 discord_username: discordUsername ?? undefined,
             },
             create: {
                 firebase_uid: firebaseUid,
                 email,
-                pseudo,
+                pseudo: normalizedPseudo,
                 password: null,
                 discord_username: discordUsername ?? null,
             },
-        });
+            });
+        } catch (err) {
+            if (err?.code === "P2002") {
+                const target = Array.isArray(err?.meta?.target) ? err.meta.target.join(",") : String(err?.meta?.target || "");
+                if (target.includes("pseudo")) return res.status(409).json({ error: "Ce pseudo existe déjà" });
+                if (target.includes("email")) return res.status(409).json({ error: "Cet email existe déjà" });
+                return res.status(409).json({ error: "Conflit: données déjà utilisées" });
+            }
+            throw err;
+        }
 
         await prisma.portfolios.upsert({
             where: { user_id: user.id },
@@ -198,7 +240,8 @@ export async function firebaseSyncController(req, res) {
         return res.json({ success: true, user });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ error: "Sync error" });
+        const status = error?.status && Number.isFinite(Number(error.status)) ? Number(error.status) : 500;
+        return res.status(status).json({ error: error?.message || "Sync error" });
     }
 }
 

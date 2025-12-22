@@ -4,12 +4,14 @@ import {
     registerController, loginController, meController,
     resetPasswordController, updatePasswordController, firebaseSyncController,
     loginFirebase,
-    updateMeController
+    updateMeController,
+    pseudoAvailabilityController
 } from "../controllers/auth.controller.js";
 
 const router = Router();
 
 router.post("/register", registerController);
+router.get("/pseudo/check", pseudoAvailabilityController);
 router.post("/login", loginController);
 router.get("/me", meController);
 

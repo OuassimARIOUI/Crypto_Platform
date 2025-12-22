@@ -380,13 +380,33 @@ export default function IndicatorsPanel() {
                             {smaVisible.sma7 && (
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-0.5 bg-[#FF00FF] rounded-full" />
-                                    <span className="text-white/80">SMA7</span>
+                                    <span className="text-white/80 flex items-center gap-1">
+                                        SMA7
+                                        <button
+                                            type="button"
+                                            className="text-white/60 hover:text-white/90 text-xs"
+                                            title="SMA7 = Simple Moving Average sur 7 points. À chaque instant, on calcule la moyenne des 7 derniers prix de la série (les 'points' dépendent du timeframe)."
+                                            aria-label="Info SMA7"
+                                        >
+                                            ⓘ
+                                        </button>
+                                    </span>
                                 </div>
                             )}
                             {smaVisible.sma30 && (
                                 <div className="flex items-center gap-2">
                                     <div className="w-3 h-0.5 bg-[#FFFF00] rounded-full" />
-                                    <span className="text-white/80">SMA30</span>
+                                    <span className="text-white/80 flex items-center gap-1">
+                                        SMA30
+                                        <button
+                                            type="button"
+                                            className="text-white/60 hover:text-white/90 text-xs"
+                                            title="SMA30 = Simple Moving Average sur 30 points. Même principe que SMA7 mais sur une fenêtre plus longue, donc plus lissée (réagit moins vite)."
+                                            aria-label="Info SMA30"
+                                        >
+                                            ⓘ
+                                        </button>
+                                    </span>
                                 </div>
                             )}
                         </div>

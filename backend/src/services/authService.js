@@ -2,12 +2,81 @@ import { prisma } from "./dbService.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
+function createHttpError(status, message) {
+    const err = new Error(message);
+    err.status = status;
+    return err;
+}
+
+function normalizePseudo(pseudo) {
+    return (pseudo ?? "").toString().trim();
+}
+
+function validatePseudoFormatOrThrow(pseudo) {
+    const value = normalizePseudo(pseudo);
+    if (!value) {
+        throw createHttpError(400, "Pseudo requis");
+    }
+
+    if (!/^[A-Za-z0-9]+$/.test(value)) {
+        throw createHttpError(400, "Pseudo invalide: uniquement lettres et chiffres");
+    }
+
+    if (value.length < 6) {
+        throw createHttpError(400, "Pseudo invalide: minimum 6 caractères");
+    }
+
+    const letters = (value.match(/[A-Za-z]/g) || []).length;
+    const digits = (value.match(/[0-9]/g) || []).length;
+    if (letters < 3 || digits < 3) {
+        throw createHttpError(400, "Pseudo invalide: minimum 3 lettres et 3 chiffres (ex: abc123)");
+    }
+
+    return value;
+}
+
+export function validatePseudoForRegistration(pseudo) {
+    return validatePseudoFormatOrThrow(pseudo);
+}
+
+export async function assertPseudoAvailable(pseudo, { exceptUserId } = {}) {
+    const normalized = validatePseudoFormatOrThrow(pseudo);
+
+    const existing = await prisma.users.findFirst({
+        where: {
+            pseudo: {
+                equals: normalized,
+                mode: "insensitive",
+            },
+        },
+        select: { id: true },
+    });
+
+    if (existing && (!exceptUserId || existing.id !== exceptUserId)) {
+        throw createHttpError(409, "Ce pseudo existe déjà");
+    }
+
+    return normalized;
+}
+
 export async function register(email, password , pseudo) {
+    const normalizedPseudo = await assertPseudoAvailable(pseudo);
     const hashed = await bcrypt.hash(password, 10);
 
-    const user = await prisma.users.create({
-        data: { email, password: hashed, pseudo }
-    });
+    let user;
+    try {
+        user = await prisma.users.create({
+            data: { email, password: hashed, pseudo: normalizedPseudo }
+        });
+    } catch (err) {
+        if (err?.code === "P2002") {
+            const target = Array.isArray(err?.meta?.target) ? err.meta.target.join(",") : String(err?.meta?.target || "");
+            if (target.includes("pseudo")) throw createHttpError(409, "Ce pseudo existe déjà");
+            if (target.includes("email")) throw createHttpError(409, "Cet email existe déjà");
+            throw createHttpError(409, "Conflit: données déjà utilisées");
+        }
+        throw err;
+    }
 
     await prisma.portfolios.create({
         data: { user_id: user.id, balance: 0 }

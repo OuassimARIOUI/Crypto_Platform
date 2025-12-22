@@ -37,6 +37,15 @@ function otherParticipant(convo, myUserId) {
     return list.find((p) => p.id !== myUserId) || list[0] || null;
 }
 
+function isBanNoticeMessage(body) {
+    return typeof body === "string" && body.startsWith("[BAN]\n");
+}
+
+function displayMessageBody(body) {
+    if (isBanNoticeMessage(body)) return body.replace(/^\[BAN\]\n/, "");
+    return body;
+}
+
 export default function MessagingDock({ me }) {
     const [mounted, setMounted] = useState(false);
     const [token, setToken] = useState(null);
@@ -313,6 +322,7 @@ export default function MessagingDock({ me }) {
                                 <div className="space-y-3">
                                     {messages.map((m) => {
                                         const mine = m.sender?.id === myUserId;
+                                        const isBan = isBanNoticeMessage(m.body);
                                         return (
                                             <div
                                                 key={m.id}
@@ -320,14 +330,22 @@ export default function MessagingDock({ me }) {
                                             >
                                                 <div
                                                     className={`max-w-[80%] rounded-xl border border-white/10 px-3 py-2 ${
-                                                        mine ? "bg-white/10" : "bg-white/5"
+                                                        isBan
+                                                            ? "border-red-500/30 bg-red-600/15"
+                                                            : mine
+                                                                ? "bg-white/10"
+                                                                : "bg-white/5"
                                                     }`}
                                                 >
                                                     <div className="text-[11px] text-gray-400">
                                                         {mine ? "You" : m.sender?.pseudo} · {formatDate(m.at)}
                                                     </div>
-                                                    <div className="mt-1 whitespace-pre-wrap text-xs text-white">
-                                                        {m.body}
+                                                    <div
+                                                        className={`mt-1 whitespace-pre-wrap text-xs ${
+                                                            isBan ? "text-red-100" : "text-white"
+                                                        }`}
+                                                    >
+                                                        {displayMessageBody(m.body)}
                                                     </div>
                                                 </div>
                                             </div>

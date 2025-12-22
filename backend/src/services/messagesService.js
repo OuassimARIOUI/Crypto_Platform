@@ -13,6 +13,73 @@ function directKeyFor(userAId, userBId) {
     return `${min}:${max}`;
 }
 
+export function formatBanNoticeBody({ reason, bannedUntil }) {
+    const cleanReason = typeof reason === "string" && reason.trim() ? reason.trim() : "Non spécifié";
+    const untilLabel = bannedUntil ? new Date(bannedUntil).toISOString() : null;
+
+    return [
+        "[BAN]",
+        "Votre compte a été banni.",
+        `Motif: ${cleanReason}`,
+        bannedUntil ? `Fin: ${untilLabel}` : "Fin: jusqu'à réactivation",
+    ].join("\n");
+}
+
+export async function ensureDirectConversationByUserIds({ userAId, userBId }) {
+    const a = Number(userAId);
+    const b = Number(userBId);
+    if (!a || Number.isNaN(a) || !b || Number.isNaN(b)) throw new Error("Invalid user ids");
+    if (a === b) throw new Error("Cannot create direct conversation with self");
+
+    const key = directKeyFor(a, b);
+
+    const convo = await prisma.conversations.upsert({
+        where: { direct_key: key },
+        create: {
+            type: "direct",
+            direct_key: key,
+            participants: {
+                create: [{ user_id: a }, { user_id: b }],
+            },
+        },
+        update: {},
+        select: { id: true },
+    });
+
+    return convo.id;
+}
+
+export async function sendTaggedMessageToDirectConversation({ senderId, targetUserId, body }) {
+    const conversationId = await ensureDirectConversationByUserIds({
+        userAId: senderId,
+        userBId: targetUserId,
+    });
+
+    const message = await prisma.messages.create({
+        data: {
+            conversation_id: conversationId,
+            sender_id: senderId,
+            body: normalizeBody(body),
+        },
+        include: {
+            sender: { select: { id: true, pseudo: true, role: true } },
+        },
+    });
+
+    await prisma.conversations.update({
+        where: { id: conversationId },
+        data: { updated_at: new Date() },
+    });
+
+    return {
+        id: message.id,
+        conversationId: message.conversation_id,
+        body: message.body,
+        at: message.created_at,
+        sender: message.sender,
+    };
+}
+
 function canModeratorTalkTo(role) {
     return role === "admin" || role === "moderator";
 }

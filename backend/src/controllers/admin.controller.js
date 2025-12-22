@@ -2,6 +2,7 @@ import { prisma } from "../services/dbService.js";
 import { createAuditLog } from "../services/auditLogService.js";
 import { addDurationToNow } from "../utils/dateDuration.js";
 import { getMaintenanceConfig, setMaintenanceConfig } from "../services/appSettingsService.js";
+import { formatBanNoticeBody, sendTaggedMessageToDirectConversation } from "../services/messagesService.js";
 
 function computeUserSummary(user, viewerRole) {
     const isModeratorViewingAdmin = viewerRole === "moderator" && user.role === "admin";
@@ -137,6 +138,20 @@ export async function banUserController(req, res) {
         targetUserId,
         metadata: { reason: updated.ban_reason, bannedUntil },
     });
+
+    try {
+        await sendTaggedMessageToDirectConversation({
+            senderId: req.userId,
+            targetUserId,
+            body: formatBanNoticeBody({
+                reason: updated.ban_reason,
+                bannedUntil: updated.banned_until,
+            }),
+        });
+    } catch (e) {
+        // Non-blocking: banning should succeed even if messaging fails.
+        console.error("Failed to send ban notice message:", e?.message || e);
+    }
 
     return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }

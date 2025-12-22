@@ -41,8 +41,13 @@ function isBanNoticeMessage(body) {
     return typeof body === "string" && body.startsWith("[BAN]\n");
 }
 
+function isTransferNoticeMessage(body) {
+    return typeof body === "string" && body.startsWith("[TRANSFER]\n");
+}
+
 function displayMessageBody(body) {
     if (isBanNoticeMessage(body)) return body.replace(/^\[BAN\]\n/, "");
+    if (isTransferNoticeMessage(body)) return body.replace(/^\[TRANSFER\]\n/, "");
     return body;
 }
 
@@ -396,6 +401,7 @@ export default function MessagingDock({ me }) {
                                     {messages.map((m) => {
                                         const mine = m.sender?.id === myUserId;
                                         const isBan = isBanNoticeMessage(m.body);
+                                        const isTransfer = isTransferNoticeMessage(m.body);
                                         return (
                                             <div
                                                 key={m.id}
@@ -405,6 +411,8 @@ export default function MessagingDock({ me }) {
                                                     className={`max-w-[80%] rounded-xl border border-white/10 px-3 py-2 ${
                                                         isBan
                                                             ? "border-red-500/30 bg-red-600/15"
+                                                            : isTransfer && !mine
+                                                                ? "border-green-500/30 bg-green-600/15"
                                                             : mine
                                                                 ? "bg-white/10"
                                                                 : "bg-white/5"
@@ -415,7 +423,11 @@ export default function MessagingDock({ me }) {
                                                     </div>
                                                     <div
                                                         className={`mt-1 whitespace-pre-wrap text-xs ${
-                                                            isBan ? "text-red-100" : "text-white"
+                                                            isBan
+                                                                ? "text-red-100"
+                                                                : isTransfer && !mine
+                                                                    ? "text-green-100"
+                                                                    : "text-white"
                                                         }`}
                                                     >
                                                         {displayMessageBody(m.body)}

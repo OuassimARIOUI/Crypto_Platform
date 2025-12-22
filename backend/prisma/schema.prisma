@@ -125,6 +125,9 @@ model users {
 
   conversation_participants conversation_participants[]
   messages_sent messages[] @relation("message_sender")
+
+  wallet_transfers_sent     wallet_transfers[] @relation("wallet_transfer_sender")
+  wallet_transfers_received wallet_transfers[] @relation("wallet_transfer_receiver")
 }
 
 model portfolios {
@@ -195,6 +198,22 @@ model portfolio_transactions {
 
   portfolio portfolios @relation(fields: [portfolio_id], references: [id])
   crypto    cryptos    @relation(fields: [crypto_id], references: [id])
+}
+
+model wallet_transfers {
+  id           Int      @id @default(autoincrement())
+  sender_id    Int
+  receiver_id  Int
+  amount       Float
+  reason       String?
+  created_at   DateTime @default(now())
+
+  sender   users @relation("wallet_transfer_sender", fields: [sender_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  receiver users @relation("wallet_transfer_receiver", fields: [receiver_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([created_at])
 }
 
 model app_settings {

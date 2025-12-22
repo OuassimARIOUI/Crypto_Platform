@@ -8,6 +8,7 @@ import {addFunds} from "../services/addFundsService.js";
 
 import { logError } from "../utils/logger.js";
 import { publishToUser } from "../services/realtimeService.js";
+import { transferBetweenUsers } from "../services/transferService.js";
 
 export async function getMyPortfolioController(req, res) {
     try {
@@ -76,5 +77,31 @@ export async function addFundsController(req, res) {
         return res.status(400).json({
             error: err.message || "Erreur interne serveur"
         });
+    }
+}
+
+export async function transferFundsController(req, res) {
+    try {
+        const { toPseudo, amount, reason } = req.body || {};
+        const senderId = req.userId;
+
+        const result = await transferBetweenUsers({
+            senderId,
+            receiverPseudo: toPseudo,
+            amount,
+            reason,
+        });
+
+        // Update sender immediately (receiver gets realtime + message)
+        publishToUser(senderId, "portfolio:changed", {
+            kind: "transfer_out",
+            amount: Number(amount),
+            to: (toPseudo ?? "").toString(),
+            at: new Date().toISOString(),
+        });
+
+        return res.json({ success: true, ...result });
+    } catch (err) {
+        return res.status(400).json({ error: err?.message || "Transfer failed" });
     }
 }

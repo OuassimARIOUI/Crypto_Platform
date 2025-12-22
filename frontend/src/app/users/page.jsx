@@ -230,8 +230,11 @@ export default function UsersPage() {
         }
     }
 
-    async function toggleActivity(userId) {
+    async function toggleActivity(user) {
         if (!canSeeActivities) return;
+        if (isModerator && user?.role === "admin") return;
+
+        const userId = user.id;
         const next = expandedActivityUserId === userId ? null : userId;
         setExpandedActivityUserId(next);
         if (next && !activityByUserId[next]) {
@@ -335,6 +338,8 @@ export default function UsersPage() {
                                 <tbody>
                                     {users.map((u) => {
                                         const isRestricted = u.status === "banned" || u.status === "suspended";
+                                        const isAdminUser = u.role === "admin";
+                                        const isModeratorBlockedFromAdmin = isModerator && isAdminUser;
                                         const draft = banDraft[u.id] || {};
                                         const isExpanded = expandedActivityUserId === u.id;
                                         const activity = activityByUserId[u.id] || [];
@@ -369,24 +374,37 @@ export default function UsersPage() {
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-white">
-                                                        {toNumber(u.portfolio?.balance).toFixed(2)}
+                                                        {isModeratorBlockedFromAdmin ? (
+                                                            <span className="text-gray-500">—</span>
+                                                        ) : (
+                                                            toNumber(u.portfolio?.balance).toFixed(2)
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-gray-200">
-                                                        {toNumber(u.portfolio?.totalDeposited).toFixed(2)}
+                                                        {isModeratorBlockedFromAdmin ? (
+                                                            <span className="text-gray-500">—</span>
+                                                        ) : (
+                                                            toNumber(u.portfolio?.totalDeposited).toFixed(2)
+                                                        )}
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-gray-200">
-                                                        {toNumber(u.portfolio?.profit).toFixed(2)}
+                                                        {isModeratorBlockedFromAdmin ? (
+                                                            <span className="text-gray-500">—</span>
+                                                        ) : (
+                                                            toNumber(u.portfolio?.profit).toFixed(2)
+                                                        )}
                                                     </td>
 
                                                     {canSeeActivities && (
                                                         <td className="px-4 py-3">
                                                             <button
-                                                                onClick={() => toggleActivity(u.id)}
-                                                                className={`rounded-md px-3 py-1 text-xs text-white hover:bg-white/15 ${
+                                                                onClick={() => toggleActivity(u)}
+                                                                disabled={isModeratorBlockedFromAdmin}
+                                                                className={`rounded-md px-3 py-1 text-xs text-white hover:bg-white/15 disabled:opacity-60 ${
                                                                     isExpanded ? "bg-white/15" : "bg-white/10"
                                                                 }`}
                                                             >
-                                                                {isExpanded ? "Hide" : "Activity"}
+                                                                {isModeratorBlockedFromAdmin ? "—" : isExpanded ? "Hide" : "Activity"}
                                                             </button>
                                                         </td>
                                                     )}

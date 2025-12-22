@@ -3,7 +3,27 @@ import { createAuditLog } from "../services/auditLogService.js";
 import { addDurationToNow } from "../utils/dateDuration.js";
 import { getMaintenanceConfig, setMaintenanceConfig } from "../services/appSettingsService.js";
 
-function computeUserSummary(user) {
+function computeUserSummary(user, viewerRole) {
+    const isModeratorViewingAdmin = viewerRole === "moderator" && user.role === "admin";
+
+    if (isModeratorViewingAdmin) {
+        return {
+            id: user.id,
+            pseudo: user.pseudo,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            bannedUntil: user.banned_until,
+            banReason: user.ban_reason,
+            createdAt: user.created_at,
+            portfolio: {
+                balance: null,
+                totalDeposited: null,
+                profit: null,
+            },
+        };
+    }
+
     const balance = user.portfolio?.balance ?? 0;
     const totalDeposited = user.portfolio?.total_deposited ?? 0;
     const profit = Number(balance) - Number(totalDeposited);
@@ -57,7 +77,7 @@ export async function listUsersController(req, res) {
         page,
         pageSize,
         total,
-        users: users.map(computeUserSummary),
+        users: users.map((u) => computeUserSummary(u, req.userRole)),
     });
 }
 
@@ -86,7 +106,7 @@ export async function updateUserRoleController(req, res) {
         metadata: { role },
     });
 
-    return res.json({ success: true, user: computeUserSummary(updated) });
+    return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }
 
 export async function banUserController(req, res) {
@@ -118,7 +138,7 @@ export async function banUserController(req, res) {
         metadata: { reason: updated.ban_reason, bannedUntil },
     });
 
-    return res.json({ success: true, user: computeUserSummary(updated) });
+    return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }
 
 export async function unbanUserController(req, res) {
@@ -146,7 +166,7 @@ export async function unbanUserController(req, res) {
         targetUserId,
     });
 
-    return res.json({ success: true, user: computeUserSummary(updated) });
+    return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }
 
 export async function getMaintenanceStatusController(req, res) {
@@ -187,6 +207,21 @@ export async function getUserActivityController(req, res) {
 
     if (!targetUserId || Number.isNaN(targetUserId)) {
         return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    if (req.userRole === "moderator") {
+        const target = await prisma.users.findUnique({
+            where: { id: targetUserId },
+            select: { role: true },
+        });
+
+        if (!target) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        if (target.role === "admin") {
+            return res.status(403).json({ error: "Moderators cannot view admin activity" });
+        }
     }
 
     const [transactions, auditLogs] = await Promise.all([

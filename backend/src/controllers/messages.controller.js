@@ -1,6 +1,7 @@
 import { prisma } from "../services/dbService.js";
 import {
     getConversationMessages,
+    getUnreadCount,
     listMyConversations,
     sendMessageToConversation,
     startDirectConversationByPseudo,
@@ -68,5 +69,14 @@ export async function sendMessageController(req, res) {
         const msg = err.message || "Failed to send message";
         const status = msg === "Access denied" ? 403 : 400;
         return res.status(status).json({ error: msg });
+    }
+}
+
+export async function unreadCountController(req, res) {
+    try {
+        const unreadCount = await getUnreadCount(req.userId);
+        return res.json({ unreadCount });
+    } catch (err) {
+        return res.status(400).json({ error: err.message || "Failed to load unread count" });
     }
 }

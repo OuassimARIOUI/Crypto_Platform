@@ -6,6 +6,7 @@ import {
     listMessagesController,
     sendMessageController,
     startDirectConversationController,
+    unreadCountController,
 } from "../controllers/messages.controller.js";
 
 const router = Router();
@@ -13,6 +14,7 @@ const router = Router();
 router.use(auth, normalizeAccountStatus);
 
 router.get("/conversations", listConversationsController);
+router.get("/unread-count", unreadCountController);
 router.post("/conversations/start", startDirectConversationController);
 
 router.get("/conversations/:id/messages", listMessagesController);

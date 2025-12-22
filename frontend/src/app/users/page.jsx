@@ -53,6 +53,9 @@ export default function UsersPage() {
     const [error, setError] = useState("");
     const [users, setUsers] = useState([]);
 
+    const [mounted, setMounted] = useState(false);
+    const [token, setToken] = useState(null);
+
     const [maintenance, setMaintenance] = useState(null);
     const [maintenanceBusy, setMaintenanceBusy] = useState(false);
 
@@ -69,7 +72,10 @@ export default function UsersPage() {
     const [activityByUserId, setActivityByUserId] = useState({});
     const [activityLoadingUserId, setActivityLoadingUserId] = useState(null);
 
-    const token = useMemo(() => Cookies.get("token"), []);
+    useEffect(() => {
+        setMounted(true);
+        setToken(Cookies.get("token") || null);
+    }, []);
 
     async function fetchMe() {
         if (!token) return;
@@ -116,9 +122,35 @@ export default function UsersPage() {
     }
 
     useEffect(() => {
+        if (!mounted) return;
         refresh();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [mounted]);
+
+    useEffect(() => {
+        if (!mounted) return;
+        if (!token) return;
+
+        const url = `${API_BASE}/realtime/stream?token=${encodeURIComponent(token)}`;
+        const es = new EventSource(url);
+
+        const onUsersChanged = () => {
+            fetchUsers();
+        };
+        const onMaintenanceChanged = () => {
+            fetchMaintenance();
+        };
+
+        es.addEventListener("users:changed", onUsersChanged);
+        es.addEventListener("maintenance:changed", onMaintenanceChanged);
+
+        return () => {
+            es.removeEventListener("users:changed", onUsersChanged);
+            es.removeEventListener("maintenance:changed", onMaintenanceChanged);
+            es.close();
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mounted, token]);
 
     async function submitReport(userId) {
         setError("");

@@ -7,6 +7,7 @@ import {
 import {addFunds} from "../services/addFundsService.js";
 
 import { logError } from "../utils/logger.js";
+import { publishToUser } from "../services/realtimeService.js";
 
 export async function getMyPortfolioController(req, res) {
     try {
@@ -58,6 +59,12 @@ export async function addFundsController(req, res) {
         }
 
         const newBalance = await addFunds(userId, Number(amount));
+
+        publishToUser(userId, "portfolio:changed", {
+            kind: "add_funds",
+            balance: newBalance,
+            at: new Date().toISOString(),
+        });
 
         return res.json({
             success: true,

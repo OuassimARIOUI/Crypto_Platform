@@ -65,13 +65,75 @@ export default function MessagingDock({ me }) {
     const [loadingMessages, setLoadingMessages] = useState(false);
     const [sending, setSending] = useState(false);
 
+    const [unreadCount, setUnreadCount] = useState(0);
+
     const messagesEndRef = useRef(null);
+    const sseRef = useRef(null);
 
     useEffect(() => {
         // Avoid hydration mismatch: server render and first client render must match.
         setMounted(true);
         setToken(Cookies.get("token") || null);
     }, []);
+
+    async function fetchUnreadCount({ silent = false } = {}) {
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_BASE}/messages/unread-count`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed to load unread count");
+            setUnreadCount(Number(data.unreadCount) || 0);
+        } catch (e) {
+            if (!silent) setError(e?.message || "Failed to load unread count");
+        }
+    }
+
+    useEffect(() => {
+        if (!mounted) return;
+        if (!token) return;
+
+        // Initial unread count
+        fetchUnreadCount({ silent: true });
+
+        const url = `${API_BASE}/realtime/stream?token=${encodeURIComponent(token)}`;
+        const es = new EventSource(url);
+        sseRef.current = es;
+
+        const onUnread = (ev) => {
+            try {
+                const data = JSON.parse(ev.data || "{}");
+                setUnreadCount(Number(data.unreadCount) || 0);
+            } catch {
+                // ignore
+            }
+        };
+
+        const onMessageNew = (ev) => {
+            try {
+                const data = JSON.parse(ev.data || "{}");
+                const cid = data?.conversationId;
+                fetchConversations({ silent: true });
+                if (open && cid && Number(cid) === Number(selectedId)) {
+                    fetchMessages(selectedId, { silent: true });
+                }
+            } catch {
+                fetchConversations({ silent: true });
+            }
+        };
+
+        es.addEventListener("messages:unread_count", onUnread);
+        es.addEventListener("message:new", onMessageNew);
+
+        return () => {
+            es.removeEventListener("messages:unread_count", onUnread);
+            es.removeEventListener("message:new", onMessageNew);
+            es.close();
+            if (sseRef.current === es) sseRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mounted, token, open, selectedId]);
 
     async function fetchConversations({ silent = false } = {}) {
         if (!token) return;
@@ -156,6 +218,7 @@ export default function MessagingDock({ me }) {
             setMessageDraft("");
             await fetchMessages(selectedId, { silent: true });
             await fetchConversations({ silent: true });
+            await fetchUnreadCount({ silent: true });
         } catch (e) {
             setError(e?.message || "Failed to send");
         } finally {
@@ -167,6 +230,7 @@ export default function MessagingDock({ me }) {
         if (!open) return;
         setError("");
         fetchConversations();
+        fetchUnreadCount({ silent: true });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open]);
 
@@ -174,6 +238,7 @@ export default function MessagingDock({ me }) {
         if (!open) return;
         if (!selectedId) return;
         fetchMessages(selectedId);
+        fetchUnreadCount({ silent: true });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, selectedId]);
 
@@ -182,6 +247,7 @@ export default function MessagingDock({ me }) {
         const t = setInterval(() => {
             fetchConversations({ silent: true });
             if (selectedId) fetchMessages(selectedId, { silent: true });
+            fetchUnreadCount({ silent: true });
         }, 5000);
         return () => clearInterval(t);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,7 +276,14 @@ export default function MessagingDock({ me }) {
                 className="fixed right-0 bottom-24 z-50 rounded-l-xl border border-white/10 bg-white/10 px-3 py-3 text-xs font-semibold text-white hover:bg-white/15"
                 aria-label="Open messaging"
             >
-                Messages
+                <span className="relative inline-flex items-center">
+                    <span>Messages</span>
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-2 -right-4 inline-flex min-w-[18px] items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                    )}
+                </span>
             </button>
 
             {open && (

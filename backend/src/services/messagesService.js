@@ -1,4 +1,5 @@
 import { prisma } from "./dbService.js";
+import { publishToUser } from "./realtimeService.js";
 
 function normalizeBody(body) {
     if (typeof body !== "string") return "";
@@ -70,6 +71,20 @@ export async function sendTaggedMessageToDirectConversation({ senderId, targetUs
         where: { id: conversationId },
         data: { updated_at: new Date() },
     });
+
+    // Notify the target user (ban notice etc.)
+    publishToUser(targetUserId, "message:new", {
+        conversationId,
+        messageId: message.id,
+        at: message.created_at,
+    });
+
+    try {
+        const unreadCount = await getUnreadCount(targetUserId);
+        publishToUser(targetUserId, "messages:unread_count", { unreadCount });
+    } catch {
+        // ignore
+    }
 
     return {
         id: message.id,
@@ -180,6 +195,12 @@ export async function getConversationMessages({ userId, conversationId, limit = 
 
     if (!isParticipant) throw new Error("Access denied");
 
+    // Mark as read (best-effort)
+    await prisma.conversation_participants.updateMany({
+        where: { conversation_id: cid, user_id: userId },
+        data: { last_read_at: new Date() },
+    });
+
     const rows = await prisma.messages.findMany({
         where: { conversation_id: cid },
         orderBy: { created_at: "desc" },
@@ -198,6 +219,35 @@ export async function getConversationMessages({ userId, conversationId, limit = 
             at: m.created_at,
             sender: m.sender,
         }));
+}
+
+export async function getUnreadCount(userId) {
+    const uid = Number(userId);
+    if (!uid || Number.isNaN(uid)) throw new Error("Invalid user id");
+
+    const parts = await prisma.conversation_participants.findMany({
+        where: { user_id: uid },
+        select: { conversation_id: true, last_read_at: true },
+        take: 100,
+    });
+
+    let total = 0;
+
+    for (const p of parts) {
+        const where = {
+            conversation_id: p.conversation_id,
+            sender_id: { not: uid },
+        };
+        if (p.last_read_at) {
+            where.created_at = { gt: p.last_read_at };
+        }
+
+        // eslint-disable-next-line no-await-in-loop
+        const c = await prisma.messages.count({ where });
+        total += c;
+    }
+
+    return total;
 }
 
 export async function sendMessageToConversation({ me, conversationId, body }) {
@@ -245,6 +295,27 @@ export async function sendMessageToConversation({ me, conversationId, body }) {
         where: { id: cid },
         data: { updated_at: new Date() },
     });
+
+    // Realtime notify other participants
+    const otherUserIds = convo.participants
+        .map((p) => p.user.id)
+        .filter((id) => id !== me.id);
+
+    for (const uid of otherUserIds) {
+        publishToUser(uid, "message:new", {
+            conversationId: cid,
+            messageId: message.id,
+            at: message.created_at,
+        });
+
+        try {
+            // eslint-disable-next-line no-await-in-loop
+            const unreadCount = await getUnreadCount(uid);
+            publishToUser(uid, "messages:unread_count", { unreadCount });
+        } catch {
+            // ignore
+        }
+    }
 
     return {
         id: message.id,

@@ -3,6 +3,7 @@ import { createAuditLog } from "../services/auditLogService.js";
 import { addDurationToNow } from "../utils/dateDuration.js";
 import { getMaintenanceConfig, setMaintenanceConfig } from "../services/appSettingsService.js";
 import { formatBanNoticeBody, sendTaggedMessageToDirectConversation } from "../services/messagesService.js";
+import { publishToRoles, publishToUser } from "../services/realtimeService.js";
 
 function computeUserSummary(user, viewerRole) {
     const isModeratorViewingAdmin = viewerRole === "moderator" && user.role === "admin";
@@ -107,6 +108,13 @@ export async function updateUserRoleController(req, res) {
         metadata: { role },
     });
 
+    publishToRoles(["admin", "moderator"], "users:changed", {
+        kind: "role",
+        targetUserId,
+        at: new Date().toISOString(),
+    });
+    publishToUser(targetUserId, "me:changed", { kind: "role", at: new Date().toISOString() });
+
     return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }
 
@@ -138,6 +146,13 @@ export async function banUserController(req, res) {
         targetUserId,
         metadata: { reason: updated.ban_reason, bannedUntil },
     });
+
+    publishToRoles(["admin", "moderator"], "users:changed", {
+        kind: "ban",
+        targetUserId,
+        at: new Date().toISOString(),
+    });
+    publishToUser(targetUserId, "me:changed", { kind: "ban", at: new Date().toISOString() });
 
     try {
         await sendTaggedMessageToDirectConversation({
@@ -181,6 +196,13 @@ export async function unbanUserController(req, res) {
         targetUserId,
     });
 
+    publishToRoles(["admin", "moderator"], "users:changed", {
+        kind: "unban",
+        targetUserId,
+        at: new Date().toISOString(),
+    });
+    publishToUser(targetUserId, "me:changed", { kind: "unban", at: new Date().toISOString() });
+
     return res.json({ success: true, user: computeUserSummary(updated, req.userRole) });
 }
 
@@ -206,6 +228,11 @@ export async function setMaintenanceStatusController(req, res) {
         actorId: req.userId,
         action: "SET_MAINTENANCE_MODE",
         metadata: { enabled: cfg.enabled, message: cfg.message },
+    });
+
+    publishToRoles(["admin", "moderator", "user"], "maintenance:changed", {
+        enabled: cfg.enabled,
+        at: new Date().toISOString(),
     });
 
     return res.json({

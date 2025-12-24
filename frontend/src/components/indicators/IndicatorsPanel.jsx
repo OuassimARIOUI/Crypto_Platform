@@ -279,11 +279,11 @@ export default function IndicatorsPanel() {
                 {/* Controls */}
                 <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
                     {/* Crypto selector */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                         <select
                             value={symbol}
                             onChange={(e) => setSymbol(e.target.value)}
-                            className="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white/10 pl-4 pr-3 text-white hover:bg-white/20 transition-colors duration-200 border border-white/10"
+                            className="w-full sm:w-auto flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-white/10 pl-4 pr-3 text-white hover:bg-white/20 transition-colors duration-200 border border-white/10"
                         >
                             {cryptos.map((c) => (
                                 <option key={c.id} value={c.symbol} className="bg-black text-white">
@@ -311,7 +311,7 @@ export default function IndicatorsPanel() {
                     </div>
 
                     {/* Indicator toggles */}
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                         <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-white/80">
                             <input
                                 type="checkbox"

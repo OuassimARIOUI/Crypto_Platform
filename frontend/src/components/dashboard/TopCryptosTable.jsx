@@ -57,38 +57,40 @@ export default function TopCryptosTable() {
 
     return (
         <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-lg overflow-hidden">
-            <table className="w-full">
-                <thead>
-                    <tr className="border-b border-white/10 text-gray-400 text-xs uppercase">
-                        <th className="px-4 py-3">#</th>
-                        <th className="px-4 py-3">Name</th>
-                        <th className="px-4 py-3">Price</th>
-                        <th className="px-4 py-3">24h %</th>
-                    </tr>
-                </thead>
+            <div className="overflow-x-auto">
+                <table className="min-w-[520px] w-full">
+                    <thead>
+                        <tr className="border-b border-white/10 text-gray-400 text-xs uppercase">
+                            <th className="px-3 sm:px-4 py-3">#</th>
+                            <th className="px-3 sm:px-4 py-3">Name</th>
+                            <th className="px-3 sm:px-4 py-3">Price</th>
+                            <th className="px-3 sm:px-4 py-3">24h %</th>
+                        </tr>
+                    </thead>
 
-                <tbody>
-                {cryptos.map((c, i) => {
-                    //  Trouve le slug du logo (sinon fallback générique)
-                    const slug = logoMap[c.symbol.toLowerCase()] || c.symbol.toLowerCase();
+                    <tbody>
+                    {cryptos.map((c, i) => {
+                        //  Trouve le slug du logo (sinon fallback générique)
+                        const slug = logoMap[c.symbol.toLowerCase()] || c.symbol.toLowerCase();
 
-                    return (
-                        <CryptoRow
-                            key={c.id}
-                            crypto={{
-                                id: c.id,
-                                name: c.name,
-                                symbol: c.symbol,
-                                price: c.price_usd,
-                                change: c.change_percent_24h,
-                                logo: `https://cryptologos.cc/logos/${slug}-${c.symbol.toLowerCase()}-logo.png`,
-                            }}
-                            index={i + 1}
-                        />
-                    );
-                })}
-                </tbody>
-            </table>
+                        return (
+                            <CryptoRow
+                                key={c.id}
+                                crypto={{
+                                    id: c.id,
+                                    name: c.name,
+                                    symbol: c.symbol,
+                                    price: c.price_usd,
+                                    change: c.change_percent_24h,
+                                    logo: `https://cryptologos.cc/logos/${slug}-${c.symbol.toLowerCase()}-logo.png`,
+                                }}
+                                index={i + 1}
+                            />
+                        );
+                    })}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

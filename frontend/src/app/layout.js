@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Manrope } from "next/font/google";
 import "./globals.css";
+import ThemeProvider from "@/components/theme/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +20,15 @@ const manrope = Manrope({
 
 export const metadata = {
   title: "CryptoTrade",
+  icons: {
+    icon: [{ url: "/LogoApp.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/LogoApp.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* MATERIAL SYMBOLS */}
         <link
@@ -31,7 +36,9 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className={`${manrope.className} bg-[#0A0E23]`} > {children}</body>
+      <body className={`${manrope.className} bg-[#0A0E23]`}>
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

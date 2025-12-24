@@ -7,8 +7,8 @@ import TransferFunds from "@/components/portfolio/TransferFunds";
 export default function PortfolioPage() {
     return (
         <DashboardLayout>
-            <div className="p-6 lg:p-8 space-y-10">
-                <h1 className="text-4xl font-black text-white">Portfolio</h1>
+            <div className="p-4 sm:p-6 lg:p-8 space-y-10">
+                <h1 className="text-2xl sm:text-4xl font-black text-white">Portfolio</h1>
 
                 <PortfolioStats />
 

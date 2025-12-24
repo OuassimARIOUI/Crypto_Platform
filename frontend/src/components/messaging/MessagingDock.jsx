@@ -292,9 +292,9 @@ export default function MessagingDock({ me }) {
             </button>
 
             {open && (
-                <div className="fixed bottom-4 right-4 z-50 flex max-w-[92vw] gap-3">
+                <div className="fixed bottom-4 right-4 z-50 flex flex-col sm:flex-row max-w-[92vw] gap-3">
                     {/* Conversations panel (bottom-right modal) */}
-                    <div className="w-72 rounded-xl border border-white/10 bg-background-dark/95 backdrop-blur p-3">
+                    <div className="w-[88vw] sm:w-72 rounded-xl border border-white/10 bg-background-dark/95 backdrop-blur p-3">
                         <div className="flex items-center justify-between">
                             <div className="text-sm font-semibold text-white">Conversations</div>
                             <button
@@ -366,7 +366,7 @@ export default function MessagingDock({ me }) {
                     </div>
 
                     {/* Conversation panel beside the list */}
-                    <div className="w-96 max-w-[60vw] rounded-xl border border-white/10 bg-background-dark/95 backdrop-blur p-3">
+                    <div className="w-[88vw] sm:w-96 max-w-[88vw] sm:max-w-[60vw] rounded-xl border border-white/10 bg-background-dark/95 backdrop-blur p-3">
                         <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0">
                                 <div className="truncate text-sm font-semibold text-white">

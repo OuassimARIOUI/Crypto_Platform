@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from "react";
-import {NextResponse as res} from "next/server";
 import Cookies from "js-cookie";
 
 export default function PortfolioAssets() {
@@ -76,55 +75,53 @@ export default function PortfolioAssets() {
 
     return (
         <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
-            <table className="w-full">
-                <thead className="bg-white/10">
-                <tr>
-                    <th className="px-6 py-4 text-left text-xs text-gray-400 uppercase">
-                        Asset
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs text-gray-400 uppercase">
-                        Holdings
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs text-gray-400 uppercase">
-                        Price
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs text-gray-400 uppercase">
-                        Total Value
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs text-gray-400 uppercase">
-                        24h
-                    </th>
-                </tr>
-                </thead>
-
-                <tbody className="divide-y divide-white/10">
-                {assets.map((a, idx) => (
-                    <tr key={idx} className="hover:bg-white/5">
-                        <td className="px-6 py-4 text-white">
-                            {a.name} ({a.symbol.toUpperCase()})
-                        </td>
-                        <td className="px-6 py-4 text-gray-300">
-                            {a.holding} {a.symbol.toUpperCase()}
-                        </td>
-                        <td className="px-6 py-4 text-gray-300">
-                            ${a.price.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 text-white font-semibold">
-                            ${a.total.toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4">
-                <span
-                    className={
-                        a.variation >= 0 ? "text-green-400" : "text-red-400"
-                    }
-                >
-                  {a.variation.toFixed(2)}%
-                </span>
-                        </td>
+            <div className="overflow-x-auto">
+                <table className="min-w-[680px] w-full">
+                    <thead className="bg-white/10">
+                    <tr>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs text-gray-400 uppercase">
+                            Asset
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs text-gray-400 uppercase">
+                            Holdings
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs text-gray-400 uppercase">
+                            Price
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs text-gray-400 uppercase">
+                            Total Value
+                        </th>
+                        <th className="px-4 sm:px-6 py-3 sm:py-4 text-left text-xs text-gray-400 uppercase">
+                            24h
+                        </th>
                     </tr>
-                ))}
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody className="divide-y divide-white/10">
+                    {assets.map((a, idx) => (
+                        <tr key={idx} className="hover:bg-white/5">
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-white">
+                                {a.name} ({a.symbol.toUpperCase()})
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-300">
+                                {a.holding} {a.symbol.toUpperCase()}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-300">
+                                ${a.price.toLocaleString()}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-white font-semibold">
+                                ${a.total.toLocaleString()}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4">
+                                <span className={a.variation >= 0 ? "text-green-400" : "text-red-400"}>
+                                    {a.variation.toFixed(2)}%
+                                </span>
+                            </td>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 }

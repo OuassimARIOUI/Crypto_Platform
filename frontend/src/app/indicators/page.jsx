@@ -4,7 +4,7 @@ import IndicatorsPanel from "@/components/indicators/IndicatorsPanel";
 export default function IndicatorsPage() {
     return (
         <DashboardLayout>
-            <div className="p-6 lg:p-10 space-y-10">
+            <div className="p-4 sm:p-6 lg:p-10 space-y-10">
                 <IndicatorsPanel />
             </div>
         </DashboardLayout>

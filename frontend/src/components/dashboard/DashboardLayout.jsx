@@ -6,11 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Notification from "@/components/ui/Notification";
 import MessagingDock from "@/components/messaging/MessagingDock";
+import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
 
 
 export default function DashboardLayout({ children }) {
     const [user, setUser] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const pathname = usePathname();
 
     // Charger l'utilisateur depuis le backend grâce au token
@@ -31,93 +34,190 @@ export default function DashboardLayout({ children }) {
             .catch((err) => console.error("ME ERROR:", err));
     }, []);
 
-    return (
-        <div className="flex min-h-screen w-full bg-background-dark text-white">
-            {/* SIDEBAR */}
-            <aside className="flex h-screen w-64 flex-col border-r border-white/10 bg-background-dark p-4">
-                <div className="flex items-center gap-3 px-3 py-2">
-                    <span className="material-symbols-outlined text-[#0da6f2] text-5xl">
-                        currency_bitcoin
-                    </span>
-                    <h2 className="text-lg font-bold tracking-tight">CryptoApp</h2>
+    // Close mobile drawer when route changes
+    useEffect(() => {
+        setSidebarOpen(false);
+    }, [pathname]);
+
+    // Prevent background scroll when mobile drawer is open
+    useEffect(() => {
+        if (!sidebarOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [sidebarOpen]);
+
+    const navItems = [
+        { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
+        { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
+        { icon: "candlestick_chart", label: "Trading", href: "/trading", restricted: true },
+        { icon: "show_chart", label: "Indicators", href: "/indicators" },
+        { icon: "person", label: "Profile", href: "/profile" },
+        ...(user?.role === "admin" || user?.role === "moderator"
+            ? [{ icon: "group", label: "Users", href: "/users" }]
+            : []),
+        ...(user?.role === "admin" ? [{ icon: "report", label: "Reports", href: "/reports" }] : []),
+    ];
+
+    const SidebarContent = ({ collapsed, onNavigate, showBrand = true }) => (
+        <>
+            {showBrand && (
+                <div className={`flex items-center gap-3 px-3 py-2 ${collapsed ? "justify-center" : ""}`}>
+                    <span className="material-symbols-outlined text-[#0da6f2] text-5xl">currency_bitcoin</span>
+                    {!collapsed && <h2 className="text-lg font-bold tracking-tight">CryptoApp</h2>}
+
+                    <div className="ml-auto hidden lg:flex">
+                        <button
+                            type="button"
+                            onClick={() => setSidebarCollapsed((v) => !v)}
+                            className="h-9 w-9 rounded-md text-gray-400 hover:bg-white/5 hover:text-white flex items-center justify-center"
+                            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            title={sidebarCollapsed ? "Expand" : "Collapse"}
+                        >
+                            <span className="material-symbols-outlined text-xl">
+                                {sidebarCollapsed ? "chevron_right" : "chevron_left"}
+                            </span>
+                        </button>
+                    </div>
                 </div>
+            )}
 
-                <nav className="mt-8 flex flex-col gap-2">
-                    {[
-                        { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
-                        { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
-                        { icon: "candlestick_chart", label: "Trading", href: "/trading", restricted: true },
-                        { icon: "show_chart", label: "Indicators", href: "/indicators" },
-                        { icon: "person", label: "Profile", href: "/profile" },
+            <nav className={`mt-8 flex flex-col gap-2 ${collapsed ? "items-center" : ""}`}>
+                {navItems.map((item) => {
+                    const isActive = pathname.startsWith(item.href);
+                    const isRestricted =
+                        item.restricted && (user?.status === "banned" || user?.status === "suspended");
 
-                        ...(user?.role === "admin" || user?.role === "moderator"
-                            ? [{ icon: "group", label: "Users", href: "/users" }]
-                            : []),
-                        ...(user?.role === "admin"
-                            ? [{ icon: "report", label: "Reports", href: "/reports" }]
-                            : []),
-                    ].map((item) => {
-                        const isActive = pathname.startsWith(item.href);
-                        const isRestricted =
-                            item.restricted && (user?.status === "banned" || user?.status === "suspended");
-
-                        return (
-                            <Link
-                                key={item.label}
-                                href={item.href}
-                                aria-disabled={isRestricted}
-                                tabIndex={isRestricted ? -1 : 0}
-                                onClick={(e) => {
-                                    if (isRestricted) e.preventDefault();
-                                }}
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
-                    ${
+                    return (
+                        <Link
+                            key={item.label}
+                            href={item.href}
+                            aria-disabled={isRestricted}
+                            tabIndex={isRestricted ? -1 : 0}
+                            onClick={(e) => {
+                                if (isRestricted) {
+                                    e.preventDefault();
+                                    return;
+                                }
+                                onNavigate?.();
+                            }}
+                            title={collapsed ? item.label : undefined}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition w-full
+                                ${collapsed ? "justify-center" : ""}
+                                ${
                                     isActive
                                         ? "bg-primary/20 text-primary"
                                         : isRestricted
                                             ? "text-gray-500 opacity-60 cursor-not-allowed"
                                             : "text-gray-400 hover:bg-white/5 hover:text-white"
                                 }
-                `}
+                            `}
+                        >
+                            <span
+                                className={`material-symbols-outlined text-xl ${isActive ? "text-primary" : ""}`}
                             >
-                <span
-                    className={`material-symbols-outlined text-xl ${
-                        isActive ? "text-primary" : ""
-                    }`}
+                                {item.icon}
+                            </span>
+                            {!collapsed && <p className="text-sm font-medium">{item.label}</p>}
+                        </Link>
+                    );
+                })}
+            </nav>
+
+            {/* Logout */}
+            <div className={`mt-auto ${collapsed ? "flex justify-center" : ""}`}>
+                <button
+                    onClick={() => {
+                        Cookies.remove("token");
+                        window.location.href = "/login";
+                    }}
+                    className={`flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg w-full
+                        ${collapsed ? "justify-center" : ""}
+                    `}
+                    title={collapsed ? "Logout" : undefined}
                 >
-                    {item.icon}
-                </span>
-                                <p className="text-sm font-medium">{item.label}</p>
-                            </Link>
-                        );
-                    })}
-                </nav>
+                    <span className="material-symbols-outlined text-xl">logout</span>
+                    {!collapsed && <p className="text-sm">Logout</p>}
+                </button>
+            </div>
+        </>
+    );
 
+    return (
+        <div className="flex min-h-screen w-full bg-background-dark text-white">
+            {/* Mobile overlay */}
+            {sidebarOpen && (
+                <button
+                    type="button"
+                    aria-label="Close menu"
+                    onClick={() => setSidebarOpen(false)}
+                    className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
+                />
+            )}
 
-
-                {/* Logout */}
-                <div className="mt-auto">
+            {/* Mobile drawer */}
+            <aside
+                className={`fixed inset-y-0 left-0 z-50 h-screen border-r border-white/10 bg-background-dark p-4 transform transition-transform duration-200 ease-out lg:hidden
+                    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                    w-72
+                `}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Sidebar"
+            >
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 px-3 py-2">
+                        <span className="material-symbols-outlined text-[#0da6f2] text-5xl">currency_bitcoin</span>
+                        <h2 className="text-lg font-bold tracking-tight">CryptoApp</h2>
+                    </div>
                     <button
-                        onClick={() => {
-                            Cookies.remove("token");
-                            window.location.href = "/login";
-                        }}
-                        className="flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white"
+                        type="button"
+                        onClick={() => setSidebarOpen(false)}
+                        className="h-10 w-10 rounded-md text-gray-300 hover:bg-white/5 hover:text-white flex items-center justify-center"
+                        aria-label="Close menu"
                     >
-                        <span className="material-symbols-outlined text-xl">logout</span>
-                        <p className="text-sm">Logout</p>
+                        <span className="material-symbols-outlined">close</span>
                     </button>
+                </div>
+                <div className="mt-2 flex h-[calc(100vh-72px)] flex-col">
+                    <SidebarContent
+                        collapsed={false}
+                        showBrand={false}
+                        onNavigate={() => setSidebarOpen(false)}
+                    />
                 </div>
             </aside>
 
+            {/* Desktop sidebar */}
+            <aside
+                className={`hidden lg:flex h-screen flex-col border-r border-white/10 bg-background-dark p-4 transition-[width] duration-200
+                    ${sidebarCollapsed ? "w-20" : "w-64"}
+                `}
+            >
+                <SidebarContent collapsed={sidebarCollapsed} />
+            </aside>
+
             {/* MAIN CONTENT */}
-            <main className="flex-1">
+            <main className="flex-1 min-w-0">
                 {/* Topbar */}
-                <header className="flex h-16 items-center justify-end border-b border-white/10 px-6">
-                    <div className="flex items-center gap-4">
-                        <button className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center text-gray-300 hover:text-white">
-                            <span className="material-symbols-outlined">notifications</span>
+                <header className="flex h-16 items-center justify-between lg:justify-end border-b border-white/10 px-4 sm:px-6">
+                    <div className="lg:hidden">
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(true)}
+                            className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center text-gray-300 hover:text-white"
+                            aria-label="Open menu"
+                        >
+                            <span className="material-symbols-outlined">menu</span>
                         </button>
+                    </div>
+
+                    <div className="flex items-center gap-4">
+                        <ThemeToggleButton className="h-10 w-10 bg-white/5 rounded-full flex items-center justify-center text-gray-300 hover:text-white" />
 
                         <div className="flex items-center gap-3">
                             {/* Avatar */}

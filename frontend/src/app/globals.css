@@ -18,6 +18,38 @@
 }
 
 /* ============
+   LIGHT THEME
+   (manual toggle via html[data-theme="light"]) 
+   ============ */
+html[data-theme="light"] {
+  --background: #f7f9fc;
+  --foreground: #0b1220;
+
+  --glass-bg: rgba(0, 0, 0, 0.035);
+  --glass-border: rgba(0, 0, 0, 0.10);
+  --input-bg: rgba(0, 0, 0, 0.045);
+}
+
+/* Minimal compatibility layer: keep existing dark-first utility classes readable in light mode. */
+html[data-theme="light"] .text-white { color: var(--foreground) !important; }
+html[data-theme="light"] .text-white\/70 { color: rgba(11, 18, 32, 0.70) !important; }
+html[data-theme="light"] .text-white\/60 { color: rgba(11, 18, 32, 0.60) !important; }
+html[data-theme="light"] .text-white\/50 { color: rgba(11, 18, 32, 0.50) !important; }
+html[data-theme="light"] .text-gray-200 { color: rgba(11, 18, 32, 0.82) !important; }
+html[data-theme="light"] .text-gray-300 { color: rgba(11, 18, 32, 0.72) !important; }
+html[data-theme="light"] .text-gray-400 { color: rgba(11, 18, 32, 0.62) !important; }
+html[data-theme="light"] .text-gray-500 { color: rgba(11, 18, 32, 0.52) !important; }
+
+html[data-theme="light"] .bg-white\/5 { background-color: rgba(0, 0, 0, 0.035) !important; }
+html[data-theme="light"] .bg-white\/10 { background-color: rgba(0, 0, 0, 0.06) !important; }
+html[data-theme="light"] .bg-white\/15 { background-color: rgba(0, 0, 0, 0.085) !important; }
+html[data-theme="light"] .bg-black\/30 { background-color: rgba(0, 0, 0, 0.03) !important; }
+html[data-theme="light"] .bg-black\/20 { background-color: rgba(0, 0, 0, 0.02) !important; }
+
+html[data-theme="light"] .border-white\/10 { border-color: rgba(0, 0, 0, 0.10) !important; }
+html[data-theme="light"] .border-white\/15 { border-color: rgba(0, 0, 0, 0.15) !important; }
+
+/* ============
    DARK MODE
    ============ */
 @media (prefers-color-scheme: dark) {

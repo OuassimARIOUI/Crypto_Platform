@@ -84,9 +84,9 @@ export default function ReportsPage() {
 
     return (
         <DashboardLayout>
-            <div className="p-6 lg:p-8 space-y-6">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-4xl font-black text-white">Reports</h1>
+            <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h1 className="text-2xl sm:text-4xl font-black text-white">Reports</h1>
                     <button
                         onClick={refresh}
                         className="rounded-lg bg-white/5 px-4 py-2 text-sm text-gray-200 hover:bg-white/10"
@@ -106,16 +106,16 @@ export default function ReportsPage() {
                 ) : (
                     <div className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
                         <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm">
-                                <thead className="bg-white/5 text-gray-300">
+                            <table className="min-w-[980px] w-full text-sm">
+                                <thead className="bg-white/5 text-gray-300 whitespace-nowrap">
                                     <tr>
-                                        <th className="px-4 py-3 text-left font-semibold">Id</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Reported</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Reporter</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Category</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Reason</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Created</th>
-                                        <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Id</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Reported</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Reporter</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Category</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Reason</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Created</th>
+                                        <th className="px-4 py-3 text-left font-semibold whitespace-nowrap">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>

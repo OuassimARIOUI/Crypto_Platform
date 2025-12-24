@@ -201,8 +201,8 @@ export default function TradingHeaderChart() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-2 justify-start lg:justify-end">
-                        <div className="flex items-center gap-1 bg-black/30 p-1 rounded-lg border border-white/10">
+                    <div className="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
+                        <div className="w-full sm:w-auto flex items-center gap-1 bg-black/30 p-1 rounded-lg border border-white/10">
                             {TIMEFRAME_BUTTONS.map((b) => (
                                 <button
                                     key={b.key}
@@ -218,15 +218,15 @@ export default function TradingHeaderChart() {
                             ))}
                         </div>
 
-                        <div className="flex items-center gap-1 bg-black/30 p-1 rounded-lg border border-white/10">
+                        <div className="w-full sm:w-auto flex items-center gap-1 bg-black/30 p-1 rounded-lg border border-white/10">
                             {YMODE_BUTTONS.map((b) => (
                                 <button
                                     key={b.key}
                                     onClick={() => setYMode(b.key)}
                                     className={
                                         yMode === b.key
-                                            ? "text-black bg-primary text-xs font-bold py-2 px-3 rounded-md"
-                                            : "text-gray-300 hover:text-white text-xs font-bold py-2 px-3 rounded-md"
+                                            ? "text-black bg-primary text-[11px] sm:text-xs font-bold py-2 px-2 sm:px-3 rounded-md"
+                                            : "text-gray-300 hover:text-white text-[11px] sm:text-xs font-bold py-2 px-2 sm:px-3 rounded-md"
                                     }
                                 >
                                     {b.label}

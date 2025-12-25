@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import Cookies from "js-cookie";
 
 export default function IndicatorsPanel() {
+    const [theme, setTheme] = useState("dark");
     const [cryptos, setCryptos] = useState([]);
     const [symbol, setSymbol] = useState("btc");
     const [timeframe, setTimeframe] = useState("24h");
@@ -21,6 +22,25 @@ export default function IndicatorsPanel() {
     const [alertStatus, setAlertStatus] = useState("");
 
     const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
+
+    useEffect(() => {
+        const getTheme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+        setTheme(getTheme());
+
+        const observer = new MutationObserver(() => setTheme(getTheme()));
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
+    const isLight = theme === "light";
+    const chartText = isLight ? "rgba(11,18,32,0.80)" : "rgba(255,255,255,0.80)";
+    const chartTextMuted = isLight ? "rgba(11,18,32,0.50)" : "rgba(255,255,255,0.50)";
+    const chartGrid = isLight ? "rgba(0,0,0,0.10)" : "rgba(255,255,255,0.10)";
+    const priceLine = isLight ? "rgba(11,18,32,0.85)" : "#ffffff";
 
     function formatXAxisLabel(timeframe, ts) {
         if (!ts) return "";
@@ -128,7 +148,7 @@ export default function IndicatorsPanel() {
                 x: new Date(p.time),
                 y: p.price
             })),
-            color: "#ffffff"
+            color: priceLine
         },
 
         smaVisible.sma7 && indicators?.sma7Series && {
@@ -153,14 +173,14 @@ export default function IndicatorsPanel() {
             type: "line",
             toolbar: { show: false },
             background: "transparent",
-            foreColor: "rgba(255,255,255,0.8)",
+            foreColor: chartText,
         },
         stroke: {
             curve: "smooth",
             width: 2
         },
         grid: {
-            borderColor: "rgba(255,255,255,0.10)",
+            borderColor: chartGrid,
             strokeDashArray: 0,
             padding: {
                 left: 8,
@@ -186,7 +206,7 @@ export default function IndicatorsPanel() {
                 formatter: (value, timestamp) =>
                     formatXAxisLabel(timeframe, timestamp ?? value),
                 style: {
-                    colors: "rgba(255,255,255,0.50)",
+                    colors: chartTextMuted,
                     fontSize: "12px",
                     fontWeight: 700,
                 },
@@ -196,14 +216,14 @@ export default function IndicatorsPanel() {
             labels: {
                 formatter: v => (isNaN(v) ? "" : "$" + Number(v).toFixed(2)),
                 style: {
-                    colors: "rgba(255,255,255,0.50)",
+                    colors: chartTextMuted,
                     fontSize: "12px",
                     fontWeight: 700,
                 },
             }
         },
         tooltip: {
-            theme: "dark",
+            theme: isLight ? "light" : "dark",
             x: {
                 formatter: (value) => {
                     const date = new Date(value);

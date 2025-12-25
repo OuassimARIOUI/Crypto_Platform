@@ -53,6 +53,7 @@ function toSeries(symbol, rows, yMode) {
 }
 
 export default function TradingHeaderChart() {
+    const [theme, setTheme] = useState("dark");
     const [timeframe, setTimeframe] = useState("1h");
     const [loading, setLoading] = useState(true);
     const [yMode, setYMode] = useState("price");
@@ -60,6 +61,19 @@ export default function TradingHeaderChart() {
     const [selectedSymbols, setSelectedSymbols] = useState(["btc"]);
     const [histories, setHistories] = useState({});
     const [latestBySymbol, setLatestBySymbol] = useState({});
+
+    useEffect(() => {
+        const getTheme = () => (document.documentElement.dataset.theme === "light" ? "light" : "dark");
+        setTheme(getTheme());
+
+        const observer = new MutationObserver(() => setTheme(getTheme()));
+        observer.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["data-theme"],
+        });
+
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -170,6 +184,11 @@ export default function TradingHeaderChart() {
     const primaryLatest = latestBySymbol?.[primarySymbol] || null;
     const headerPrice = primaryLatest?.price_usd ?? null;
     const headerVar24h = primaryLatest?.change_percent_24h ?? null;
+
+    const isLight = theme === "light";
+    const chartText = isLight ? "rgba(11,18,32,0.80)" : "rgba(255,255,255,0.80)";
+    const chartTextMuted = isLight ? "rgba(11,18,32,0.55)" : "rgba(255,255,255,0.55)";
+    const chartGrid = isLight ? "rgba(0,0,0,0.10)" : "rgba(255,255,255,0.10)";
 
     return (
         <div className="rounded-xl border border-white/10 bg-white/5 p-6 space-y-4">
@@ -282,6 +301,8 @@ export default function TradingHeaderChart() {
                             animations: { enabled: true },
                             toolbar: { show: false },
                             zoom: { enabled: false },
+                            background: "transparent",
+                            foreColor: chartText,
                         },
                         stroke: {
                             curve: "smooth",
@@ -293,7 +314,7 @@ export default function TradingHeaderChart() {
                             position: "top",
                         },
                         tooltip: {
-                            theme: "dark",
+                            theme: isLight ? "light" : "dark",
                             shared: true,
                             x: { format: "dd MMM HH:mm" },
                             y: {
@@ -312,13 +333,19 @@ export default function TradingHeaderChart() {
                             labels: {
                                 formatter: (val) =>
                                     yMode === "price" ? formatUsd(val) : `${Number(val).toFixed(2)}%`,
+                                style: { colors: chartTextMuted, fontWeight: 700 },
                             },
                         },
                         grid: {
                             show: true,
+                            borderColor: chartGrid,
                         },
                         noData: {
                             text: loading ? "Loading…" : "Select at least one crypto",
+                        },
+                        markers: {
+                            size: 0,
+                            hover: { size: 4 },
                         },
                     }}
                 />

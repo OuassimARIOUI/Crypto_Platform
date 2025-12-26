@@ -78,7 +78,7 @@ describe("alertsController", () => {
 
         await alertsController(req, res);
 
-        expect(logError).toHaveBeenCalledWith("error AlertsController", error);
+        expect(logError).toHaveBeenCalledWith("error checkAlertController", error);
         expect(res.status).toHaveBeenCalledWith(500);
         expect(res.json).toHaveBeenCalledWith({ error: "Erreur interne serveur" });
     });

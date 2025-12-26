@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "cron": "node src/main.js",
-    "test": "vitest run",
+    "test": "vitest run -c vitest.config.mjs",
+    "test:integration": "vitest run -c vitest.integration.config.mjs",
+    "test:integration:prepare": "node src/test/integration/_shared/prepareDb.js",
     "set-role": "node src/scripts/setUserRole.js"
   },
   "keywords": [],

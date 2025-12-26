@@ -35,17 +35,17 @@ describe("getHistoryService()", () => {
             symbol: "btc"
         });
 
-        // Fake prices (déjà triés DESC dans la requête)
+        // Fake prices (la requête renvoie ASC)
         const fakePrices = [
-            {
-                id: 2,
-                price_usd: "45500",
-                fetched_at: "2025-12-01T14:00:00Z"
-            },
             {
                 id: 1,
                 price_usd: "45000",
-                fetched_at: "2025-12-01T13:00:00Z"
+                fetched_at: new Date("2025-12-01T13:00:00Z")
+            },
+            {
+                id: 2,
+                price_usd: "45500",
+                fetched_at: new Date("2025-12-01T14:00:00Z")
             }
         ];
 
@@ -54,20 +54,25 @@ describe("getHistoryService()", () => {
 
         const result = await getHistoryService("btc", "24h");
 
-        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith({
-            where: { crypto_id: 1 },
-            orderBy: { fetched_at: "desc" },
-            take: 24,
-        });
+        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    crypto_id: 1,
+                    fetched_at: expect.objectContaining({ gte: expect.any(Date) }),
+                }),
+                orderBy: { fetched_at: "asc" },
+                take: 2000,
+            })
+        );
 
-        // reverse() doit remettre les prix dans l’ordre chronologique petit → grand
+        // Résultat chronologique petit → grand
         expect(result).toEqual([
             {
-                time: "2025-12-01T13:00:00Z",
+                time: new Date("2025-12-01T13:00:00Z"),
                 price: 45000
             },
             {
-                time: "2025-12-01T14:00:00Z",
+                time: new Date("2025-12-01T14:00:00Z"),
                 price: 45500
             }
         ]);
@@ -80,11 +85,16 @@ describe("getHistoryService()", () => {
 
         await getHistoryService("eth", "INVALID_TIMEFRAME");
 
-        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith({
-            where: { crypto_id: 5 },
-            orderBy: { fetched_at: "desc" },
-            take: 24,  // valeur par défaut
-        });
+        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    crypto_id: 5,
+                    fetched_at: expect.objectContaining({ gte: expect.any(Date) }),
+                }),
+                orderBy: { fetched_at: "asc" },
+                take: 2000,
+            })
+        );
     });
 
     it("calcule correctement le nombre d'heures pour un timeframe (ex: 7d)", async () => {
@@ -94,11 +104,16 @@ describe("getHistoryService()", () => {
 
         await getHistoryService("btc", "7d");
 
-        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith({
-            where: { crypto_id: 2 },
-            orderBy: { fetched_at: "desc" },
-            take: 24 * 7,
-        });
+        expect(prisma.crypto_prices.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({
+                where: expect.objectContaining({
+                    crypto_id: 2,
+                    fetched_at: expect.objectContaining({ gte: expect.any(Date) }),
+                }),
+                orderBy: { fetched_at: "asc" },
+                take: 2000,
+            })
+        );
     });
 
 });

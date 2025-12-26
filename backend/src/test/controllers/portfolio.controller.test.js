@@ -12,6 +12,10 @@ import { addFunds } from "../../services/addFundsService.js";
 
 import { logError } from "../../utils/logger.js";
 
+vi.mock("../../services/realtimeService.js", () => ({
+    publishToUser: vi.fn()
+}));
+
 // Mock des services
 vi.mock("../../services/portfolioService.js", () => ({
     getMyPortfolio: vi.fn(),
@@ -35,7 +39,7 @@ describe("Portfolio Controllers", () => {
         vi.clearAllMocks();
 
         req = {
-            user: { id: 10 },
+            userId: 10,
             body: {}
         };
 

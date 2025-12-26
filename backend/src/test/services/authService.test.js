@@ -11,6 +11,7 @@ vi.mock("../../services/dbService.js", () => ({
         users: {
             create: vi.fn(),
             findUnique: vi.fn(),
+            findFirst: vi.fn(),
         },
         portfolios: {
             create: vi.fn(),
@@ -30,10 +31,13 @@ describe("AuthService Tests", () => {
         it("crée un utilisateur + un portefeuille", async () => {
             bcrypt.hash.mockResolvedValue("hashed123");
 
+            // No conflicting pseudo
+            prisma.users.findFirst.mockResolvedValue(null);
+
             prisma.users.create.mockResolvedValue({
                 id: 1,
                 email: "test@mail.com",
-                pseudo: "youssef",
+                pseudo: "yous123",
                 password: "hashed123"
             });
 
@@ -43,14 +47,14 @@ describe("AuthService Tests", () => {
                 balance: 0
             });
 
-            const result = await register("test@mail.com", "password", "youssef");
+            const result = await register("test@mail.com", "password", "yous123");
 
             expect(bcrypt.hash).toHaveBeenCalled();
             expect(prisma.users.create).toHaveBeenCalledWith({
                 data: {
                     email: "test@mail.com",
                     password: "hashed123",
-                    pseudo: "youssef",
+                    pseudo: "yous123",
                 },
             });
 

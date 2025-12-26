@@ -7,13 +7,24 @@ import express from "express";
 ----------------------------- */
 
 vi.mock("../../controllers/alerts.controller.js", () => ({
-    alertsController: vi.fn((req, res) => res.json({ ok: "alerts" }))
+    alertsController: vi.fn((req, res) => res.json({ ok: "alerts" })),
+    checkAlertController: vi.fn((req, res) => res.json({ ok: "alerts-check" })),
+    listMyAlertsController: vi.fn((req, res) => res.json({ ok: "alerts" })),
+    createAlertController: vi.fn((req, res) => res.json({ ok: "alerts-create" })),
+    deleteAlertController: vi.fn((req, res) => res.json({ ok: "alerts-delete" })),
+    resetAlertController: vi.fn((req, res) => res.json({ ok: "alerts-reset" })),
 }));
 
 vi.mock("../../controllers/auth.controller.js", () => ({
     registerController: vi.fn((req, res) => res.json({ ok: "register" })),
+    pseudoAvailabilityController: vi.fn((req, res) => res.json({ ok: "pseudo-check" })),
     loginController: vi.fn((req, res) => res.json({ ok: "login" })),
-    meController: vi.fn((req, res) => res.json({ ok: "me" }))
+    meController: vi.fn((req, res) => res.json({ ok: "me" })),
+    resetPasswordController: vi.fn((req, res) => res.json({ ok: "reset-password" })),
+    updatePasswordController: vi.fn((req, res) => res.json({ ok: "update-password" })),
+    firebaseSyncController: vi.fn((req, res) => res.json({ ok: "firebase-sync" })),
+    loginFirebase: vi.fn((req, res) => res.json({ ok: "firebase-login" })),
+    updateMeController: vi.fn((req, res) => res.json({ ok: "update-me" })),
 }));
 
 vi.mock("../../controllers/cryptos.controller.js", () => ({
@@ -30,7 +41,8 @@ vi.mock("../../controllers/portfolio.controller.js", () => ({
     getMyPortfolioController: vi.fn((req, res) => res.json({ ok: "portfolio" })),
     buyCryptoController: vi.fn((req, res) => res.json({ ok: "buy" })),
     sellCryptoController: vi.fn((req, res) => res.json({ ok: "sell" })),
-    addFundsController: vi.fn((req, res) => res.json({ ok: "addfunds" }))
+    addFundsController: vi.fn((req, res) => res.json({ ok: "addfunds" })),
+    transferFundsController: vi.fn((req, res) => res.json({ ok: "transfer" })),
 }));
 
 vi.mock("../../controllers/price.controller.js", () => ({
@@ -52,6 +64,8 @@ vi.mock("../../controllers/priceHistory.controller.js", () => ({
 vi.mock("../../middleware/auth.js", () => ({
     auth: vi.fn((req, res, next) => {
         req.user = { id: 99, role: "user" };
+        req.userId = 99;
+        req.dbUser = { id: 99, role: "user", status: "active" };
         next();
     })
 }));

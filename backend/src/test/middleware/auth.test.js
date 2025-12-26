@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { auth, adminOnly } from "../../middleware/auth.js";
 
-const verifyIdTokenMock = vi.fn();
-const prismaMock = {
-    users: {
-        findUnique: vi.fn(),
-        update: vi.fn(),
+const { verifyIdTokenMock, prismaMock } = vi.hoisted(() => ({
+    verifyIdTokenMock: vi.fn(),
+    prismaMock: {
+        users: {
+            findUnique: vi.fn(),
+            update: vi.fn(),
+        },
     },
-};
+}));
 
 vi.mock("../../services/firebaseAdmin.js", () => ({
     default: {

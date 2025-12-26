@@ -5,33 +5,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { checkActionCode } from "firebase/auth";
 import { auth } from "../../../../lib/firebase";
-
-function buildRedirectUrl(pathname, params) {
-  const qs = new URLSearchParams(params);
-  return qs.toString() ? `${pathname}?${qs.toString()}` : pathname;
-}
+import {
+  buildRedirectUrl,
+  getAuthActionBaseParams,
+  getAuthActionInput,
+  getFastRedirectPathname,
+} from "../../../../lib/firebaseActionLink";
 
 export default function AuthActionPage() {
   const sp = useSearchParams();
   const router = useRouter();
 
-  const mode = sp.get("mode") || "";
-  const oobCode =
-    sp.get("oobCode") ||
-    sp.get("oobcode") ||
-    sp.get("oob_code") ||
-    sp.get("code") ||
-    "";
-  const continueUrl = sp.get("continueUrl") || "";
+  const { mode, oobCode, continueUrl } = useMemo(() => getAuthActionInput(sp), [sp]);
 
   const [status, setStatus] = useState("loading");
   const [details, setDetails] = useState("");
 
-  const baseParams = useMemo(() => {
-    const params = { oobCode };
-    if (continueUrl) params.continueUrl = continueUrl;
-    return params;
-  }, [oobCode, continueUrl]);
+  const baseParams = useMemo(
+    () => getAuthActionBaseParams({ oobCode, continueUrl }),
+    [oobCode, continueUrl]
+  );
 
   useEffect(() => {
     if (!oobCode) {
@@ -41,13 +34,9 @@ export default function AuthActionPage() {
     }
 
     // Fast path when Firebase provides the standard mode.
-    if (mode === "verifyEmail") {
-      router.replace(buildRedirectUrl("/verify-email", baseParams));
-      return;
-    }
-
-    if (mode === "resetPassword") {
-      router.replace(buildRedirectUrl("/reset-password", baseParams));
+    const fastPath = getFastRedirectPathname(mode);
+    if (fastPath) {
+      router.replace(buildRedirectUrl(fastPath, baseParams));
       return;
     }
 

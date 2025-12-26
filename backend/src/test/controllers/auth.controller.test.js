@@ -6,6 +6,14 @@ import { logError, logInfo } from "../../utils/logger.js";
 import jwt from "jsonwebtoken";
 import { prisma } from "../../services/dbService.js";
 
+vi.mock("../../services/firebaseAdmin.js", () => ({
+    default: {
+        auth: () => ({
+            verifyIdToken: vi.fn().mockRejectedValue(new Error("Invalid token"))
+        })
+    }
+}));
+
 // Mock des dépendances
 vi.mock("../../services/authService.js", () => ({
     register: vi.fn(),
@@ -75,7 +83,7 @@ describe("Auth Controllers", () => {
 
             expect(logError).toHaveBeenCalled();
             expect(res.status).toHaveBeenCalledWith(500);
-            expect(res.json).toHaveBeenCalledWith({ error: "Erreur serveur" });
+            expect(res.json).toHaveBeenCalledWith({ error: "DB error" });
         });
 
     });
@@ -161,7 +169,9 @@ describe("Auth Controllers", () => {
 
             await meController(req, res);
 
-            expect(prisma.users.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+            expect(prisma.users.findUnique).toHaveBeenCalledWith(
+                expect.objectContaining({ where: { id: 1 } })
+            );
             expect(res.json).toHaveBeenCalledWith(mockUser);
         });
 

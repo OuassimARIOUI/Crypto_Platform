@@ -8,6 +8,7 @@ vi.mock("../../services/dbService.js", () => ({
     prisma: {
         portfolios: {
             findUnique: vi.fn(),
+            create: vi.fn(),
             update: vi.fn()
         },
         portfolio_transactions: {
@@ -22,7 +23,7 @@ vi.mock("../../services/dbService.js", () => ({
     }
 }));
 
-// Mock du logger (optionnel)
+// Mock du logger 
 vi.mock("../../utils/logger.js", () => ({
     logError: vi.fn()
 }));
@@ -37,12 +38,24 @@ beforeEach(() => {
 // -----------------------------
 //
 describe("getMyPortfolio()", () => {
-    it("retourne null si aucun portefeuille trouvé", async () => {
+    it("crée un portefeuille et retourne une structure vide si aucun portefeuille trouvé", async () => {
         prisma.portfolios.findUnique.mockResolvedValue(null);
+        prisma.portfolios.create.mockResolvedValue({ id: 1, user_id: 1, balance: 0 });
 
         const result = await getMyPortfolio(1);
 
-        expect(result).toBeNull();
+        expect(prisma.portfolios.create).toHaveBeenCalledWith({
+            data: {
+                user_id: 1,
+                balance: 0,
+            },
+        });
+
+        expect(result).toEqual({
+            balance: 0,
+            holdings: {},
+            transactions: [],
+        });
     });
 
     it("retourne balance + holdings + transactions", async () => {
@@ -118,18 +131,19 @@ describe("buyCrypto()", () => {
         prisma.cryptos.findUnique.mockResolvedValue({ id: 10 });
         prisma.crypto_prices.findFirst.mockResolvedValue({ price_usd: "20000" });
 
-        prisma.portfolios.findUnique.mockResolvedValue({
-            id: 99,
-            user_id: 1,
-            balance: 50000
-        });
+        prisma.portfolios.findUnique
+            .mockResolvedValueOnce({
+                id: 99,
+                user_id: 1,
+                balance: 50000
+            })
+            .mockResolvedValueOnce({
+                balance: 30000,
+                transactions: []
+            });
 
         prisma.portfolios.update.mockResolvedValue({});
         prisma.portfolio_transactions.create.mockResolvedValue({});
-        prisma.portfolios.findUnique.mockResolvedValue({
-            balance: 30000,
-            transactions: []
-        });
 
         const result = await buyCrypto(1, "btc", 1);
 

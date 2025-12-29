@@ -18,11 +18,15 @@ if (!process.env.DATABASE_URL) {
 // This will create/update tables as needed on the test database.
 const npxCmd = process.platform === "win32" ? "npx.cmd" : "npx";
 
-const push = spawnSync(npxCmd, ["prisma", "db", "push", "--skip-generate"], {
+const push = spawnSync(
+  npxCmd,
+  ["prisma", "db", "push", "--skip-generate", "--accept-data-loss"],
+  {
   cwd: backendRoot,
   stdio: "inherit",
   env: process.env,
-});
+  }
+);
 
 if (push.status !== 0) {
   process.exit(push.status ?? 1);

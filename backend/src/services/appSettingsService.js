@@ -19,11 +19,28 @@ export async function getMaintenanceConfig({ noCache = false } = {}) {
         return cachedMaintenance;
     }
 
-    const row = await prisma.app_settings.upsert({
-        where: { key: GLOBAL_SETTINGS_KEY },
-        create: { key: GLOBAL_SETTINGS_KEY },
-        update: {},
-    });
+    let row;
+    try {
+        row = await prisma.app_settings.upsert({
+            where: { key: GLOBAL_SETTINGS_KEY },
+            create: { key: GLOBAL_SETTINGS_KEY },
+            update: {},
+        });
+    } catch (err) {
+        // Rare race: two concurrent upserts can collide on unique PK in some environments.
+        if (err?.code === "P2002") {
+            row = await prisma.app_settings.findUnique({ where: { key: GLOBAL_SETTINGS_KEY } });
+        } else {
+            throw err;
+        }
+    }
+
+    if (!row) {
+        // Defensive: should not happen unless DB is unavailable.
+        row = await prisma.app_settings.create({
+            data: { key: GLOBAL_SETTINGS_KEY },
+        });
+    }
 
     cachedMaintenance = {
         enabled: Boolean(row.maintenance_enabled),
@@ -40,18 +57,34 @@ export async function setMaintenanceConfig({ enabled, message } = {}) {
         throw new Error("enabled must be a boolean");
     }
 
-    const updated = await prisma.app_settings.upsert({
-        where: { key: GLOBAL_SETTINGS_KEY },
-        create: {
-            key: GLOBAL_SETTINGS_KEY,
-            maintenance_enabled: enabled,
-            maintenance_message: normalizeMessage(message),
-        },
-        update: {
-            maintenance_enabled: enabled,
-            maintenance_message: normalizeMessage(message),
-        },
-    });
+    let updated;
+    try {
+        updated = await prisma.app_settings.upsert({
+            where: { key: GLOBAL_SETTINGS_KEY },
+            create: {
+                key: GLOBAL_SETTINGS_KEY,
+                maintenance_enabled: enabled,
+                maintenance_message: normalizeMessage(message),
+            },
+            update: {
+                maintenance_enabled: enabled,
+                maintenance_message: normalizeMessage(message),
+            },
+        });
+    } catch (err) {
+        // Same race handling as getMaintenanceConfig.
+        if (err?.code === "P2002") {
+            updated = await prisma.app_settings.update({
+                where: { key: GLOBAL_SETTINGS_KEY },
+                data: {
+                    maintenance_enabled: enabled,
+                    maintenance_message: normalizeMessage(message),
+                },
+            });
+        } else {
+            throw err;
+        }
+    }
 
     cachedMaintenance = {
         enabled: Boolean(updated.maintenance_enabled),

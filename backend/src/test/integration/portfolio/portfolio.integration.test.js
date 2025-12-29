@@ -16,6 +16,7 @@ vi.mock("../../../services/firebaseAdmin.js", () => ({
 
 import { prisma } from "../../../services/dbService.js";
 import { truncateAllTables } from "../_shared/dbUtils.js";
+import { disableMaintenance } from "../_shared/maintenanceUtils.js";
 
 let app;
 
@@ -26,6 +27,7 @@ beforeAll(async () => {
 beforeEach(async () => {
   vi.clearAllMocks();
   await truncateAllTables();
+  await disableMaintenance();
 });
 
 describe("Integration: portfolio routes (real DB)", () => {

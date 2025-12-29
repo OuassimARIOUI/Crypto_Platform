@@ -7,6 +7,78 @@ export async function auth(req, res, next) {
 
     if (!header) return res.status(401).json({ error: "Token manquant" });
 
+    // PERF-ONLY bypass (to load-test authenticated routes without real Firebase)
+    // Enabled only when PERF_TEST=true AND not in production.
+    if (
+        process.env.PERF_TEST === "true" &&
+        process.env.NODE_ENV !== "production" &&
+        header.startsWith("Bearer ")
+    ) {
+        const token = header.split(" ")[1];
+        const expected = process.env.PERF_TEST_TOKEN || "perf_test_token";
+
+        if (token === expected) {
+            const uid = process.env.PERF_TEST_UID || "perf_uid";
+            const email = process.env.PERF_TEST_EMAIL || "perf_test@mail.com";
+
+            // Pseudo must be alphanumeric only.
+            const basePseudo = (process.env.PERF_TEST_PSEUDO || "perfuser1").replace(/[^a-zA-Z0-9]/g, "");
+
+            let user;
+            try {
+                user = await prisma.users.upsert({
+                    where: { email },
+                    update: {
+                        firebase_uid: uid,
+                        status: "active",
+                        role: "user",
+                    },
+                    create: {
+                        email,
+                        pseudo: basePseudo || `perfuser${Date.now().toString(36).slice(-6)}`,
+                        firebase_uid: uid,
+                        password: null,
+                        status: "active",
+                        role: "user",
+                    },
+                });
+            } catch (err) {
+                // If pseudo collision happens, retry with a random alphanumeric pseudo.
+                if (err?.code === "P2002") {
+                    user = await prisma.users.upsert({
+                        where: { email },
+                        update: {
+                            firebase_uid: uid,
+                            status: "active",
+                            role: "user",
+                        },
+                        create: {
+                            email,
+                            pseudo: `perfuser${Date.now().toString(36).slice(-6)}`,
+                            firebase_uid: uid,
+                            password: null,
+                            status: "active",
+                            role: "user",
+                        },
+                    });
+                } else {
+                    throw err;
+                }
+            }
+
+            await prisma.portfolios.upsert({
+                where: { user_id: user.id },
+                update: {},
+                create: { user_id: user.id, balance: 0, total_deposited: 0 },
+            });
+
+            req.user = { uid, email };
+            req.dbUser = user;
+            req.userId = user.id;
+            return next();
+        }
+    }
+
     const token = header.split(" ")[1];
 
     try {

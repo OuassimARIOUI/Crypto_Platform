@@ -85,7 +85,7 @@ describe("Sécurité : TestInsertion à la DB", () => {
         const { connectDB } = await import("../../services/dbService.js");
         const { fetchCryptoData } = await import("../../services/fetchService.js");
 
-        const fakeData = Array.from({ length: 5 }).map((_, i) => ({
+        const fakeData = Array.from({ length: 20 }).map((_, i) => ({
             symbol: `c${i}`,
             name: `Crypto${i}`,
             current_price: 1000,

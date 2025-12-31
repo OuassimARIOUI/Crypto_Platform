@@ -69,7 +69,7 @@ export default function TopCryptosTable() {
                     </thead>
 
                     <tbody>
-                    {cryptos.map((c, i) => {
+                    {cryptos.slice(0, 20).map((c, i) => {
                         //  Trouve le slug du logo (sinon fallback générique)
                         const slug = logoMap[c.symbol.toLowerCase()] || c.symbol.toLowerCase();
 

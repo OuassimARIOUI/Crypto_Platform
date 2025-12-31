@@ -13,10 +13,10 @@ export default function DashboardPage() {
                 {/* Stats (Mock for now → later backend) */}
                 <DashboardStats />
 
-                {/* Top 5 Cryptos */}
+                {/* Top 20 Cryptos */}
                 <div className="mt-8">
                     <h2 className="text-[22px] font-bold text-white mb-4">
-                        Top 5 Cryptocurrencies
+                        Top 20 Cryptocurrencies
                     </h2>
 
                     <TopCryptosTable />

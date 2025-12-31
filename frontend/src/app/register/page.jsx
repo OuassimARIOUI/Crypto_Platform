@@ -84,68 +84,83 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-[#101c22] p-4 relative">
+        <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
 
-            {/* Background blur effects */}
-            <div className="absolute -top-1/4 -left-1/4 h-1/2 w-1/2 rounded-full bg-primary/20 blur-3xl animate-[spin_20s_linear_infinite]"></div>
-            <div className="absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full bg-primary/20 blur-3xl animate-[spin_25s_linear_infinite_reverse]"></div>
+            {/* Background */}
+            <div
+                className="absolute inset-0 w-full h-full bg-center bg-cover opacity-30"
+                style={{
+                    backgroundImage:
+                        `url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyBroiDJnby3GMkVA97K-1ZymGAOfHWmi8SpM9cZfFR9FcFVHAUNMc-GHY7CfNQ4UR9rEb9niCqWbKJVqMNIYNnnjx1UAoiF_ZqlYkVnYErggEgh0P88EZj1Ab21-Dfo_LV4cyGKwCmULAepNknX_IiAAUw-mc0-aMEtbVSjOpf0ALsJgDAUHkTK1z4pPH9X3rdP_wHb_EdhjhCNzD2DVkXZvzYjSIwg4YLD92Yg4nAu7IL-wgkH-012A2B7j0EMTQmH9E7YbyJ17r")`,
+                }}
+            ></div>
 
-            <div className="relative z-10 max-w-md w-full rounded-xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl">
-                <h1 className="text-white text-[32px] font-bold text-center mb-8">
-                    Create Your Account
-                </h1>
+            {/* CARD */}
+            <div className="relative z-10 flex flex-col items-center gap-8 w-full max-w-md">
 
-                {error && (
-                    <div className="mb-4 rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-3 text-sm text-red-200">
-                        {error}
-                    </div>
-                )}
+                <div className="flex items-center gap-3 mb-4">
+                    <span className="material-symbols-outlined text-primary text-4xl">
+                        currency_bitcoin
+                    </span>
+                    <span className="text-white text-3xl font-bold tracking-tight font-display">
+                        CryptoTrade
+                    </span>
+                </div>
 
-                <form onSubmit={handleRegister} className="space-y-6">
-                    <Input
-                        label="Username"
-                        placeholder="Enter your username"
-                        value={pseudo}
-                        onChange={(e) => setPseudo(e.target.value)}
-                    />
+                <div className="glassmorphism flex w-full flex-col gap-6 rounded-xl p-8">
+                    <h1 className="text-white text-4xl font-black leading-tight tracking-tight">
+                        Create Your Account
+                    </h1>
 
-                    <Input
-                        label="Email Address"
-                        type="email"
-                        placeholder="Enter your email address"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
+                    {error && (
+                        <div className="rounded-lg border border-red-500/30 bg-red-600/15 px-4 py-3 text-sm text-red-200">
+                            {error}
+                        </div>
+                    )}
 
-                    <Input
-                        label="Password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <form onSubmit={handleRegister} className="space-y-6">
+                        <Input
+                            label="Username"
+                            placeholder="Enter your username"
+                            value={pseudo}
+                            onChange={(e) => setPseudo(e.target.value)}
+                        />
 
-                    <Input
-                        label="Discord Username (optional)"
-                        placeholder="ex: mydiscord"
-                        value={discordUsername}
-                        onChange={(e) => setDiscordUsername(e.target.value)}
-                    />
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            placeholder="Enter your email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                        />
 
-                    <Button type="submit" disabled={loading}>
-                        {loading ? "Creating..." : "Create Account"}
-                    </Button>
-                </form>
+                        <Input
+                            label="Password"
+                            type="password"
+                            placeholder="Enter your password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
 
-                <p className="mt-4 text-center text-white/60 text-sm">
-                    Already have an account?{" "}
-                    <Link
-                        href="/login"
-                        className="font-medium text-primary/80 hover:text-primary transition-colors"
-                    >
-                        Log In
-                    </Link>
-                </p>
+                        <Input
+                            label="Discord Username (optional)"
+                            placeholder="ex: mydiscord"
+                            value={discordUsername}
+                            onChange={(e) => setDiscordUsername(e.target.value)}
+                        />
+
+                        <Button type="submit" disabled={loading}>
+                            {loading ? "Creating..." : "Create Account"}
+                        </Button>
+                    </form>
+
+                    <p className="text-center text-[#888888] text-sm">
+                        Already have an account?{" "}
+                        <Link href="/login" className="text-primary font-bold underline hover:text-primary/80">
+                            Log In
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

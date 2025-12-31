@@ -30,9 +30,9 @@ describe("fetchService", () => {
     });
     
     test("Performance : récupération des données < 2 secondes", async () => {
-        // on simule une API rapide avec 5 cryptos
+        // on simule une API rapide avec 20 cryptos
         axios.get.mockResolvedValueOnce({
-            data: Array.from({ length: 5 }).map((_, i) => ({
+            data: Array.from({ length: 20 }).map((_, i) => ({
                 name: `Crypto${i}`,
                 current_price: 1000 + i * 100,
             })),

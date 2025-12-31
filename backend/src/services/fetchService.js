@@ -7,7 +7,7 @@ export async function fetchCryptoData() {
             params: {
                 vs_currency: "usd",
                 order: "market_cap_desc",
-                per_page: 5,
+                per_page: 20,
                 page: 1,
                 sparkline: false,
             },
@@ -18,10 +18,7 @@ export async function fetchCryptoData() {
             timeout: 10000
         });
         const data = response.data;
-        logInfo(` ${new Date().toLocaleTimeString()} — Données crypto :`);
-        data.forEach((c) => {
-            console.log(`   ${c.name.padEnd(12)} → ${c.current_price.toFixed(2)} USD`);
-        });
+        logInfo(` ${new Date().toLocaleTimeString()} — Données crypto (${Array.isArray(data) ? data.length : 0})`);
         if (data) return data;
     } catch (err) {
         logError(" Erreur lors de la récupération des données :", err.message);

@@ -2,17 +2,16 @@ import ForgotPasswordForm from "@/components/forms/ForgotPasswordForm";
 
 export default function ForgotPasswordPage() {
     return (
-        <div
-            className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden"
-            style={{
-                backgroundImage:
-                    'url("https://lh3.googleusercontent.com/aida-public/AB6AXuDXEkAh6s7LrpuA6QLffbsGBRuh5wc9WI4mtIFKDdIvff8j4uEs4Rxm5dNAepscuNqlcNPOn3Sti1zaMhflYwuF4CEKUjO1ATMaLLDcOx_qiYNWxQzWkWhAhfrZpNyKns0wRH7IbYyDThnS3PLuYiOHpZjvDJRljh3DvN1s-AhRjuJdR2YEw9nI3pnKX5z_tmQBNLIbLE_ATICu9JQ5g88X4dmVvz-PomYgIfKmwKnqI9LKOpNHFCyqOO8SToux9cVMbU3yBbNIFJZM")',
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-            }}
-        >
-            {/* overlay */}
-            <div className="absolute inset-0 bg-[#101c22]/80 backdrop-blur-sm"></div>
+        <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
+
+            {/* Background */}
+            <div
+                className="absolute inset-0 w-full h-full bg-center bg-cover opacity-30"
+                style={{
+                    backgroundImage:
+                        `url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyBroiDJnby3GMkVA97K-1ZymGAOfHWmi8SpM9cZfFR9FcFVHAUNMc-GHY7CfNQ4UR9rEb9niCqWbKJVqMNIYNnnjx1UAoiF_ZqlYkVnYErggEgh0P88EZj1Ab21-Dfo_LV4cyGKwCmULAepNknX_IiAAUw-mc0-aMEtbVSjOpf0ALsJgDAUHkTK1z4pPH9X3rdP_wHb_EdhjhCNzD2DVkXZvzYjSIwg4YLD92Yg4nAu7IL-wgkH-012A2B7j0EMTQmH9E7YbyJ17r")`,
+                }}
+            ></div>
 
             {/* CONTENU */}
             <div className="relative z-10 flex w-full flex-col items-center px-4">

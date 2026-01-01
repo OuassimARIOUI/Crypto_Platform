@@ -7,14 +7,60 @@ export default function TopCryptosTable() {
     const [loading, setLoading] = useState(true);
 
     const logoMap = {
+        // Top cryptos
         btc: "bitcoin",
         eth: "ethereum",
         usdt: "tether",
         xrp: "xrp",
-        bnb: "binance-coin",
+        bnb: "binancecoin",
         ada: "cardano",
         sol: "solana",
         dot: "polkadot",
+        // Additional cryptos from top 20
+        usdc: "usd-coin",
+        trx: "tron",
+        doge: "dogecoin",
+        steth: "staked-ether",
+        bch: "bitcoin-cash",
+        wbtc: "wrapped-bitcoin",
+        wsteth: "wrapped-steth",
+        wbeth: "wrapped-beacon-eth",
+        weeth: "wrapped-eeth",
+        usds: "usds",
+        wbt: "whitebit",
+        // Stablecoins
+        "bsc-usd": "binance-usd",
+        busd: "binance-usd",
+        dai: "multi-collateral-dai",
+        // Other popular cryptos
+        avax: "avalanche",
+        matic: "polygon",
+        shib: "shiba-inu",
+        link: "chainlink",
+        ltc: "litecoin",
+        uni: "uniswap",
+        atom: "cosmos",
+        xlm: "stellar",
+        etc: "ethereum-classic",
+        xmr: "monero",
+        algo: "algorand",
+        vet: "vechain",
+        icp: "internet-computer",
+        fil: "filecoin",
+        hbar: "hedera",
+        near: "near-protocol",
+        apt: "aptos",
+        arb: "arbitrum",
+        op: "optimism",
+        pepe: "pepe",
+        sui: "sui",
+        ton: "toncoin",
+        render: "render",
+        inj: "injective",
+        imx: "immutable-x",
+        kas: "kaspa",
+        bonk: "bonk",
+        floki: "floki-inu",
     };
 
     useEffect(() => {
@@ -72,6 +118,10 @@ export default function TopCryptosTable() {
                     {cryptos.slice(0, 20).map((c, i) => {
                         //  Trouve le slug du logo (sinon fallback générique)
                         const slug = logoMap[c.symbol.toLowerCase()] || c.symbol.toLowerCase();
+                        const symbol = c.symbol.toUpperCase();
+                        
+                        // Utilise CryptoCompare comme source principale (plus fiable)
+                        const logoUrl = `https://assets.coincap.io/assets/icons/${c.symbol.toLowerCase()}@2x.png`;
 
                         return (
                             <CryptoRow
@@ -82,7 +132,7 @@ export default function TopCryptosTable() {
                                     symbol: c.symbol,
                                     price: c.price_usd,
                                     change: c.change_percent_24h,
-                                    logo: `https://cryptologos.cc/logos/${slug}-${c.symbol.toLowerCase()}-logo.png`,
+                                    logo: logoUrl,
                                 }}
                                 index={i + 1}
                             />

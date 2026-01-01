@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { checkActionCode } from "firebase/auth";
 import { auth } from "../../../../lib/firebase";
@@ -12,7 +12,7 @@ import {
   getFastRedirectPathname,
 } from "../../../../lib/firebaseActionLink";
 
-export default function AuthActionPage() {
+function AuthActionContent() {
   const sp = useSearchParams();
   const router = useRouter();
 
@@ -114,5 +114,20 @@ export default function AuthActionPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function AuthActionPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen w-full flex items-center justify-center bg-[#0A0E23] p-6">
+        <div className="w-full max-w-xl text-center">
+          <div className="text-white font-black leading-none text-[72px] sm:text-[96px]">…</div>
+          <h1 className="mt-4 text-white text-2xl sm:text-3xl font-bold">Chargement…</h1>
+        </div>
+      </main>
+    }>
+      <AuthActionContent />
+    </Suspense>
   );
 }

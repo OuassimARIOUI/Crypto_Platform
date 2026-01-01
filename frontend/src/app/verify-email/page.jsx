@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { auth } from "../../../lib/firebase";
 import { applyActionCode, checkActionCode } from "firebase/auth";
 import { useSearchParams } from "next/navigation";
 
-export default function VerifyEmail() {
+function VerifyEmailContent() {
     const [status, setStatus] = useState("loading");
     const [details, setDetails] = useState("");
     const searchParams = useSearchParams();
@@ -65,5 +65,17 @@ export default function VerifyEmail() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function VerifyEmail() {
+    return (
+        <Suspense fallback={
+            <div className="text-white flex items-center justify-center min-h-screen">
+                <p>Loading...</p>
+            </div>
+        }>
+            <VerifyEmailContent />
+        </Suspense>
     );
 }

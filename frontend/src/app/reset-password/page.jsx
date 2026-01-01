@@ -1,11 +1,11 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Notification from "@/components/ui/Notification";
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
     const searchParams = useSearchParams();
     const oobCode = searchParams.get("oobCode");
 
@@ -68,14 +68,15 @@ export default function ResetPasswordPage() {
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
 
-            {/* Background */}
+            {/* Background GIF */}
             <div
-                className="absolute inset-0 w-full h-full bg-center bg-cover opacity-30"
+                className="absolute inset-0 w-full h-full bg-center bg-cover opacity-40"
                 style={{
-                    backgroundImage:
-                        `url("https://lh3.googleusercontent.com/aida-public/AB6AXuDyBroiDJnby3GMkVA97K-1ZymGAOfHWmi8SpM9cZfFR9FcFVHAUNMc-GHY7CfNQ4UR9rEb9niCqWbKJVqMNIYNnnjx1UAoiF_ZqlYkVnYErggEgh0P88EZj1Ab21-Dfo_LV4cyGKwCmULAepNknX_IiAAUw-mc0-aMEtbVSjOpf0ALsJgDAUHkTK1z4pPH9X3rdP_wHb_EdhjhCNzD2DVkXZvzYjSIwg4YLD92Yg4nAu7IL-wgkH-012A2B7j0EMTQmH9E7YbyJ17r")`,
+                    backgroundImage: `url("/bg.gif")`,
                 }}
             ></div>
+            {/* Overlay gradient for better readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0A0E23]/70 via-[#0A0E23]/50 to-[#0A0E23]/80"></div>
 
             <div className="relative z-10 flex w-full flex-col items-center px-4">
                 <div className="mb-8 flex items-center gap-3">
@@ -165,5 +166,17 @@ export default function ResetPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-[#0A0E23]">
+                <p className="text-white">Loading...</p>
+            </div>
+        }>
+            <ResetPasswordContent />
+        </Suspense>
     );
 }

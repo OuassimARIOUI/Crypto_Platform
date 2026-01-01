@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 
-export default function DiscordCallbackPage() {
+function DiscordCallbackContent() {
     const router = useRouter();
     const params = useSearchParams();
     const [status, setStatus] = useState("loading");
@@ -67,5 +67,19 @@ export default function DiscordCallbackPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function DiscordCallbackPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#0A0E23] p-6">
+                <div className="glassmorphism max-w-md w-full p-6 rounded-xl">
+                    <p className="text-white">Loading...</p>
+                </div>
+            </div>
+        }>
+            <DiscordCallbackContent />
+        </Suspense>
     );
 }

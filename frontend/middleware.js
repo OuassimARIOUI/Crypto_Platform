@@ -67,7 +67,8 @@ export async function middleware(request) {
   // Role-gated pages (e.g. /users, /reports)
   const gate = ROLE_GATES.find((g) => pathname === g.prefix || pathname.startsWith(`${g.prefix}/`));
   if (gate) {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3004";
+    // Use server-side URL for Docker internal communication
+    const apiBase = process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE || "http://localhost:3004";
     const me = await fetchMe({ apiBase, token });
 
     if (!me.ok) {

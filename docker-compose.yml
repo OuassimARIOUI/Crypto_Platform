@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -51,6 +49,46 @@ services:
     depends_on:
       redis:
         condition: service_started
+      db:
+        condition: service_healthy
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # URL pour le navigateur (client-side)
+      - NEXT_PUBLIC_API_BASE=http://localhost:3004
+      # URL pour le middleware/serveur (server-side, communication Docker interne)
+      - API_BASE_URL=http://backend:3004
+    depends_on:
+      - backend
+    restart: always
+
+  # Service de backup automatique de la base de données
+  db-backup:
+    image: postgres:16
+    container_name: db-backup
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPASSWORD: post1234
+      PGDATABASE: crypto
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        echo "Backup service started..."
+        while true; do
+          /backup.sh
+          echo "Next backup in 24 hours..."
+          sleep 86400
+        done
+    depends_on:
       db:
         condition: service_healthy
     restart: always

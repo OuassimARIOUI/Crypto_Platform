@@ -2,6 +2,40 @@
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 
+// Crypto logos map
+const cryptoLogos = {
+    btc: "https://assets.coingecko.com/coins/images/1/small/bitcoin.png",
+    eth: "https://assets.coingecko.com/coins/images/279/small/ethereum.png",
+    bnb: "https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png",
+    xrp: "https://assets.coingecko.com/coins/images/44/small/xrp-symbol-white-128.png",
+    ada: "https://assets.coingecko.com/coins/images/975/small/cardano.png",
+    doge: "https://assets.coingecko.com/coins/images/5/small/dogecoin.png",
+    sol: "https://assets.coingecko.com/coins/images/4128/small/solana.png",
+    dot: "https://assets.coingecko.com/coins/images/12171/small/polkadot.png",
+    matic: "https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png",
+    ltc: "https://assets.coingecko.com/coins/images/2/small/litecoin.png",
+    usdt: "https://assets.coingecko.com/coins/images/325/small/Tether.png",
+    usdc: "https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png",
+};
+
+const BuyIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+);
+
+const WalletIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+);
+
+const CoinIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 export default function TradingBuyCard() {
     const [symbol, setSymbol] = useState("btc");
     const [amountUsd, setAmountUsd] = useState("");
@@ -9,8 +43,11 @@ export default function TradingBuyCard() {
     const [balance, setBalance] = useState(null);
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState("");
+    const [isSuccess, setIsSuccess] = useState(false);
     const [holding, setHolding] = useState(0);
     const [cryptos, setCryptos] = useState([]);
+    const [imgError, setImgError] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         async function loadData() {
@@ -33,17 +70,13 @@ export default function TradingBuyCard() {
                 const prices = await pricesRes.json();
 
                 const holdings = portfolio.holdings || {};
-
-                // Quantité détenue
                 const qty = holdings[symbol] ?? 0;
                 setHolding(qty);
 
-                // Trouver le bon crypto_id via la liste /cryptos
                 const crypto = cryptos.find(c => c.symbol === symbol);
 
                 if (crypto) {
                     const priceRow = prices.find(p => p.crypto_id === crypto.id);
-
                     if (priceRow) {
                         setCurrentPrice(Number(priceRow.price_usd));
                     } else {
@@ -52,7 +85,6 @@ export default function TradingBuyCard() {
                 } else {
                     setCurrentPrice(null);
                 }
-
 
                 setBalance(portfolio.balance);
                 setLoading(false);
@@ -71,20 +103,28 @@ export default function TradingBuyCard() {
             .then(data => setCryptos(data));
     }, []);
 
+    useEffect(() => {
+        setImgError(false);
+    }, [symbol]);
 
     async function handleBuy(e) {
         e.preventDefault();
         setMessage("");
+        setSubmitting(true);
 
         try {
             const token = Cookies.get("token");
             if (!token) {
-                setMessage("Connexion requise");
+                setMessage("Login required");
+                setIsSuccess(false);
+                setSubmitting(false);
                 return;
             }
 
             if (!currentPrice || !amountUsd) {
-                setMessage("Montant ou prix invalide");
+                setMessage("Invalid amount or price");
+                setIsSuccess(false);
+                setSubmitting(false);
                 return;
             }
 
@@ -105,96 +145,213 @@ export default function TradingBuyCard() {
             const data = await res.json();
 
             if (!res.ok) {
-                setMessage(data.error || "Erreur lors de l'achat");
+                setMessage(data.error || "Purchase failed");
+                setIsSuccess(false);
+                setSubmitting(false);
                 return;
             }
 
-            // Mise à jour instantanée
             setBalance(data.balance);
             setHolding(prev => prev + quantity);
-
-            setMessage("Achat effectué avec succès !");
+            setMessage(`Successfully bought ${quantity.toFixed(6)} ${symbol.toUpperCase()}`);
+            setIsSuccess(true);
             setAmountUsd("");
         } catch (err) {
             console.error(err);
-            setMessage("Erreur serveur");
+            setMessage("Server error");
+            setIsSuccess(false);
+        } finally {
+            setSubmitting(false);
         }
     }
 
+    const quickAmounts = [50, 100, 250, 500];
+    const estimatedQty = currentPrice && amountUsd ? (Number(amountUsd) / currentPrice) : 0;
+    const logoUrl = cryptoLogos[symbol.toLowerCase()];
+
+    const fallbackIcon = (
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500/30 to-green-600/10 flex items-center justify-center text-white font-bold text-xs">
+            {symbol.slice(0, 3).toUpperCase()}
+        </div>
+    );
+
     return (
-        <div className="flex flex-col gap-6 p-6 rounded-xl border border-[#315668]/50 bg-[#182b34]/70">
-            <p className="text-white text-xl font-bold">Buy</p>
+        <div className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent backdrop-blur-sm overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500/30 to-green-500/10 flex items-center justify-center text-green-400">
+                        <BuyIcon />
+                    </div>
+                    <div>
+                        <h2 className="text-white text-lg font-bold">Buy Crypto</h2>
+                        <p className="text-gray-400 text-sm">Purchase at market price</p>
+                    </div>
+                </div>
+                {/* Selected crypto badge */}
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                    {imgError || !logoUrl ? fallbackIcon : (
+                        <img src={logoUrl} alt={symbol} className="w-5 h-5 rounded-full" onError={() => setImgError(true)} />
+                    )}
+                    <span className="text-white font-medium text-sm">{symbol.toUpperCase()}</span>
+                </div>
+            </div>
 
-            {loading ? (
-                <p className="text-white">Chargement...</p>
-            ) : (
-                <>
-                    <form className="space-y-4" onSubmit={handleBuy}>
-                        <label className="flex flex-col w-full">
-                            <p className="text-white text-base font-medium pb-2">
-                                Cryptocurrency
-                            </p>
-                            <select
-                                className="form-select rounded-lg bg-[#182b34] border-[#315668] text-white h-12 px-3"
-                                value={symbol}
-                                onChange={(e) => setSymbol(e.target.value)}
-                            >
-                                {cryptos.map(c => (
-                                    <option key={c.id} value={c.symbol}>
-                                        {c.name} ({c.symbol.toUpperCase()})
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-
-                        <label className="flex flex-col w-full">
-                            <p className="text-white text-base font-medium pb-2">
-                                Amount (USD)
-                            </p>
-                            <input
-                                type="float"
-                                min="0"
-                                className="form-input rounded-lg bg-[#182b34] border-[#315668] text-white h-12 px-3"
-                                placeholder="Enter amount"
-                                value={amountUsd}
-                                onChange={(e) => setAmountUsd(e.target.value)}
-                            />
-                        </label>
-
-                        <div className="flex flex-col gap-1 text-sm">
-                            <p className="text-[#90b7cb]">
-                                Balance:{" "}
-                                <span className="text-white">
-                                    {balance !== null ? `$${balance.toFixed(2)}` : "-"}
-                                </span>
-                            </p>
-
-                            <p className="text-[#90b7cb]">
-                                You own:{" "}
-                                <span className="text-white">
-                                    {holding} {symbol.toUpperCase()}
-                                </span>
-                            </p>
-
-                            <p className="text-[#90b7cb]">
-                                Current price:{" "}
-                                <span className="text-white">
-                                    {currentPrice ? `$${currentPrice.toLocaleString()}` : "-"}
-                                </span>
-                            </p>
+            {/* Content */}
+            <div className="p-6">
+                {loading ? (
+                    <div className="space-y-4 animate-pulse">
+                        <div className="h-12 bg-white/10 rounded-xl" />
+                        <div className="h-12 bg-white/10 rounded-xl" />
+                        <div className="h-12 bg-white/10 rounded-xl" />
+                    </div>
+                ) : (
+                    <form className="space-y-5" onSubmit={handleBuy}>
+                        {/* Crypto Selector */}
+                        <div>
+                            <label className="block text-gray-400 text-xs mb-2 uppercase tracking-wider">
+                                Select Cryptocurrency
+                            </label>
+                            <div className="relative">
+                                <select
+                                    className="w-full appearance-none px-4 py-3 rounded-xl bg-black/30 text-white border border-white/10 focus:border-green-500/50 focus:ring-1 focus:ring-green-500/25 transition-colors cursor-pointer"
+                                    value={symbol}
+                                    onChange={(e) => setSymbol(e.target.value)}
+                                >
+                                    {cryptos.map(c => (
+                                        <option key={c.id} value={c.symbol} className="bg-[#0d1117]">
+                                            {c.name} ({c.symbol.toUpperCase()})
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
 
+                        {/* Amount Input */}
+                        <div>
+                            <label className="block text-gray-400 text-xs mb-2 uppercase tracking-wider">
+                                Amount (USD)
+                            </label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <span className="text-gray-400 text-lg">$</span>
+                                </div>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    className="w-full pl-8 pr-4 py-3 rounded-xl bg-black/30 text-white text-lg border border-white/10 focus:border-green-500/50 focus:ring-1 focus:ring-green-500/25 transition-colors placeholder:text-gray-500"
+                                    placeholder="0.00"
+                                    value={amountUsd}
+                                    onChange={(e) => setAmountUsd(e.target.value)}
+                                />
+                            </div>
+                            {/* Quick amounts */}
+                            <div className="flex gap-2 mt-2">
+                                {quickAmounts.map((amt) => (
+                                    <button
+                                        key={amt}
+                                        type="button"
+                                        onClick={() => setAmountUsd(amt.toString())}
+                                        className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${
+                                            amountUsd === amt.toString()
+                                                ? "border-green-500 bg-green-500/20 text-green-400"
+                                                : "border-white/10 text-gray-400 hover:border-white/20 hover:text-white"
+                                        }`}
+                                    >
+                                        ${amt}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Estimated output */}
+                        {estimatedQty > 0 && (
+                            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20">
+                                <p className="text-gray-400 text-xs mb-1">You will receive approximately</p>
+                                <p className="text-green-400 text-xl font-bold">
+                                    {estimatedQty.toFixed(6)} {symbol.toUpperCase()}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Info cards */}
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                                    <WalletIcon />
+                                    <span>Balance</span>
+                                </div>
+                                <p className="text-white font-semibold">
+                                    ${balance !== null ? balance.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "-"}
+                                </p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                <div className="flex items-center gap-2 text-gray-400 text-xs mb-1">
+                                    <CoinIcon />
+                                    <span>Holdings</span>
+                                </div>
+                                <p className="text-white font-semibold truncate">
+                                    {holding.toFixed(4)} {symbol.toUpperCase()}
+                                </p>
+                            </div>
+                            <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                <p className="text-gray-400 text-xs mb-1">Price</p>
+                                <p className="text-white font-semibold">
+                                    {currentPrice ? `$${currentPrice.toLocaleString()}` : "-"}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Message */}
+                        {message && (
+                            <div className={`px-4 py-3 rounded-xl flex items-center gap-2 ${
+                                isSuccess 
+                                    ? "bg-green-500/10 border border-green-500/30 text-green-400" 
+                                    : "bg-red-500/10 border border-red-500/30 text-red-400"
+                            }`}>
+                                {isSuccess ? (
+                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                )}
+                                <span className="text-sm">{message}</span>
+                            </div>
+                        )}
+
+                        {/* Submit button */}
                         <button
                             type="submit"
-                            className="w-full h-12 rounded-lg bg-[#0bda57] font-bold text-black"
+                            disabled={submitting || !amountUsd || Number(amountUsd) <= 0}
+                            className="w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-bold text-lg hover:from-green-400 hover:to-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-green-500/20"
                         >
-                            BUY
+                            {submitting ? (
+                                <>
+                                    <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <span>Processing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <BuyIcon />
+                                    <span>Buy {symbol.toUpperCase()}</span>
+                                </>
+                            )}
                         </button>
                     </form>
-
-                    {message && <p className="text-sm mt-2 text-white">{message}</p>}
-                </>
-            )}
+                )}
+            </div>
         </div>
     );
 }

@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-worker
+  namespace: crypto-platform
+  labels:
+    app.kubernetes.io/name: crypto-worker
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-worker
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: crypto-worker
+        app.kubernetes.io/name: crypto-worker
+    spec:
+      initContainers:
+        # Wait for PostgreSQL to be ready
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z postgres-service 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+        # Wait for Redis to be ready
+        - name: wait-for-redis
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z redis-service 6379; do
+                echo "Waiting for Redis..."
+                sleep 2
+              done
+              echo "Redis is ready!"
+        # Run Prisma migrations (if not already done by backend)
+        - name: prisma-migrate
+          image: crypto_platform-backend:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - npx prisma db push --accept-data-loss
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: DATABASE_URL
+      containers:
+        - name: worker
+          image: crypto_platform-worker:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - node
+            - src/workers/crypto.worker.js
+          env:
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: crypto-config
+                  key: NODE_ENV
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: DATABASE_URL
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: crypto-secrets
+                  key: REDIS_URL
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          # Worker doesn't have HTTP endpoints, so use exec probe
+          livenessProbe:
+            exec:
+              command:
+                - node
+                - -e
+                - "console.log('healthy')"
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: ghcr-secret  # Create this secret for private registry

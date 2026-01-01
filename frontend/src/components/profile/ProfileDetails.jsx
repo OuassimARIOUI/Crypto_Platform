@@ -1,8 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Cookies from "js-cookie";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
 
 // Icône Discord SVG
 const DiscordIcon = ({ className = "w-5 h-5" }) => (
@@ -18,70 +16,76 @@ export default function ProfileDetails() {
     const [saving, setSaving] = useState(false);
     const [connectingDiscord, setConnectingDiscord] = useState(false);
 
+    // Valeurs éditables
     const [pseudo, setPseudo] = useState("");
-    const [message, setMessage] = useState("");
+    const [addAmount, setAddAmount] = useState("");
+    
+    // États d'édition inline
+    const [editingPseudo, setEditingPseudo] = useState(false);
+    const [editingBalance, setEditingBalance] = useState(false);
+    
+    // Messages
+    const [message, setMessage] = useState({ text: "", type: "" });
 
-    // Vérifie si Discord est connecté via OAuth (pas juste un username manuel)
+    // Valeurs originales pour détecter les changements
+    const [originalPseudo, setOriginalPseudo] = useState("");
+
+    // Vérifie si Discord est connecté via OAuth
     const isDiscordLinked = Boolean(user?.discord_user_id);
     const discordUsername = user?.discord_username || "";
 
+    // Détecter si des changements ont été faits
+    const hasChanges = useMemo(() => {
+        return pseudo !== originalPseudo;
+    }, [pseudo, originalPseudo]);
+
     useEffect(() => {
+        loadData();
+    }, []);
+
+    async function loadData() {
         const token = Cookies.get("token");
         if (!token) {
             setLoading(false);
             return;
         }
 
-        async function loadData() {
-            try {
-                // --- Load User ---
-                const resUser = await fetch("http://localhost:3004/auth/me", {
+        try {
+            const [resUser, resPort] = await Promise.all([
+                fetch("http://localhost:3004/auth/me", {
                     headers: { Authorization: "Bearer " + token }
-                });
-                const dataUser = await resUser.json();
-                if (resUser.ok) {
-                    setUser(dataUser);
-                    setPseudo(dataUser.pseudo || "");
-                }
-
-                // --- Load Portfolio (balance) ---
-                const resPort = await fetch("http://localhost:3004/portfolio/me", {
+                }),
+                fetch("http://localhost:3004/portfolio/me", {
                     credentials: "include",
                     headers: { Authorization: "Bearer " + token }
-                });
-                const dataPort = await resPort.json();
-                if (resPort.ok) setBalance(dataPort.balance || 0);
+                })
+            ]);
 
-            } catch (e) {
-                console.error("ERROR LOADING PROFILE DATA", e);
-            } finally {
-                setLoading(false);
+            const dataUser = await resUser.json();
+            const dataPort = await resPort.json();
+
+            if (resUser.ok) {
+                setUser(dataUser);
+                setPseudo(dataUser.pseudo || "");
+                setOriginalPseudo(dataUser.pseudo || "");
             }
-        }
 
-        loadData();
-    }, []);
-
-    async function refreshUser() {
-        const token = Cookies.get("token");
-        if (!token) return;
-
-        const resUser = await fetch("http://localhost:3004/auth/me", {
-            headers: { Authorization: "Bearer " + token }
-        });
-        const dataUser = await resUser.json();
-        if (resUser.ok) {
-            setUser(dataUser);
-            setPseudo(dataUser.pseudo || "");
+            if (resPort.ok) {
+                setBalance(dataPort.balance || 0);
+            }
+        } catch (e) {
+            console.error("ERROR LOADING PROFILE DATA", e);
+        } finally {
+            setLoading(false);
         }
     }
 
-    async function saveProfile() {
+    async function saveChanges() {
         const token = Cookies.get("token");
         if (!token) return;
 
         setSaving(true);
-        setMessage("");
+        setMessage({ text: "", type: "" });
 
         try {
             const res = await fetch("http://localhost:3004/auth/me", {
@@ -96,11 +100,45 @@ export default function ProfileDetails() {
             if (!res.ok) throw new Error(data?.error || "Save failed");
 
             setUser(data.user);
-            setMessage("Profile updated.");
+            setOriginalPseudo(pseudo);
+            setEditingPseudo(false);
+            setMessage({ text: "Profile updated successfully!", type: "success" });
+            
+            setTimeout(() => setMessage({ text: "", type: "" }), 3000);
         } catch (e) {
-            setMessage(e.message || "Save failed");
+            setMessage({ text: e.message || "Save failed", type: "error" });
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function addFunds() {
+        const token = Cookies.get("token");
+        if (!token || !addAmount) return;
+
+        try {
+            const res = await fetch("http://localhost:3004/portfolio/add-funds", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
+                body: JSON.stringify({ amount: Number(addAmount) })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setBalance(data.balance);
+                setAddAmount("");
+                setEditingBalance(false);
+                setMessage({ text: `$${Number(addAmount).toLocaleString()} added successfully!`, type: "success" });
+                setTimeout(() => setMessage({ text: "", type: "" }), 3000);
+            } else {
+                setMessage({ text: data.error || "Failed to add funds", type: "error" });
+            }
+        } catch (e) {
+            setMessage({ text: "Failed to add funds", type: "error" });
         }
     }
 
@@ -108,7 +146,7 @@ export default function ProfileDetails() {
         const token = Cookies.get("token");
         if (!token) return;
 
-        setMessage("");
+        setMessage({ text: "", type: "" });
         setConnectingDiscord(true);
 
         try {
@@ -117,13 +155,12 @@ export default function ProfileDetails() {
             });
             const data = await res.json();
             if (!res.ok) {
-                setMessage(data?.error || "Failed to start Discord connect");
+                setMessage({ text: data?.error || "Failed to start Discord connect", type: "error" });
                 return;
             }
-
             window.location.href = data.url;
         } catch (e) {
-            setMessage("Failed to connect Discord");
+            setMessage({ text: "Failed to connect Discord", type: "error" });
         } finally {
             setConnectingDiscord(false);
         }
@@ -133,176 +170,290 @@ export default function ProfileDetails() {
         const token = Cookies.get("token");
         if (!token) return;
 
-        setMessage("");
-
         const res = await fetch("http://localhost:3004/discord/disconnect", {
             method: "POST",
             headers: { Authorization: "Bearer " + token }
         });
         const data = await res.json();
         if (!res.ok) {
-            setMessage(data?.error || "Failed to disconnect Discord");
+            setMessage({ text: data?.error || "Failed to disconnect Discord", type: "error" });
             return;
         }
 
-        await refreshUser();
-        setMessage("Discord disconnected.");
+        await loadData();
+        setMessage({ text: "Discord disconnected", type: "success" });
+        setTimeout(() => setMessage({ text: "", type: "" }), 3000);
     }
 
-    if (loading) return <p className="text-white">Chargement…</p>;
+    function cancelChanges() {
+        setPseudo(originalPseudo);
+        setEditingPseudo(false);
+    }
+
+    if (loading) {
+        return (
+            <div className="glassmorphism rounded-xl p-8 flex items-center justify-center">
+                <div className="flex items-center gap-3 text-white">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-primary rounded-full animate-spin" />
+                    <span>Loading profile...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div className="glassmorphism rounded-xl p-8 text-center text-white/60">
+                Unable to load profile. Please try again.
+            </div>
+        );
+    }
 
     return (
-        <div className="glassmorphism rounded-xl">
-            <h2 className="text-white text-[22px] font-bold px-6 pb-3 pt-5 border-b border-white/10">
-                Account Details
-            </h2>
-
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6">
-
-                {/* Username */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Username</p>
-                    <p className="text-white text-base">{user.pseudo}</p>
-                </div>
-
-                {/* Email */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Email Address</p>
-                    <p className="text-white text-base">{user.email}</p>
-                </div>
-
-                {/* Account Created */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Account Created</p>
-                    <p className="text-white text-base">
-                        {new Date(user.created_at).toLocaleDateString("en-US", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                        })}
-                    </p>
-                </div>
-
-                {/* Role */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Role</p>
-                    <p className="text-white text-base">
-                        {user.role || "User"}
-                    </p>
-                </div>
-
-                {/* BALANCE  */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Portfolio Balance</p>
-                    <p className="text-white text-xl font-bold">
-                        ${balance.toLocaleString()}
-                    </p>
-                </div>
-
-                {/* Discord - Section améliorée */}
-                <div className="flex flex-col gap-1">
-                    <p className="text-white/60 text-sm">Discord</p>
-                    {isDiscordLinked ? (
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#5865F2]/20 border border-[#5865F2]/30">
-                                <DiscordIcon className="w-4 h-4 text-[#5865F2]" />
-                                <span className="text-white font-medium text-sm">
-                                    {discordUsername}
-                                </span>
-                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="text-white/50 text-base">Not connected</p>
-                    )}
-                </div>
-
+        <div className="glassmorphism rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+                <h2 className="text-white text-[22px] font-bold">Account Details</h2>
+                {user.role && (
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'admin' 
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                            : user.role === 'moderator'
+                                ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                                : 'bg-primary/20 text-primary border border-primary/30'
+                    }`}>
+                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                    </span>
+                )}
             </div>
 
-            {/* Discord Connection Card - UI avancée */}
-            <div className="mx-6 mb-6 p-4 rounded-xl bg-gradient-to-r from-[#5865F2]/10 to-[#5865F2]/5 border border-[#5865F2]/20">
-                <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-[#5865F2]/20">
-                        <DiscordIcon className="w-8 h-8 text-[#5865F2]" />
-                    </div>
+            {/* Message de notification */}
+            {message.text && (
+                <div className={`mx-6 mt-4 flex items-center gap-2 px-4 py-3 rounded-lg ${
+                    message.type === "error"
+                        ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                        : "bg-green-500/10 border border-green-500/20 text-green-400"
+                }`}>
+                    <span className="material-symbols-outlined text-lg">
+                        {message.type === "error" ? "error" : "check_circle"}
+                    </span>
+                    <span className="text-sm">{message.text}</span>
+                </div>
+            )}
+
+            {/* Contenu principal */}
+            <div className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     
-                    <div className="flex-1">
-                        <h3 className="text-white font-semibold text-lg">Discord Integration</h3>
+                    {/* Username - Éditable */}
+                    <div className="group p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all">
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-white/50 text-xs uppercase tracking-wider font-medium">Username</p>
+                            {!editingPseudo && (
+                                <button 
+                                    onClick={() => setEditingPseudo(true)}
+                                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">edit</span>
+                                </button>
+                            )}
+                        </div>
+                        {editingPseudo ? (
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    value={pseudo}
+                                    onChange={(e) => setPseudo(e.target.value)}
+                                    className="flex-1 px-3 py-2 rounded-lg bg-black/30 border border-primary/50 text-white focus:outline-none focus:border-primary"
+                                    autoFocus
+                                />
+                                <button 
+                                    onClick={() => setEditingPseudo(false)}
+                                    className="p-2 rounded-lg bg-primary/20 text-primary hover:bg-primary/30 transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">check</span>
+                                </button>
+                                <button 
+                                    onClick={cancelChanges}
+                                    className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                                >
+                                    <span className="material-symbols-outlined text-lg">close</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-white text-lg font-semibold">{user.pseudo}</p>
+                        )}
+                    </div>
+
+                    {/* Email - Non éditable */}
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <p className="text-white/50 text-xs uppercase tracking-wider font-medium mb-2">Email Address</p>
+                        <p className="text-white text-lg">{user.email}</p>
+                    </div>
+
+                    {/* Balance - Éditable (Add Funds) */}
+                    <div className="group p-4 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition-all">
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-white/50 text-xs uppercase tracking-wider font-medium">Portfolio Balance</p>
+                            {!editingBalance && (
+                                <button 
+                                    onClick={() => setEditingBalance(true)}
+                                    className="opacity-0 group-hover:opacity-100 px-3 py-1 rounded-lg bg-primary/20 text-primary text-xs font-medium hover:bg-primary/30 transition-all flex items-center gap-1"
+                                >
+                                    <span className="material-symbols-outlined text-sm">add</span>
+                                    Add Funds
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-white text-2xl font-bold">${balance.toLocaleString()}</p>
                         
-                        {isDiscordLinked ? (
-                            <>
-                                <p className="text-white/60 text-sm mt-1">
-                                    Your account is linked to <span className="text-[#5865F2] font-medium">@{discordUsername}</span>
-                                </p>
-                                <p className="text-white/40 text-xs mt-2">
-                                    You will receive price alerts and notifications via Discord DM.
-                                </p>
-                                
-                                <div className="flex items-center gap-3 mt-4">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20">
-                                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        {editingBalance && (
+                            <div className="mt-3 pt-3 border-t border-primary/20">
+                                <div className="flex items-center gap-2">
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40">$</span>
+                                        <input
+                                            type="number"
+                                            value={addAmount}
+                                            onChange={(e) => setAddAmount(e.target.value)}
+                                            placeholder="0.00"
+                                            className="w-full pl-7 pr-3 py-2 rounded-lg bg-black/30 border border-primary/50 text-white focus:outline-none focus:border-primary"
+                                            autoFocus
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={addFunds}
+                                        disabled={!addAmount || Number(addAmount) <= 0}
+                                        className="px-4 py-2 rounded-lg bg-primary text-black font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Add
+                                    </button>
+                                    <button 
+                                        onClick={() => { setAddAmount(""); setEditingBalance(false); }}
+                                        className="p-2 rounded-lg bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                    </button>
+                                </div>
+                                <div className="flex gap-2 mt-2">
+                                    {[100, 500, 1000, 5000].map((amount) => (
+                                        <button
+                                            key={amount}
+                                            onClick={() => setAddAmount(amount.toString())}
+                                            className="px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/70 text-sm hover:bg-white/10 hover:text-white transition-all"
+                                        >
+                                            ${amount.toLocaleString()}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Account Created */}
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                        <p className="text-white/50 text-xs uppercase tracking-wider font-medium mb-2">Member Since</p>
+                        <p className="text-white text-lg">
+                            {new Date(user.created_at).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                            })}
+                        </p>
+                    </div>
+
+                </div>
+
+                {/* Discord Section */}
+                <div className="mt-6 p-5 rounded-xl bg-gradient-to-r from-[#5865F2]/10 to-[#5865F2]/5 border border-[#5865F2]/20">
+                    <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-[#5865F2]/20 shrink-0">
+                            <DiscordIcon className="w-7 h-7 text-[#5865F2]" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="text-white font-semibold text-lg">Discord</h3>
+                                {isDiscordLinked && (
+                                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20">
+                                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="text-green-400 text-xs font-medium">Connected</span>
                                     </div>
-                                    
+                                )}
+                            </div>
+                            
+                            {isDiscordLinked ? (
+                                <div className="mt-2">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#5865F2]/20 border border-[#5865F2]/30">
+                                        <DiscordIcon className="w-4 h-4 text-[#5865F2]" />
+                                        <span className="text-white font-medium">@{discordUsername}</span>
+                                    </div>
+                                    <p className="text-white/40 text-xs mt-2">
+                                        You will receive price alerts via Discord DM.
+                                    </p>
                                     <button
                                         type="button"
                                         onClick={disconnectDiscord}
-                                        className="px-4 py-1.5 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
+                                        className="mt-3 px-4 py-2 rounded-lg text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
                                     >
-                                        Disconnect
+                                        Disconnect Discord
                                     </button>
                                 </div>
-                            </>
-                        ) : (
-                            <>
-                                <p className="text-white/60 text-sm mt-1">
-                                    Link your Discord account to receive price alerts via DM.
-                                </p>
-                                
-                                <button
-                                    type="button"
-                                    onClick={connectDiscord}
-                                    disabled={connectingDiscord}
-                                    className="mt-4 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5865F2]/25 hover:shadow-[#5865F2]/40"
-                                >
-                                    <DiscordIcon className="w-5 h-5" />
-                                    {connectingDiscord ? "Connecting..." : "Connect Discord"}
-                                </button>
-                            </>
-                        )}
+                            ) : (
+                                <div className="mt-2">
+                                    <p className="text-white/50 text-sm">
+                                        Link your Discord to receive price alerts via DM.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={connectDiscord}
+                                        disabled={connectingDiscord}
+                                        className="mt-3 flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#5865F2] hover:bg-[#4752C4] text-white font-medium text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#5865F2]/25 hover:shadow-[#5865F2]/40"
+                                    >
+                                        <DiscordIcon className="w-5 h-5" />
+                                        {connectingDiscord ? "Connecting..." : "Connect Discord"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Edit section */}
-            <div className="px-6 pb-6 pt-2 border-t border-white/10 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                        label="Update username"
-                        placeholder="Your username"
-                        value={pseudo}
-                        onChange={(e) => setPseudo(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="w-full md:w-auto">
-                        <Button onClick={saveProfile} disabled={saving}>
-                            {saving ? "Saving..." : "Save Changes"}
-                        </Button>
+            {/* Footer avec Save Changes - Visible seulement si changements */}
+            {hasChanges && (
+                <div className="px-6 py-4 bg-primary/5 border-t border-primary/20 flex items-center justify-between">
+                    <p className="text-white/60 text-sm flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse" />
+                        You have unsaved changes
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={cancelChanges}
+                            className="px-4 py-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={saveChanges}
+                            disabled={saving}
+                            className="px-6 py-2 rounded-lg bg-primary text-black font-semibold hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                            {saving ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                                    Saving...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined text-lg">save</span>
+                                    Save Changes
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
-
-                {message && (
-                    <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                        message.includes("disconnected") || message.includes("failed") || message.includes("Failed")
-                            ? "bg-red-500/10 border border-red-500/20 text-red-400"
-                            : "bg-green-500/10 border border-green-500/20 text-green-400"
-                    }`}>
-                        <span className="text-sm">{message}</span>
-                    </div>
-                )}
-            </div>
+            )}
         </div>
     );
 }

@@ -2,12 +2,38 @@
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
 
+// Icons pour les stats
+const WalletIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+);
+
+const TrendUpIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+);
+
+const ChartIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+    </svg>
+);
+
+const CoinsIcon = () => (
+    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 export default function PortfolioStats() {
     const [stats, setStats] = useState({
         totalValue: 0,
         todayProfit: 0,
         totalProfit: 0,
         totalProfitPct: 0,
+        assetsCount: 0,
     });
     const [loading, setLoading] = useState(true);
 
@@ -17,22 +43,17 @@ export default function PortfolioStats() {
                 const token = Cookies.get("token");
                 if (!token) return;
 
-                // 1) Portfolio (balance, holdings, transactions)
                 const pRes = await fetch("http://localhost:3004/portfolio/me", {
                     headers: { Authorization: "Bearer " + token }
                 });
                 const portfolio = await pRes.json();
 
-                // 2) Latest market prices
                 const pricesRes = await fetch("http://localhost:3004/prices");
                 const prices = await pricesRes.json();
 
-                // 3) Build total portfolio value
                 let totalValue = 0;
                 let todayProfit = 0;
 
-                // Total profit = realized + unrealized
-                // We approximate cost basis using average cost per crypto.
                 const txs = Array.isArray(portfolio.transactions)
                     ? [...portfolio.transactions].sort(
                         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
@@ -73,6 +94,7 @@ export default function PortfolioStats() {
                 }
 
                 let unrealizedProfit = 0;
+                const assetsCount = Object.keys(portfolio.holdings || {}).length;
 
                 for (const [symbol, qty] of Object.entries(portfolio.holdings)) {
                     const tx = portfolio.transactions.find(
@@ -93,7 +115,6 @@ export default function PortfolioStats() {
                     todayProfit += value * (variation / 100);
 
                     const pos = positions.get(String(symbol)) || { qty: 0, cost: 0 };
-                    // Use holdings qty as the source of truth for current size.
                     const currentQty = Number(qty);
                     if (Number.isFinite(currentQty) && currentQty > 0) {
                         const costBasis = Number(pos.cost) || 0;
@@ -109,6 +130,7 @@ export default function PortfolioStats() {
                     todayProfit,
                     totalProfit,
                     totalProfitPct,
+                    assetsCount,
                 });
 
             } catch (e) {
@@ -120,45 +142,100 @@ export default function PortfolioStats() {
         load();
     }, []);
 
-    if (loading) return <p className="text-white">Chargement...</p>;
+    if (loading) {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(4)].map((_, i) => (
+                    <div key={i} className="rounded-2xl p-6 border border-white/10 bg-white/5 animate-pulse">
+                        <div className="h-10 w-10 rounded-xl bg-white/10 mb-4" />
+                        <div className="h-4 w-24 bg-white/10 rounded mb-2" />
+                        <div className="h-8 w-32 bg-white/10 rounded" />
+                    </div>
+                ))}
+            </div>
+        );
+    }
+
+    const statsCards = [
+        {
+            label: "Total Portfolio Value",
+            value: `$${stats.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            change: stats.todayProfit,
+            changeLabel: "today",
+            icon: WalletIcon,
+            iconBg: "from-primary/30 to-primary/10",
+            iconColor: "text-primary",
+        },
+        {
+            label: "Today's Profit",
+            value: `$${Math.abs(stats.todayProfit).toFixed(2)}`,
+            change: stats.todayProfit,
+            changeLabel: `${(stats.todayProfit / (stats.totalValue || 1) * 100).toFixed(2)}%`,
+            icon: TrendUpIcon,
+            iconBg: stats.todayProfit >= 0 ? "from-green-500/30 to-green-500/10" : "from-red-500/30 to-red-500/10",
+            iconColor: stats.todayProfit >= 0 ? "text-green-400" : "text-red-400",
+        },
+        {
+            label: "Total Profit",
+            value: `$${Math.abs(stats.totalProfit).toFixed(2)}`,
+            change: stats.totalProfit,
+            changeLabel: `${stats.totalProfitPct >= 0 ? "+" : ""}${stats.totalProfitPct.toFixed(2)}%`,
+            icon: ChartIcon,
+            iconBg: stats.totalProfit >= 0 ? "from-green-500/30 to-green-500/10" : "from-red-500/30 to-red-500/10",
+            iconColor: stats.totalProfit >= 0 ? "text-green-400" : "text-red-400",
+        },
+        {
+            label: "Assets Held",
+            value: stats.assetsCount.toString(),
+            change: null,
+            changeLabel: "cryptocurrencies",
+            icon: CoinsIcon,
+            iconBg: "from-purple-500/30 to-purple-500/10",
+            iconColor: "text-purple-400",
+        },
+    ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {statsCards.map((card, idx) => {
+                const Icon = card.icon;
+                return (
+                    <div
+                        key={idx}
+                        className="group relative rounded-2xl p-6 border border-white/10 bg-gradient-to-br from-white/5 to-transparent backdrop-blur-sm hover:border-primary/30 transition-all duration-300"
+                    >
+                        {/* Glow effect on hover */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        
+                        <div className="relative">
+                            {/* Icon */}
+                            <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${card.iconBg} flex items-center justify-center mb-4`}>
+                                <span className={card.iconColor}>
+                                    <Icon />
+                                </span>
+                            </div>
 
-            {/* Total Portfolio Value */}
-            <div className="flex flex-col gap-2 rounded-xl p-6 border border-white/10 bg-white/5">
-                <p className="text-gray-300 text-base font-medium">Total Portfolio Value</p>
-                <p className="text-white text-4xl font-bold">
-                    ${stats.totalValue.toLocaleString()}
-                </p>
-                <p className={stats.todayProfit >= 0 ? "text-green-400" : "text-red-400"}>
-                    {stats.todayProfit >= 0 ? "+" : ""}
-                    ${stats.todayProfit.toFixed(2)}
-                </p>
-            </div>
+                            {/* Label */}
+                            <p className="text-gray-400 text-sm font-medium mb-1">{card.label}</p>
 
-            {/* Today's Profit */}
-            <div className="flex flex-col gap-2 rounded-xl p-6 border border-white/10 bg-white/5">
-                <p className="text-gray-300 text-base font-medium">Today&apos;s Profit</p>
-                <p className="text-white text-4xl font-bold">
-                    ${stats.todayProfit.toFixed(2)}
-                </p>
-                <p className={stats.todayProfit >= 0 ? "text-green-400" : "text-red-400"}>
-                    {(stats.todayProfit / (stats.totalValue || 1) * 100).toFixed(2)}%
-                </p>
-            </div>
+                            {/* Value */}
+                            <p className="text-white text-2xl lg:text-3xl font-bold mb-2">{card.value}</p>
 
-            {/* Total Profit (optionnel) */}
-            <div className="flex flex-col gap-2 rounded-xl p-6 border border-white/10 bg-white/5">
-                <p className="text-gray-300 text-base font-medium">Total Profit</p>
-                <p className="text-white text-4xl font-bold">
-                    ${stats.totalProfit.toFixed(2)}
-                </p>
-                <p className={stats.totalProfit >= 0 ? "text-green-400" : "text-red-400"}>
-                    {stats.totalProfit >= 0 ? "+" : ""}{stats.totalProfitPct.toFixed(2)}%
-                </p>
-            </div>
-
+                            {/* Change indicator */}
+                            <div className="flex items-center gap-2">
+                                {card.change !== null && (
+                                    <span className={`text-sm font-medium ${card.change >= 0 ? "text-green-400" : "text-red-400"}`}>
+                                        {card.change >= 0 ? "↑" : "↓"}
+                                    </span>
+                                )}
+                                <span className={`text-sm ${card.change !== null ? (card.change >= 0 ? "text-green-400" : "text-red-400") : "text-gray-500"}`}>
+                                    {card.changeLabel}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 }

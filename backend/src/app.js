@@ -12,6 +12,7 @@ import reportsRoutes from "./routes/reports.routes.js";
 import messagesRoutes from "./routes/messages.routes.js";
 import realtimeRoutes from "./routes/realtime.routes.js";
 import { maintenanceGuard } from "./middleware/maintenance.js";
+import { metricsMiddleware, metricsHandler, healthHandler } from "./middleware/metrics.js";
 
 const app = express();
 
@@ -24,6 +25,13 @@ app.use(cors({
 
 
 app.use(express.json());
+
+// Prometheus metrics middleware
+app.use(metricsMiddleware);
+
+// Health & Metrics endpoints (before maintenance guard)
+app.get("/health", healthHandler);
+app.get("/metrics", metricsHandler);
 
 // Global maintenance mode (admin can bypass)
 app.use(maintenanceGuard);

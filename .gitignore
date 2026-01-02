@@ -141,3 +141,16 @@ vite.config.ts.timestamp-*
 ./idea/vcs.xml
 
 /backend/firebase-service-account.json
+
+# Large binaries (Minikube, etc.)
+minikube-linux-amd64
+minikube
+*.exe
+*.bin
+
+# Large media files
+*.gif
+!frontend/public/icons/*.gif
+
+# Kubernetes secrets (production)
+k8s/overlays/*/secrets.envminikube-linux-amd64

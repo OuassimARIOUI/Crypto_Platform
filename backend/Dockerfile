@@ -8,7 +8,10 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-COPY firebase-service-account.json ./firebase-service-account.json
+
+# Copy firebase service account if it exists (created by CI or locally)
+# The file is optional - the app will check for it at runtime
+COPY firebase-service-account.jso[n] ./
 
 RUN npx prisma generate
 

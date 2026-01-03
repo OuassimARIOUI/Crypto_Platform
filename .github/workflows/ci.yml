@@ -223,6 +223,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create Firebase service account for Docker build
+        working-directory: backend
+        run: |
+          # Create a mock Firebase service account for Docker build
+          # In production, this should be replaced with real credentials via environment variables
+          cat > firebase-service-account.json << 'EOF'
+          {
+            "type": "service_account",
+            "project_id": "crypto-platform-prod",
+            "private_key_id": "prod-key-id",
+            "private_key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF8PbnGy0AHB7MxszR/goLwPBbvbT\nfBlDJOYMHECgPKUiqoDOhDL/3qdKOISBcWGhSqHLdXqQR91LgsK5jJqLEqTv6LE/\n9sNwVvy0pPO3GHQYqsqDRrvLcL9O5msLEz5v3U8f1/5UBt91TQXsmflRxVHtfH7w\nx8j5EYKbZW2w2+DsvWwJL9NIkHtQ8F8jFudMNDKpFVuJLPLCxY4H0qnwAZ+v+Qt6\ngAoMnU6LAuQV8ySC9Z8bVnLdDGbDMphO3JDqCvZqh3SWjEMY3VNlR3/AhRBbPR/H\n7ltJWK2G4YKWD9oLqQB9gHJo3gO9bnKHXoIYqQIDAQABAoIBAAFkIaDE/S3gYH3s\ng4jIxoGdWqCg6e6fH0CwAfmC+HtHEypN9M7LVv7L8G/dJeqGp+CeyD7X4G6QPQTT\ncevYDBRpXvE6E/ZNGFPFQxHPE8n/g8P0U+Qn0q+iWJQ+bg0MVWZJC3YPFSYmEXOJ\nxf+XzKWz4oLD8qEyeQ0zfthFqBvHR/6CXOB9k7n+ZGnj3s/3/8RMj7b/8jx9h3nD\nHimPy3rz/2h7P3MK+P2J1H9UQ3L9HDP0BLH8k3v9h0r+VCr1b9UTp6Y6D0QIaCaP\nLO3i/lQRa3XQs8QnRw8i0QxHQjOA8F7Qf3cPgh4RMaCg3GfkLJCr1xT+A+R7Y8k4\n8w8A+E0CgYEA6VlJlWiMKnEMNd+f3J9QQf8x+vL+klf5kGa0q3N6c9G7w4O+xNqN\n+e5jMtV6lH8Qm0N+x1LNA6H8G8mfCcJH3YmQqLCH4xGATxv/LVsxHrzMxD+D/soO\nvR/lSNzT0mG2j8rXv0FNA/8dULCi0BPqX4EN3j8afDvf9k/x8EwuvncCgYEA5d3A\nkHFVBVlRJd7M5j/6E6BZQKb7d7gRpLLf2WXP6lhXRxYT3P9u5+fqn7E7zhBl/k7P\nxB8WkZzXCw8T6EJ8C8lGXVJxkZX4t8P9V2FI5o6E3f/pn6K5d3ZbqNwmD1Z5f9z6\ny0NF8yq0fv8hN8g7pX9J4bHw2dQo0k0n+U8v0WcCgYBpkVaJCw6z3t7x1sD8IyJM\nhFnBe5mT0nZM8gdIcA3G5H6mhQW6YMXM3N9TQ8j5L8Y5Qf9q5FvDGk9F3qT9HYyq\nPThBWxW/5Lf0w1S0X8QX9g4KY0X+Aw4q7e6VL/w7x5e8a5o+Yf9p1d9k2i7q8Yw4\nGqN+h5F7qCl5Z5t8p9k0AwKBgGSgM/xE3IhM7j/7Lr1xD6G3g5l5B0V7kJOi8B3w\nS8e+F5xO3t8wIz5v8/W2rF8d1P9r+Dx3E5jH3jK7m6f/I6m5w8P6r3E8k5xQ9y8f\nF1e6Z6q0TQ9g3j9r+K7T4v3w5l8P6m9f/B2n1R5d6X8j+D4wZ7k8O9e2c3S5q7G9\nf1xpAoGBAJnL7r6G+p4f7K0eQT9w7W5d8Z9LJCv9T8j5x6r3L0d9E8f3T6pA7k5x\nQ8w2v5d6B3nF8j9e2W7r4K6m5p8P9d3f/I2o8y6X9k5Z3t7Q8g1j+D5xL7r8f6e9\nV2c3R9d8Y7k+B4wS9p1m6f/O5n8P7l2e3X6q9W8j+D5xZ7g8o9e2\n-----END RSA PRIVATE KEY-----\n",
+            "client_email": "firebase-adminsdk@crypto-platform-prod.iam.gserviceaccount.com",
+            "client_id": "123456789",
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+            "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk%40crypto-platform-prod.iam.gserviceaccount.com"
+          }
+          EOF
+          echo "✓ Firebase service account created for Docker build"
+
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:

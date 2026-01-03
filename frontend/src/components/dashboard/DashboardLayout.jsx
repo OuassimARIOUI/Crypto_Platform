@@ -120,11 +120,14 @@ export default function DashboardLayout({ children }) {
             .catch((err) => console.error("ME ERROR:", err));
     }, []);
 
-    // Close mobile drawer when route changes
+    // Close mobile drawer when route changes - using queueMicrotask to avoid synchronous setState warning
     useEffect(() => {
         if (prevPathname.current !== pathname) {
             prevPathname.current = pathname;
-            setSidebarOpen(false);
+            // Use queueMicrotask to defer the state update and avoid cascading renders
+            queueMicrotask(() => {
+                setSidebarOpen(false);
+            });
         }
     }, [pathname]);
 

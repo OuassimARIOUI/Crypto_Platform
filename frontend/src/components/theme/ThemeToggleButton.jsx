@@ -1,30 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { toggleTheme } from "./ThemeProvider";
 
-function getTheme() {
+function getThemeSnapshot() {
+  if (typeof document === "undefined") return "dark";
   return document.documentElement.dataset.theme === "light" ? "light" : "dark";
 }
 
+function subscribeToTheme(callback) {
+  const observer = new MutationObserver(callback);
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-theme"],
+  });
+  return () => observer.disconnect();
+}
+
 export default function ThemeToggleButton({ className = "" }) {
-  const [theme, setTheme] = useState("dark");
-
-  useEffect(() => {
-    setTheme(getTheme());
-
-    // Keep in sync if theme is changed elsewhere.
-    const observer = new MutationObserver(() => {
-      setTheme(getTheme());
-    });
-
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
+  const theme = useSyncExternalStore(subscribeToTheme, getThemeSnapshot, () => "dark");
 
   const nextLabel = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
   const icon = theme === "dark" ? "light_mode" : "dark_mode";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,62 +8,9 @@ import Notification from "@/components/ui/Notification";
 import MessagingDock from "@/components/messaging/MessagingDock";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
 
-
-
-export default function DashboardLayout({ children }) {
-    const [user, setUser] = useState(null);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const pathname = usePathname();
-
-    // Charger l'utilisateur depuis le backend grâce au token
-    useEffect(() => {
-        const token = Cookies.get("token");
-        if (!token) return;
-
-        fetch("http://localhost:3004/auth/me", {
-            headers: {
-                Authorization: "Bearer " + token,
-            },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (data?.error) return;
-                setUser(data);
-            })
-            .catch((err) => console.error("ME ERROR:", err));
-    }, []);
-
-    // Close mobile drawer when route changes
-    useEffect(() => {
-        setSidebarOpen(false);
-    }, [pathname]);
-
-    // Prevent background scroll when mobile drawer is open
-    useEffect(() => {
-        if (!sidebarOpen) return;
-
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
-
-        return () => {
-            document.body.style.overflow = previousOverflow;
-        };
-    }, [sidebarOpen]);
-
-    const navItems = [
-        { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
-        { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
-        { icon: "candlestick_chart", label: "Trading", href: "/trading", restricted: true },
-        { icon: "show_chart", label: "Indicators", href: "/indicators" },
-        { icon: "person", label: "Profile", href: "/profile" },
-        ...(user?.role === "admin" || user?.role === "moderator"
-            ? [{ icon: "group", label: "Users", href: "/users" }]
-            : []),
-        ...(user?.role === "admin" ? [{ icon: "report", label: "Reports", href: "/reports" }] : []),
-    ];
-
-    const SidebarContent = ({ collapsed, onNavigate, showBrand = true }) => (
+// SidebarContent extracted outside of the main component to avoid recreating on each render
+function SidebarContent({ collapsed, onNavigate, showBrand = true, navItems, pathname, user, sidebarCollapsed, onToggleCollapse }) {
+    return (
         <>
             {showBrand && (
                 <div className={`flex items-center gap-3 px-3 py-2 ${collapsed ? "justify-center" : ""}`}>
@@ -73,7 +20,7 @@ export default function DashboardLayout({ children }) {
                     <div className="ml-auto hidden lg:flex">
                         <button
                             type="button"
-                            onClick={() => setSidebarCollapsed((v) => !v)}
+                            onClick={onToggleCollapse}
                             className="h-9 w-9 rounded-md text-gray-400 hover:bg-white/5 hover:text-white flex items-center justify-center"
                             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                             title={sidebarCollapsed ? "Expand" : "Collapse"}
@@ -146,6 +93,75 @@ export default function DashboardLayout({ children }) {
             </div>
         </>
     );
+}
+
+export default function DashboardLayout({ children }) {
+    const [user, setUser] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const pathname = usePathname();
+    const prevPathname = useRef(pathname);
+
+    // Charger l'utilisateur depuis le backend grâce au token
+    useEffect(() => {
+        const token = Cookies.get("token");
+        if (!token) return;
+
+        fetch("http://localhost:3004/auth/me", {
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+        })
+            .then((res) => res.json())
+            .then((data) => {
+                if (data?.error) return;
+                setUser(data);
+            })
+            .catch((err) => console.error("ME ERROR:", err));
+    }, []);
+
+    // Close mobile drawer when route changes - using queueMicrotask to avoid synchronous setState warning
+    useEffect(() => {
+        if (prevPathname.current !== pathname) {
+            prevPathname.current = pathname;
+            // Use queueMicrotask to defer the state update and avoid cascading renders
+            queueMicrotask(() => {
+                setSidebarOpen(false);
+            });
+        }
+    }, [pathname]);
+
+    // Prevent background scroll when mobile drawer is open
+    useEffect(() => {
+        if (!sidebarOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [sidebarOpen]);
+
+    const handleToggleCollapse = useCallback(() => {
+        setSidebarCollapsed((v) => !v);
+    }, []);
+
+    const handleCloseSidebar = useCallback(() => {
+        setSidebarOpen(false);
+    }, []);
+
+    const navItems = [
+        { icon: "dashboard", label: "Dashboard", href: "/dashboard" },
+        { icon: "account_balance_wallet", label: "Portfolio", href: "/portfolio" },
+        { icon: "candlestick_chart", label: "Trading", href: "/trading", restricted: true },
+        { icon: "show_chart", label: "Indicators", href: "/indicators" },
+        { icon: "person", label: "Profile", href: "/profile" },
+        ...(user?.role === "admin" || user?.role === "moderator"
+            ? [{ icon: "group", label: "Users", href: "/users" }]
+            : []),
+        ...(user?.role === "admin" ? [{ icon: "report", label: "Reports", href: "/reports" }] : []),
+    ];
 
     return (
         <div className="flex min-h-screen w-full bg-background-dark text-white">
@@ -154,7 +170,7 @@ export default function DashboardLayout({ children }) {
                 <button
                     type="button"
                     aria-label="Close menu"
-                    onClick={() => setSidebarOpen(false)}
+                    onClick={handleCloseSidebar}
                     className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm lg:hidden"
                 />
             )}
@@ -176,7 +192,7 @@ export default function DashboardLayout({ children }) {
                     </div>
                     <button
                         type="button"
-                        onClick={() => setSidebarOpen(false)}
+                        onClick={handleCloseSidebar}
                         className="h-10 w-10 rounded-md text-gray-300 hover:bg-white/5 hover:text-white flex items-center justify-center"
                         aria-label="Close menu"
                     >
@@ -187,7 +203,12 @@ export default function DashboardLayout({ children }) {
                     <SidebarContent
                         collapsed={false}
                         showBrand={false}
-                        onNavigate={() => setSidebarOpen(false)}
+                        onNavigate={handleCloseSidebar}
+                        navItems={navItems}
+                        pathname={pathname}
+                        user={user}
+                        sidebarCollapsed={sidebarCollapsed}
+                        onToggleCollapse={handleToggleCollapse}
                     />
                 </div>
             </aside>
@@ -198,7 +219,14 @@ export default function DashboardLayout({ children }) {
                     ${sidebarCollapsed ? "w-20" : "w-64"}
                 `}
             >
-                <SidebarContent collapsed={sidebarCollapsed} />
+                <SidebarContent
+                    collapsed={sidebarCollapsed}
+                    navItems={navItems}
+                    pathname={pathname}
+                    user={user}
+                    sidebarCollapsed={sidebarCollapsed}
+                    onToggleCollapse={handleToggleCollapse}
+                />
             </aside>
 
             {/* MAIN CONTENT */}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { checkActionCode } from "firebase/auth";
 import { auth } from "../../../../lib/firebase";
@@ -18,8 +18,9 @@ function AuthActionContent() {
 
   const { mode, oobCode, continueUrl } = useMemo(() => getAuthActionInput(sp), [sp]);
 
-  const [status, setStatus] = useState("loading");
-  const [details, setDetails] = useState("");
+  const [status, setStatus] = useState(() => oobCode ? "loading" : "invalid");
+  const [details, setDetails] = useState(() => oobCode ? "" : "Paramètre oobCode manquant.");
+  const hasRun = useRef(false);
 
   const baseParams = useMemo(
     () => getAuthActionBaseParams({ oobCode, continueUrl }),
@@ -27,11 +28,10 @@ function AuthActionContent() {
   );
 
   useEffect(() => {
-    if (!oobCode) {
-      setStatus("invalid");
-      setDetails("Paramètre oobCode manquant.");
+    if (!oobCode || hasRun.current) {
       return;
     }
+    hasRun.current = true;
 
     // Fast path when Firebase provides the standard mode.
     const fastPath = getFastRedirectPathname(mode);

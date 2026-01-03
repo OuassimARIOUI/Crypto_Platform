@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import { getPriceHistoryController } from "../../controllers/PriceHistory.controller.js";
+import { getPriceHistoryController } from "../../controllers/priceHistory.controller.js";
 import { getHistoryService } from "../../services/getHistoryService.js";
 
 // Mock service

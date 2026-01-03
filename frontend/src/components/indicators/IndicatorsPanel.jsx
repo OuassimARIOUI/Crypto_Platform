@@ -474,7 +474,7 @@ export default function IndicatorsPanel() {
                     <div>
                         <h3 className="text-white text-xl font-bold">Discord Alerts</h3>
                         <p className="text-white/60 text-sm mt-1">
-                            Create an alert for <span className="text-primary font-medium">{symbol.toUpperCase()}</span>. When triggered, you'll receive a Discord DM if your account is connected.
+                            Create an alert for <span className="text-primary font-medium">{symbol.toUpperCase()}</span>. When triggered, you&apos;ll receive a Discord DM if your account is connected.
                         </p>
                     </div>
                 </div>

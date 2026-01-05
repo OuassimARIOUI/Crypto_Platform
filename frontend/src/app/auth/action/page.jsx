@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { checkActionCode } from "firebase/auth";
-import { auth } from "../../../../lib/firebase";
+import { auth, isFirebaseConfigured } from "../../../../lib/firebase";
 import {
   buildRedirectUrl,
   getAuthActionBaseParams,
@@ -18,8 +18,14 @@ function AuthActionContent() {
 
   const { mode, oobCode, continueUrl } = useMemo(() => getAuthActionInput(sp), [sp]);
 
-  const [status, setStatus] = useState(() => oobCode ? "loading" : "invalid");
-  const [details, setDetails] = useState(() => oobCode ? "" : "Paramètre oobCode manquant.");
+  const [status, setStatus] = useState(() => {
+    if (!isFirebaseConfigured) return "error";
+    return oobCode ? "loading" : "invalid";
+  });
+  const [details, setDetails] = useState(() => {
+    if (!isFirebaseConfigured) return "Firebase n'est pas configuré.";
+    return oobCode ? "" : "Paramètre oobCode manquant.";
+  });
   const hasRun = useRef(false);
 
   const baseParams = useMemo(
@@ -28,7 +34,7 @@ function AuthActionContent() {
   );
 
   useEffect(() => {
-    if (!oobCode || hasRun.current) {
+    if (!isFirebaseConfigured || !oobCode || hasRun.current) {
       return;
     }
     hasRun.current = true;

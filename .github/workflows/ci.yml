@@ -228,6 +228,8 @@ jobs:
           tags: |
             ghcr.io/${{ steps.repo.outputs.name }}/frontend:latest
             ghcr.io/${{ steps.repo.outputs.name }}/frontend:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

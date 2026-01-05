@@ -293,30 +293,48 @@ jobs:
     environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
 
     steps:
+      - name: Check if Kubernetes is configured
+        id: k8s-check
+        run: |
+          if [ -n "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "✓ KUBE_CONFIG secret is configured"
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo " KUBE_CONFIG secret not configured. Skipping Kubernetes deployment."
+            echo "To enable K8s deployment, add KUBE_CONFIG secret with your kubeconfig (base64 encoded)."
+          fi
+
       - name: Checkout
+        if: steps.k8s-check.outputs.configured == 'true'
         uses: actions/checkout@v4
 
       - name: Convert repository name to lowercase
+        if: steps.k8s-check.outputs.configured == 'true'
         id: repo
         run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Install kubectl
+        if: steps.k8s-check.outputs.configured == 'true'
         uses: azure/setup-kubectl@v3
         with:
           version: 'v1.29.0'
 
       - name: Install kustomize
+        if: steps.k8s-check.outputs.configured == 'true'
         uses: imranismail/setup-kustomize@v2
         with:
           kustomize-version: '5.3.0'
 
       - name: Set up kubeconfig
+        if: steps.k8s-check.outputs.configured == 'true'
         run: |
           mkdir -p ~/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
       - name: Update image tags with kustomize
+        if: steps.k8s-check.outputs.configured == 'true'
         working-directory: k8s/base
         run: |
           # Update backend image (from local name to ghcr.io with commit SHA)
@@ -327,16 +345,19 @@ jobs:
           kustomize edit set image crypto_platform-worker=ghcr.io/${{ steps.repo.outputs.name }}/backend:${{ github.sha }}
 
       - name: Deploy to Kubernetes
+        if: steps.k8s-check.outputs.configured == 'true'
         run: |
           kubectl apply -k k8s/base
 
       - name: Wait for rollout
+        if: steps.k8s-check.outputs.configured == 'true'
         run: |
           kubectl rollout status deployment/backend -n crypto-platform --timeout=300s
           kubectl rollout status deployment/frontend -n crypto-platform --timeout=300s
           kubectl rollout status deployment/crypto-worker -n crypto-platform --timeout=300s
 
       - name: Verify deployment
+        if: steps.k8s-check.outputs.configured == 'true'
         run: |
           echo "=== Pods Status ==="
           kubectl get pods -n crypto-platform
@@ -348,6 +369,7 @@ jobs:
           kubectl get ingress -n crypto-platform
 
       - name: Run smoke tests
+        if: steps.k8s-check.outputs.configured == 'true'
         run: |
           # Wait for services to be ready
           sleep 30
@@ -358,6 +380,22 @@ jobs:
           
           echo "Smoke tests completed!"
 
+      - name: Deployment skipped summary
+        if: steps.k8s-check.outputs.configured == 'false'
+        run: |
+          echo "=============================================="
+          echo "  Kubernetes deployment was SKIPPED"
+          echo "=============================================="
+          echo ""
+          echo "Docker images were successfully built and pushed to:"
+          echo "  - ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/backend:${{ github.sha }}"
+          echo "  - ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/frontend:${{ github.sha }}"
+          echo ""
+          echo "To enable Kubernetes deployment:"
+          echo "  1. Get your kubeconfig file"
+          echo "  2. Encode it: cat ~/.kube/config | base64 -w0"
+          echo "  3. Add it as a GitHub secret named KUBE_CONFIG"
+          echo ""
   # =============================================================================
   # Kubernetes Dry Run (for PRs)
   # =============================================================================

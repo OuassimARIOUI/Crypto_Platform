@@ -10,6 +10,17 @@ const firebaseConfig = {
     appId: "1:293985364644:web:41662f71c6d689d4825431"
 };
 
+// Check if Firebase API key is available (required for auth features)
+const isFirebaseConfigured = !!firebaseConfig.apiKey;
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+let app = null;
+let auth = null;
+
+if (isFirebaseConfigured) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+} else {
+    console.warn("⚠️ Firebase API key not configured. Auth features will be disabled.");
+}
+
+export { auth, isFirebaseConfigured };

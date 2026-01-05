@@ -5,7 +5,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
 
-import { auth } from "../../../lib/firebase";
+import { auth, isFirebaseConfigured } from "../../../lib/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
 export default function RegisterPage() {

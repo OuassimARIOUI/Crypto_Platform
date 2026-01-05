@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const isFirebaseDisabled = process.env.FIREBASE_DISABLED === "true";
 
 if (isFirebaseDisabled) {
-    console.log("⚠️ Firebase is DISABLED (FIREBASE_DISABLED=true). Auth features using Firebase will be mocked.");
+    console.log(" Firebase is DISABLED (FIREBASE_DISABLED=true). Auth features using Firebase will be mocked.");
 } else {
     const defaultServiceAccountPath = fileURLToPath(
         new URL("../../firebase-service-account.json", import.meta.url)

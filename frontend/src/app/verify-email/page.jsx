@@ -1,17 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { auth } from "../../../lib/firebase";
+import { auth, isFirebaseConfigured } from "../../../lib/firebase";
 import { applyActionCode, checkActionCode } from "firebase/auth";
 import { useSearchParams } from "next/navigation";
 
 function VerifyEmailContent() {
-    const [status, setStatus] = useState("loading");
-    const [details, setDetails] = useState("");
+    const [status, setStatus] = useState(isFirebaseConfigured ? "loading" : "error");
+    const [details, setDetails] = useState(isFirebaseConfigured ? "" : "Firebase n'est pas configuré.");
     const searchParams = useSearchParams();
     const ran = useRef(false);
 
     useEffect(() => {
+        // Skip if Firebase is not configured
+        if (!isFirebaseConfigured) return;
+        
         // React StrictMode (dev) can run effects twice; action codes are one-time.
         if (ran.current) return;
         ran.current = true;

@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["**"]
+    branches: [dev]
   pull_request:
+    branches: [main]
   schedule:
     # Backup automatique tous les jours à 2h du matin UTC
     - cron: '0 2 * * *'
@@ -58,22 +59,10 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: Create Firebase config for CI
-        working-directory: backend
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "$FIREBASE_SERVICE_ACCOUNT" | base64 -d > firebase-service-account.json
-            echo "✓ Firebase service account created from secret"
-          else
-            # Create a minimal mock for tests (Firebase will be disabled at runtime)
-            echo '{"type":"service_account","project_id":"mock","private_key":"-----BEGIN PRIVATE KEY-----\nMIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA0Z3VS5JJcds3xfn/\nygWyF8PbnGy0AHB7MxszR/goLwPBbvbTfBlDJOYMHECgPKUiqoDOhDL/3qdKOISB\ncQIDAQABAkEAy7lHd1mnEWX7h0Z1v5nQ6g8F4oKL4R7W5J0y+1z8m8C7nK1B4K2L\nD3v8Hh7UB3x8F9QfA+3Y8M7z9y7oQ8DAQJAEAkBigQIDAQAB\n-----END PRIVATE KEY-----\n","client_email":"mock@mock.iam.gserviceaccount.com"}' > firebase-service-account.json
-            echo "⚠️ Using mock Firebase config (FIREBASE_SERVICE_ACCOUNT secret not set)"
-          fi
-
       - name: Unit tests + coverage (backend)
         working-directory: backend
+        env:
+          FIREBASE_DISABLED: "true"
         run: npm run test:coverage
 
       - name: Prepare integration DB schema (backend)
@@ -82,6 +71,8 @@ jobs:
 
       - name: Integration tests + coverage (backend)
         working-directory: backend
+        env:
+          FIREBASE_DISABLED: "true"
         run: npm run test:integration:coverage
 
       - name: Upload backend coverage artifacts
@@ -217,20 +208,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Firebase service account for Docker build
-        working-directory: backend
-        env:
-          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: |
-          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
-            echo "$FIREBASE_SERVICE_ACCOUNT" | base64 -d > firebase-service-account.json
-            echo "✓ Firebase service account created from secret"
-          else
-            # Create a minimal mock (Firebase will be disabled at runtime in CI builds)
-            echo '{"type":"service_account","project_id":"mock","private_key":"-----BEGIN PRIVATE KEY-----\nMIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA0Z3VS5JJcds3xfn/\nygWyF8PbnGy0AHB7MxszR/goLwPBbvbTfBlDJOYMHECgPKUiqoDOhDL/3qdKOISB\ncQIDAQABAkEAy7lHd1mnEWX7h0Z1v5nQ6g8F4oKL4R7W5J0y+1z8m8C7nK1B4K2L\nD3v8Hh7UB3x8F9QfA+3Y8M7z9y7oQ8DAQJAEAkBigQIDAQAB\n-----END PRIVATE KEY-----\n","client_email":"mock@mock.iam.gserviceaccount.com"}' > firebase-service-account.json
-            echo "⚠️ Using mock Firebase config (FIREBASE_SERVICE_ACCOUNT secret not set)"
-          fi
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5

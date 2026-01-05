@@ -26,7 +26,7 @@ echo "Starting PostgreSQL restore at $(date)"
 echo "Backup file: ${BACKUP_FILE}"
 echo "=========================================="
 echo ""
-echo "⚠️  WARNING: This will overwrite the current database!"
+echo "  WARNING: This will overwrite the current database!"
 echo "Press Ctrl+C to cancel or wait 5 seconds to continue..."
 sleep 5
 

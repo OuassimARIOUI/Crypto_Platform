@@ -43,7 +43,7 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            //  Vérifie disponibilité du pseudo AVANT Firebase
+            //  Vérifie disponibilité du pseudo AVANT Firebasee
             const checkRes = await fetch(
                 `http://localhost:3004/auth/pseudo/check?pseudo=${encodeURIComponent(pseudo.trim())}`
             );

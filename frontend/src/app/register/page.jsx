@@ -43,7 +43,7 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            // 0️⃣ Vérifie disponibilité du pseudo AVANT Firebase
+            //  Vérifie disponibilité du pseudo AVANT Firebase
             const checkRes = await fetch(
                 `http://localhost:3004/auth/pseudo/check?pseudo=${encodeURIComponent(pseudo.trim())}`
             );
@@ -52,13 +52,13 @@ export default function RegisterPage() {
                 throw new Error(checkData?.error || "Pseudo invalide ou déjà utilisé");
             }
 
-            // 1️⃣ Création du compte Firebase Auth
+            //  Création du compte Firebase Auth
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-            // 2️⃣ Envoi de l'email de vérification Firebase
+            //  Envoi de l'email de vérification Firebase
             await sendEmailVerification(userCred.user);
 
-            // 3️⃣ Sync avec ton backend (PostgreSQL)
+            //  Sync avec le backend (PostgreSQL)
             const syncRes = await fetch("http://localhost:3004/auth/firebase-sync", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

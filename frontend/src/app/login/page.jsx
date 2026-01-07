@@ -53,7 +53,7 @@ export default function LoginPage() {
             const userCred = await signInWithEmailAndPassword(auth, email, password);
             const token = await userCred.user.getIdToken();
 
-            // 2️⃣ SYNC AVEC TON BACKEND
+            //  SYNC AVEC LE BACKEND
             const res = await fetch("http://localhost:3004/auth/firebase-login", {
                 method: "POST",
                 headers: {
@@ -71,7 +71,7 @@ export default function LoginPage() {
                 return;
             }
 
-            // 3️⃣ STOCK TOKEN ET REDIRECT
+            // STOCK TOKEN ET REDIRECT
             Cookies.set("token", token, { expires: 7 });
             window.location.href = "/dashboard";
         } catch (err) {

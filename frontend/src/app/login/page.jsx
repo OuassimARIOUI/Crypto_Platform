@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { auth, isFirebaseConfigured } from "../../../lib/firebase";
+import { startTokenRefresh, stopTokenRefresh } from "../../../lib/tokenManager";
 import Link from "next/link";
 import Cookies from "js-cookie";
 
@@ -11,12 +12,41 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (!isFirebaseConfigured || !auth) {
+            return;
+        }
+
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const token = await user.getIdToken();
+                Cookies.set("token", token, { expires: 7 });
+                
+                startTokenRefresh(async (newToken) => {
+                    Cookies.set("token", newToken, { expires: 7 });
+                });
+            } else {
+                stopTokenRefresh();
+            }
+        });
+
+        return () => {
+            unsubscribe();
+            stopTokenRefresh();
+        };
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
 
+        if (!isFirebaseConfigured || !auth) {
+            alert("Firebase n'est pas configuré. Veuillez contacter l'administrateur.");
+            setLoading(false);
+            return;
+        }
+
         try {
-            // 1️⃣ LOGIN FIREBASE
             const userCred = await signInWithEmailAndPassword(auth, email, password);
             const token = await userCred.user.getIdToken();
 

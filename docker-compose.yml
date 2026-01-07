@@ -54,15 +54,19 @@ services:
     restart: always
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
     container_name: frontend
     ports:
       - "3000:3000"
     environment:
-      # URL pour le navigateur (client-side)
+      - NEXT_PUBLIC_FIREBASE_API_KEY=${NEXT_PUBLIC_FIREBASE_API_KEY}
       - NEXT_PUBLIC_API_BASE=http://localhost:3004
-      # URL pour le middleware/serveur (server-side, communication Docker interne)
       - API_BASE_URL=http://backend:3004
+    env_file:
+      - ./frontend/.env
     depends_on:
       - backend
     restart: always

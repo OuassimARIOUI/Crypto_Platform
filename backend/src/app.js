@@ -16,6 +16,8 @@ import { metricsMiddleware, metricsHandler, healthHandler } from "./middleware/m
 
 const app = express();
 
+// Disable X-Powered-By header for security
+app.disable('x-powered-by');
 
 app.use(cors({
     origin: "http://localhost:3000",

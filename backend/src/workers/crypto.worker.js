@@ -10,6 +10,10 @@ await connectDB();
 
 console.log(" Worker started. Waiting for jobs…");
 
+// Parse REDIS_URL or use defaults
+const redisUrl = process.env.REDIS_URL || "redis://redis:6379";
+const parsedUrl = new URL(redisUrl);
+
 // Worker BullMQ
 new Worker(
     "crypto-jobs",
@@ -32,8 +36,8 @@ new Worker(
     },
     {
         connection: {
-            host: "redis",
-            port: 6379
+            host: parsedUrl.hostname,
+            port: parseInt(parsedUrl.port) || 6379
         }
     }
 );

@@ -57,7 +57,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"crypto-platform\"}[5m])) * 100",
+              "expr": "sum(rate(process_cpu_seconds_total{job=\"crypto-backend\"}[5m])) * 100",
               "refId": "A"
             }
           ],
@@ -79,11 +79,11 @@ data:
                 "mode": "absolute",
                 "steps": [
                   {"color": "green", "value": null},
-                  {"color": "yellow", "value": 70},
-                  {"color": "red", "value": 90}
+                  {"color": "yellow", "value": 100},
+                  {"color": "red", "value": 150}
                 ]
               },
-              "unit": "percent"
+              "unit": "decmbytes"
             }
           },
           "gridPos": {"h": 6, "w": 6, "x": 6, "y": 0},
@@ -102,7 +102,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=\"crypto-platform\"}) / sum(container_spec_memory_limit_bytes{namespace=\"crypto-platform\"}) * 100",
+              "expr": "sum(process_resident_memory_bytes{job=\"crypto-backend\"}) / (1024*1024)",
               "refId": "A"
             }
           ],
@@ -141,7 +141,7 @@ data:
           },
           "targets": [
             {
-              "expr": "count(kube_pod_status_ready{namespace=\"crypto-platform\", condition=\"true\"})",
+              "expr": "count(up{job=\"crypto-backend\"})",
               "refId": "A"
             }
           ],
@@ -260,7 +260,7 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(http_requests_total{namespace=\"crypto-platform\"}[5m])) by (method)",
+              "expr": "sum(rate(http_requests_total{job=\"crypto-backend\"}[5m])) by (method)",
               "legendFormat": "{{method}}",
               "refId": "A"
             }
@@ -334,12 +334,12 @@ data:
           },
           "targets": [
             {
-              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{namespace=\"crypto-platform\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"crypto-backend\"}[5m])) by (le))",
               "legendFormat": "p95",
               "refId": "A"
             },
             {
-              "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{namespace=\"crypto-platform\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket{job=\"crypto-backend\"}[5m])) by (le))",
               "legendFormat": "p50",
               "refId": "B"
             }
@@ -413,8 +413,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(container_memory_usage_bytes{namespace=\"crypto-platform\"}) by (pod)",
-              "legendFormat": "{{pod}}",
+              "expr": "sum(process_resident_memory_bytes{job=\"crypto-backend\"}) by (instance)",
+              "legendFormat": "{{instance}}",
               "refId": "A"
             }
           ],
@@ -487,8 +487,8 @@ data:
           },
           "targets": [
             {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"crypto-platform\"}[5m])) by (pod)",
-              "legendFormat": "{{pod}}",
+              "expr": "sum(rate(process_cpu_seconds_total{job=\"crypto-backend\"}[5m])) by (instance)",
+              "legendFormat": "{{instance}}",
               "refId": "A"
             }
           ],

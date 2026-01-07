@@ -21,6 +21,10 @@ spec:
       labels:
         app: backend
         app.kubernetes.io/name: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3004"
+        prometheus.io/path: "/metrics"
     spec:
       initContainers:
         # Wait for PostgreSQL to be ready
@@ -116,6 +120,10 @@ metadata:
   labels:
     app.kubernetes.io/name: backend
     app.kubernetes.io/component: api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3004"
+    prometheus.io/path: "/metrics"
 spec:
   type: ClusterIP
   ports:

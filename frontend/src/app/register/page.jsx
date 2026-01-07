@@ -4,6 +4,8 @@ import { useState } from "react";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import Link from "next/link";
+import { useNotification } from "@/hooks/useNotification";
+import Notification from "@/components/ui/Notification";
 
 import { auth, isFirebaseConfigured } from "../../../lib/firebase";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
@@ -15,6 +17,7 @@ export default function RegisterPage() {
     const [discordUsername, setDiscordUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const { notification, showNotification, hideNotification } = useNotification();
 
     function validatePseudoLocal(value) {
         const v = (value ?? "").toString().trim();
@@ -40,7 +43,7 @@ export default function RegisterPage() {
         setLoading(true);
 
         try {
-            // 0️⃣ Vérifie disponibilité du pseudo AVANT Firebase
+            //  Vérifie disponibilité du pseudo AVANT Firebase
             const checkRes = await fetch(
                 `http://localhost:3004/auth/pseudo/check?pseudo=${encodeURIComponent(pseudo.trim())}`
             );
@@ -49,13 +52,13 @@ export default function RegisterPage() {
                 throw new Error(checkData?.error || "Pseudo invalide ou déjà utilisé");
             }
 
-            // 1️⃣ Création du compte Firebase Auth
+            //  Création du compte Firebase Auth
             const userCred = await createUserWithEmailAndPassword(auth, email, password);
 
-            // 2️⃣ Envoi de l'email de vérification Firebase
+            //  Envoi de l'email de vérification Firebase
             await sendEmailVerification(userCred.user);
 
-            // 3️⃣ Sync avec ton backend (PostgreSQL)
+            //  Sync avec le backend (PostgreSQL)
             const syncRes = await fetch("http://localhost:3004/auth/firebase-sync", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -72,8 +75,10 @@ export default function RegisterPage() {
                 throw new Error(syncData?.error || "Sync error");
             }
 
-            alert("Account created! Please verify your email before logging in.");
-            window.location.href = "/login";
+            showNotification("Compte créé ! Veuillez vérifier votre email avant de vous connecter.", "success", 7000);
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 2000);
 
         } catch (err) {
             console.error(err);
@@ -85,6 +90,15 @@ export default function RegisterPage() {
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
+
+            {/* Notification */}
+            {notification && (
+                <Notification
+                    message={notification.message}
+                    type={notification.type}
+                    onClose={hideNotification}
+                />
+            )}
 
             {/* Background GIF */}
             <div

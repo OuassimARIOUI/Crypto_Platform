@@ -1,0 +1,19 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.25.0
+
+# Ignore rules - À configurer selon vos besoins
+# ignore:
+#   SNYK-JS-EXAMPLE-123456:
+#     - '*':
+#         reason: Faux positif vérifié
+#         expires: 2026-06-01T00:00:00.000Z
+
+# Patch rules - Applique automatiquement les patches de sécurité
+patch: {}
+
+# Exclude paths - Exclut certains dossiers du scan
+exclude:
+  - test/**
+  - coverage/**
+  - docs/**
+  - node_modules/**

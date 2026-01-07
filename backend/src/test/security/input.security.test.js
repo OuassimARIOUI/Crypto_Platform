@@ -25,7 +25,7 @@ vi.mock("../../services/firebaseAdmin.js", () => ({
     },
 }));
 
-describe("Security - Input Validation", () => {
+describe("Sécurité - Validation des entrées", () => {
     let req, res;
 
     beforeEach(() => {
@@ -37,8 +37,8 @@ describe("Security - Input Validation", () => {
         vi.clearAllMocks();
     });
 
-    describe("XSS Prevention", () => {
-        it("should handle XSS in pseudo during registration", async () => {
+    describe("Prévention XSS", () => {
+        it("devrait gérer le XSS dans le pseudo lors de l'inscription", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -55,7 +55,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should handle XSS in email field", async () => {
+        it("devrait gérer le XSS dans le champ email", async () => {
             req.body = {
                 email: "<script>alert('xss')</script>@mail.com",
                 password: "password123",
@@ -72,7 +72,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should sanitize HTML entities in pseudo check", async () => {
+        it("devrait nettoyer les entités HTML dans la vérification du pseudo", async () => {
             req.query.pseudo = "&lt;img src=x onerror=alert(1)&gt;";
             
             assertPseudoAvailable.mockRejectedValue({
@@ -86,8 +86,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("SQL Injection Prevention", () => {
-        it("should reject SQL injection in email field", async () => {
+    describe("Prévention de l'injection SQL", () => {
+        it("devrait rejeter une injection SQL dans le champ email", async () => {
             req.body = {
                 email: "admin'--",
                 password: "password123",
@@ -104,7 +104,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject SQL injection in pseudo field", async () => {
+        it("devrait rejeter une injection SQL dans le champ pseudo", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -121,7 +121,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should handle UNION-based SQL injection", async () => {
+        it("devrait gérer une injection SQL basée sur UNION", async () => {
             req.body = {
                 email: "test@mail.com' UNION SELECT * FROM users--",
                 password: "password123",
@@ -138,7 +138,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should prevent time-based SQL injection", async () => {
+        it("devrait prévenir l'injection SQL basée sur le temps", async () => {
             req.body = {
                 email: "test@mail.com'; WAITFOR DELAY '00:00:05'--",
                 password: "password123",
@@ -156,8 +156,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("NoSQL Injection Prevention", () => {
-        it("should reject object injection in login", async () => {
+    describe("Prévention de l'injection NoSQL", () => {
+        it("devrait rejeter l'injection d'objet dans le login", async () => {
             req.body = {
                 email: { $ne: null },
                 password: { $ne: null },
@@ -170,7 +170,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject $where operator injection", async () => {
+        it("devrait rejeter l'injection de l'opérateur $where", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -185,8 +185,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("Command Injection Prevention", () => {
-        it("should reject shell commands in pseudo", async () => {
+    describe("Prévention de l'injection de commandes", () => {
+        it("devrait rejeter les commandes shell dans le pseudo", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -203,7 +203,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject backtick commands", async () => {
+        it("devrait rejeter les commandes avec backtick", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -221,8 +221,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("Path Traversal Prevention", () => {
-        it("should reject path traversal in pseudo", async () => {
+    describe("Prévention de la traversée de chemin", () => {
+        it("devrait rejeter la traversée de chemin dans le pseudo", async () => {
             req.query.pseudo = "../../../etc/passwd";
             
             assertPseudoAvailable.mockRejectedValue({
@@ -235,7 +235,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject encoded path traversal", async () => {
+        it("devrait rejeter la traversée de chemin encodée", async () => {
             req.query.pseudo = "..%2F..%2F..%2Fetc%2Fpasswd";
             
             assertPseudoAvailable.mockRejectedValue({
@@ -249,8 +249,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("Size Limits", () => {
-        it("should reject extremely long pseudo", async () => {
+    describe("Limites de taille", () => {
+        it("devrait rejeter un pseudo extrêmement long", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -267,7 +267,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject extremely long email", async () => {
+        it("devrait rejeter un email extrêmement long", async () => {
             req.body = {
                 email: "a".repeat(10000) + "@mail.com",
                 password: "password123",
@@ -285,8 +285,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("Special Characters Handling", () => {
-        it("should handle null bytes in input", async () => {
+    describe("Gestion des caractères spéciaux", () => {
+        it("devrait gérer les octets nuls dans l'entrée", async () => {
             req.body = {
                 email: "test\x00@mail.com",
                 password: "password123",
@@ -303,7 +303,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should handle unicode characters properly", async () => {
+        it("devrait gérer correctement les caractères unicode", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -320,7 +320,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should handle RTL override attacks", async () => {
+        it("devrait gérer les attaques de remplacement RTL", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -338,8 +338,8 @@ describe("Security - Input Validation", () => {
         });
     });
 
-    describe("Missing or Empty Fields", () => {
-        it("should reject registration without email", async () => {
+    describe("Champs manquants ou vides", () => {
+        it("devrait rejeter une inscription sans email", async () => {
             req.body = {
                 password: "password123",
                 pseudo: "testuser",
@@ -355,7 +355,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject registration without password", async () => {
+        it("devrait rejeter une inscription sans mot de passe", async () => {
             req.body = {
                 email: "test@mail.com",
                 pseudo: "testuser",
@@ -371,7 +371,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject registration without pseudo", async () => {
+        it("devrait rejeter une inscription sans pseudo", async () => {
             req.body = {
                 email: "test@mail.com",
                 password: "password123",
@@ -387,7 +387,7 @@ describe("Security - Input Validation", () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
-        it("should reject empty string values", async () => {
+        it("devrait rejeter les valeurs de chaîne vides", async () => {
             req.body = {
                 email: "",
                 password: "",

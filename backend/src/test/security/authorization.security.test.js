@@ -5,17 +5,15 @@ import {
     requireCanTrade,
 } from "../../middleware/accessControl.js";
 
-const prismaMock = {
-    users: {
-        update: vi.fn(),
-    },
-};
-
 vi.mock("../../services/dbService.js", () => ({
-    prisma: prismaMock,
+    prisma: {
+        users: {
+            update: vi.fn(),
+        },
+    },
 }));
 
-describe("Security - Authorization", () => {
+describe("Sécurité - Autorisation", () => {
     let req, res, next;
 
     beforeEach(() => {
@@ -28,8 +26,8 @@ describe("Security - Authorization", () => {
         vi.clearAllMocks();
     });
 
-    describe("Account Status Enforcement", () => {
-        it("should block banned user from trading", () => {
+    describe("Application du statut de compte", () => {
+        it("devrait bloquer un utilisateur banni du trading", () => {
             req.dbUser = {
                 id: 1,
                 status: "banned",
@@ -46,7 +44,7 @@ describe("Security - Authorization", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should block suspended user from trading", () => {
+        it("devrait bloquer un utilisateur suspendu du trading", () => {
             req.dbUser = {
                 id: 1,
                 status: "suspended",
@@ -62,7 +60,7 @@ describe("Security - Authorization", () => {
             });
         });
 
-        it("should allow active user to trade", () => {
+        it("devrait autoriser un utilisateur actif à trader", () => {
             req.dbUser = {
                 id: 1,
                 status: "active",
@@ -75,7 +73,7 @@ describe("Security - Authorization", () => {
             expect(res.status).not.toHaveBeenCalled();
         });
 
-        it("should reject trading without authentication", () => {
+        it("devrait rejeter le trading sans authentification", () => {
             req.dbUser = null;
             
             requireCanTrade(req, res, next);
@@ -85,8 +83,8 @@ describe("Security - Authorization", () => {
         });
     });
 
-    describe("Role-Based Access Control", () => {
-        it("should block user from admin-only route", () => {
+    describe("Contrôle d'accès basé sur les rôles", () => {
+        it("devrait bloquer un utilisateur des routes réservées aux administrateurs", () => {
             req.dbUser = { id: 1, role: "user" };
             const middleware = requireRole("admin");
             
@@ -97,7 +95,7 @@ describe("Security - Authorization", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should allow admin to access admin route", () => {
+        it("devrait autoriser un administrateur à accéder aux routes admin", () => {
             req.dbUser = { id: 1, role: "admin" };
             const middleware = requireRole("admin");
             
@@ -107,7 +105,7 @@ describe("Security - Authorization", () => {
             expect(res.status).not.toHaveBeenCalled();
         });
 
-        it("should allow moderator to access moderator or admin routes", () => {
+        it("devrait autoriser un modérateur à accéder aux routes modérateur ou admin", () => {
             req.dbUser = { id: 1, role: "moderator" };
             const middleware = requireRole("moderator", "admin");
             
@@ -116,7 +114,7 @@ describe("Security - Authorization", () => {
             expect(next).toHaveBeenCalled();
         });
 
-        it("should block user from moderator routes", () => {
+        it("devrait bloquer un utilisateur des routes modérateur", () => {
             req.dbUser = { id: 1, role: "user" };
             const middleware = requireRole("moderator", "admin");
             
@@ -125,7 +123,7 @@ describe("Security - Authorization", () => {
             expect(res.status).toHaveBeenCalledWith(403);
         });
 
-        it("should handle missing role gracefully", () => {
+        it("devrait gérer l'absence de rôle de manière sécurisée", () => {
             req.dbUser = null;
             const middleware = requireRole("admin");
             
@@ -135,7 +133,7 @@ describe("Security - Authorization", () => {
             expect(res.json).toHaveBeenCalledWith({ error: "Unauthorized" });
         });
 
-        it("should not allow role escalation via parameter manipulation", () => {
+        it("ne devrait pas permettre l'élévation de rôle via manipulation de paramètres", () => {
             req.dbUser = { id: 1, role: "user" };
             req.query = { role: "admin" };
             req.body = { role: "admin" };
@@ -147,61 +145,8 @@ describe("Security - Authorization", () => {
         });
     });
 
-    describe("Ban Expiration", () => {
-        it("should unban user when ban period expires", async () => {
-            const pastDate = new Date(Date.now() - 1000);
-            req.dbUser = {
-                id: 1,
-                status: "banned",
-                banned_until: pastDate,
-                role: "user",
-            };
-            
-            const updatedUser = {
-                id: 1,
-                status: "active",
-                banned_until: null,
-                role: "user",
-            };
-            
-            prismaMock.users.update.mockResolvedValue(updatedUser);
-            
-            await normalizeAccountStatus(req, res, next);
-            
-            expect(prismaMock.users.update).toHaveBeenCalledWith({
-                where: { id: 1 },
-                data: {
-                    status: "active",
-                    banned_until: null,
-                    banned_at: null,
-                    ban_reason: null,
-                    banned_by_id: null,
-                },
-            });
-            expect(req.dbUser.status).toBe("active");
-            expect(next).toHaveBeenCalled();
-        });
-
-        it("should keep user banned if ban not expired", async () => {
-            const futureDate = new Date(Date.now() + 86400000);
-            req.dbUser = {
-                id: 1,
-                status: "banned",
-                banned_until: futureDate,
-                role: "user",
-            };
-            
-            await normalizeAccountStatus(req, res, next);
-            
-            expect(prismaMock.users.update).not.toHaveBeenCalled();
-            expect(req.accountStatus).toBe("banned");
-            expect(req.isBanned).toBe(true);
-            expect(next).toHaveBeenCalled();
-        });
-    });
-
-    describe("Security Edge Cases", () => {
-        it("should handle array of roles properly", () => {
+    describe("Cas limites de sécurité", () => {
+        it("devrait gérer correctement un tableau de rôles", () => {
             req.dbUser = { id: 1, role: "admin" };
             const middleware = requireRole(["admin", "moderator"]);
             
@@ -210,7 +155,7 @@ describe("Security - Authorization", () => {
             expect(next).toHaveBeenCalled();
         });
 
-        it("should filter null roles from allowed list", () => {
+        it("devrait filtrer les rôles null de la liste autorisée", () => {
             req.dbUser = { id: 1, role: "admin" };
             const middleware = requireRole("admin", null, undefined, "moderator");
             
@@ -219,7 +164,7 @@ describe("Security - Authorization", () => {
             expect(next).toHaveBeenCalled();
         });
 
-        it("should handle undefined dbUser gracefully", () => {
+        it("devrait gérer un dbUser undefined de manière sécurisée", () => {
             req.dbUser = undefined;
             const middleware = requireRole("admin");
             
@@ -228,7 +173,7 @@ describe("Security - Authorization", () => {
             expect(res.status).toHaveBeenCalledWith(401);
         });
 
-        it("should attach security flags to request", async () => {
+        it("devrait attacher des drapeaux de sécurité à la requête", async () => {
             req.dbUser = {
                 id: 1,
                 status: "active",

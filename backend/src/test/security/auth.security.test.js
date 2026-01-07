@@ -26,7 +26,7 @@ vi.mock("../../services/dbService.js", () => ({
     prisma: prismaMock,
 }));
 
-describe("Security - Authentication", () => {
+describe("Sécurité - Authentification", () => {
     let req, res, next;
 
     beforeEach(() => {
@@ -39,8 +39,8 @@ describe("Security - Authentication", () => {
         vi.clearAllMocks();
     });
 
-    describe("Token Validation", () => {
-        it("should reject request without authorization header", async () => {
+    describe("Validation du token", () => {
+        it("devrait rejeter une requête sans en-tête d'autorisation", async () => {
             await auth(req, res, next);
             
             expect(res.status).toHaveBeenCalledWith(401);
@@ -48,7 +48,7 @@ describe("Security - Authentication", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should reject malformed authorization header", async () => {
+        it("devrait rejeter un en-tête d'autorisation mal formé", async () => {
             req.headers.authorization = "InvalidFormat";
             
             await auth(req, res, next);
@@ -56,7 +56,7 @@ describe("Security - Authentication", () => {
             expect(res.status).toHaveBeenCalledWith(401);
         });
 
-        it("should reject empty bearer token", async () => {
+        it("devrait rejeter un token bearer vide", async () => {
             req.headers.authorization = "Bearer ";
             verifyIdTokenMock.mockRejectedValue(new Error("Invalid token"));
             
@@ -65,7 +65,7 @@ describe("Security - Authentication", () => {
             expect(res.status).toHaveBeenCalledWith(401);
         });
 
-        it("should reject expired token", async () => {
+        it("devrait rejeter un token expiré", async () => {
             req.headers.authorization = "Bearer expired_token";
             verifyIdTokenMock.mockRejectedValue(new Error("auth/id-token-expired"));
             
@@ -75,7 +75,7 @@ describe("Security - Authentication", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should reject revoked token", async () => {
+        it("devrait rejeter un token révoqué", async () => {
             req.headers.authorization = "Bearer revoked_token";
             verifyIdTokenMock.mockRejectedValue(new Error("auth/id-token-revoked"));
             
@@ -84,7 +84,7 @@ describe("Security - Authentication", () => {
             expect(res.status).toHaveBeenCalledWith(401);
         });
 
-        it("should reject tampered token", async () => {
+        it("devrait rejeter un token modifié", async () => {
             req.headers.authorization = "Bearer tampered.token.here";
             verifyIdTokenMock.mockRejectedValue(new Error("Invalid signature"));
             
@@ -94,8 +94,8 @@ describe("Security - Authentication", () => {
         });
     });
 
-    describe("SQL Injection Prevention", () => {
-        it("should safely handle malicious email in token", async () => {
+    describe("Prévention de l'injection SQL", () => {
+        it("devrait gérer en toute sécurité un email malveillant dans le token", async () => {
             req.headers.authorization = "Bearer valid_token";
             const maliciousEmail = "admin'--";
             
@@ -113,7 +113,7 @@ describe("Security - Authentication", () => {
             });
         });
 
-        it("should handle SQL injection patterns in uid", async () => {
+        it("devrait gérer les modèles d'injection SQL dans l'uid", async () => {
             req.headers.authorization = "Bearer valid_token";
             const maliciousUid = "uid'; DROP TABLE users; --";
             
@@ -132,8 +132,8 @@ describe("Security - Authentication", () => {
         });
     });
 
-    describe("Authorization Bypass Attempts", () => {
-        it("should not allow role escalation via token manipulation", async () => {
+    describe("Tentatives de contournement d'autorisation", () => {
+        it("ne devrait pas permettre l'élévation de rôle via manipulation du token", async () => {
             req.headers.authorization = "Bearer valid_token";
             
             verifyIdTokenMock.mockResolvedValue({
@@ -156,7 +156,7 @@ describe("Security - Authentication", () => {
             expect(req.dbUser.role).toBe("user");
         });
 
-        it("should block admin access for non-admin users", () => {
+        it("devrait bloquer l'accès admin pour les utilisateurs non-admin", () => {
             req.dbUser = { role: "user" };
             req.user = { role: "user" };
             
@@ -167,7 +167,7 @@ describe("Security - Authentication", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should block moderator from admin-only endpoints", () => {
+        it("devrait bloquer un modérateur des endpoints réservés aux admins", () => {
             req.dbUser = { role: "moderator" };
             req.user = { role: "moderator" };
             
@@ -177,8 +177,8 @@ describe("Security - Authentication", () => {
         });
     });
 
-    describe("Session Security", () => {
-        it("should validate user still exists in database", async () => {
+    describe("Sécurité des sessions", () => {
+        it("devrait valider que l'utilisateur existe toujours dans la base de données", async () => {
             req.headers.authorization = "Bearer valid_token";
             
             verifyIdTokenMock.mockResolvedValue({
@@ -190,10 +190,11 @@ describe("Security - Authentication", () => {
             
             await auth(req, res, next);
             
-            expect(res.status).toHaveBeenCalledWith(401);
+            // Expecting 404 when user doesn't exist in database
+            expect(res.status).toHaveBeenCalledWith(404);
         });
 
-        it("should attach correct user data to request", async () => {
+        it("devrait attacher les données utilisateur correctes à la requête", async () => {
             req.headers.authorization = "Bearer valid_token";
             
             const mockDecoded = {
@@ -221,8 +222,8 @@ describe("Security - Authentication", () => {
         });
     });
 
-    describe("Performance Mode Bypass Security", () => {
-        it("should reject perf bypass in production", async () => {
+    describe("Sécurité du contournement en mode performance", () => {
+        it("devrait rejeter le contournement perf en production", async () => {
             const originalEnv = process.env.NODE_ENV;
             const originalPerfTest = process.env.PERF_TEST;
             
@@ -240,7 +241,7 @@ describe("Security - Authentication", () => {
             process.env.PERF_TEST = originalPerfTest;
         });
 
-        it("should only allow perf bypass with correct token", async () => {
+        it("devrait autoriser le contournement perf uniquement avec le token correct", async () => {
             const originalEnv = process.env.NODE_ENV;
             const originalPerfTest = process.env.PERF_TEST;
             

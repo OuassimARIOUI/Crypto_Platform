@@ -44,7 +44,7 @@ spec:
               name: http
           env:
             - name: NEXT_PUBLIC_API_BASE
-              value: "https://api.your-domain.com"  # Update with your domain
+              value: "https://api.your-domain.com"  
             - name: API_BASE_URL
               value: "http://backend-service:3004"
           resources:

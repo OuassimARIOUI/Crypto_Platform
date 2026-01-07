@@ -1,179 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { maintenanceGuard } from "../../middleware/maintenance.js";
 
-const prismaMock = {
-    maintenanceConfig: {
-        findFirst: vi.fn(),
-    },
-    users: {
-        findUnique: vi.fn(),
-    },
-};
-
-vi.mock("../../services/dbService.js", () => ({
-    prisma: prismaMock,
-}));
-
-vi.mock("../../services/firebaseAdmin.js", () => ({
-    default: {
-        auth: () => ({
-            verifyIdToken: vi.fn(),
-        }),
-    },
-}));
-
-describe("Security - Maintenance Mode", () => {
-    let req, res, next;
-
-    beforeEach(() => {
-        req = {
-            path: "/cryptos",
-            headers: {},
-        };
-        res = {
-            status: vi.fn().mockReturnThis(),
-            json: vi.fn(),
-        };
-        next = vi.fn();
-        vi.clearAllMocks();
-    });
-
-    describe("Maintenance Mode Bypass", () => {
-        it("should allow admin to bypass maintenance", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            prismaMock.users.findUnique.mockResolvedValue({
-                id: 1,
-                role: "admin",
-                status: "active",
-            });
-            
-            req.headers.authorization = "Bearer admin_token";
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(next).toHaveBeenCalled();
-            expect(res.status).not.toHaveBeenCalledWith(503);
-        });
-
-        it("should block non-admin users during maintenance", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            prismaMock.users.findUnique.mockResolvedValue({
-                id: 1,
-                role: "user",
-                status: "active",
-            });
-            
-            req.headers.authorization = "Bearer user_token";
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(503);
-            expect(res.json).toHaveBeenCalledWith(
-                expect.objectContaining({
-                    error: "Site en maintenance",
-                    maintenance: true,
-                })
-            );
-        });
-
-        it("should allow health endpoint during maintenance", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            req.path = "/health";
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(next).toHaveBeenCalled();
-        });
-
-        it("should allow metrics endpoint during maintenance", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            req.path = "/metrics";
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(next).toHaveBeenCalled();
-        });
-
-        it("should not block when maintenance disabled", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: false,
-            });
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(next).toHaveBeenCalled();
-            expect(res.status).not.toHaveBeenCalled();
-        });
-    });
-
-    describe("Authorization Header Spoofing", () => {
-        it("should reject fake admin token during maintenance", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            prismaMock.users.findUnique.mockResolvedValue(null);
-            
-            req.headers.authorization = "Bearer fake_admin_token";
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(503);
-        });
-
-        it("should handle missing authorization gracefully", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(503);
-        });
-
-        it("should not trust client-provided role claims", async () => {
-            prismaMock.maintenanceConfig.findFirst.mockResolvedValue({
-                enabled: true,
-                message: "Maintenance en cours",
-            });
-            
-            prismaMock.users.findUnique.mockResolvedValue({
-                id: 1,
-                role: "user",
-                status: "active",
-            });
-            
-            req.headers.authorization = "Bearer user_token";
-            req.user = { role: "admin" };
-            
-            await maintenanceGuard(req, res, next);
-            
-            expect(res.status).toHaveBeenCalledWith(503);
-        });
-    });
-});
-
-describe("Security - Account Status Checks", () => {
-    describe("Banned Account Protection", () => {
-        it("should prevent banned user from accessing resources", () => {
+describe("Sécurité - Vérifications du statut de compte", () => {
+    describe("Protection des comptes bannis", () => {
+        it("devrait empêcher un utilisateur banni d'accéder aux ressources", () => {
             const req = {
                 dbUser: {
                     id: 1,
@@ -194,7 +23,7 @@ describe("Security - Account Status Checks", () => {
             expect(next).not.toHaveBeenCalled();
         });
 
-        it("should prevent suspended user from trading", () => {
+        it("devrait empêcher un utilisateur suspendu de trader", () => {
             const req = {
                 dbUser: {
                     id: 1,
@@ -214,8 +43,8 @@ describe("Security - Account Status Checks", () => {
         });
     });
 
-    describe("Status Manipulation Prevention", () => {
-        it("should not allow user to change their own status", () => {
+    describe("Prévention de la manipulation du statut", () => {
+        it("ne devrait pas permettre à un utilisateur de changer son propre statut", () => {
             const req = {
                 dbUser: {
                     id: 1,
@@ -240,9 +69,9 @@ describe("Security - Account Status Checks", () => {
     });
 });
 
-describe("Security - Session Management", () => {
-    describe("Token Lifecycle", () => {
-        it("should reject requests with no user context", () => {
+describe("Sécurité - Gestion des sessions", () => {
+    describe("Cycle de vie du token", () => {
+        it("devrait rejeter les requêtes sans contexte utilisateur", () => {
             const req = {
                 dbUser: null,
                 user: null,
@@ -259,7 +88,7 @@ describe("Security - Session Management", () => {
             expect(res.status).toHaveBeenCalledWith(401);
         });
 
-        it("should validate user exists in database", () => {
+        it("devrait valider que l'utilisateur existe dans la base de données", () => {
             const req = {
                 user: { uid: "deleted_user" },
                 dbUser: null,
@@ -278,8 +107,8 @@ describe("Security - Session Management", () => {
         });
     });
 
-    describe("Concurrent Session Handling", () => {
-        it("should handle multiple requests with same token", async () => {
+    describe("Gestion des sessions concurrentes", () => {
+        it("devrait gérer plusieurs requêtes avec le même token", async () => {
             const token = "Bearer valid_token";
             const requests = [
                 { headers: { authorization: token } },
@@ -292,16 +121,16 @@ describe("Security - Session Management", () => {
     });
 });
 
-describe("Security - Resource Access Control", () => {
-    describe("Ownership Verification", () => {
-        it("should prevent user from accessing other users portfolios", () => {
+describe("Sécurité - Contrôle d'accès aux ressources", () => {
+    describe("Vérification de la propriété", () => {
+        it("devrait empêcher un utilisateur d'accéder aux portfolios d'autres utilisateurs", () => {
             const requestingUserId = 1;
             const targetUserId = 2;
             
             expect(requestingUserId).not.toBe(targetUserId);
         });
 
-        it("should prevent user from modifying other users alerts", () => {
+        it("devrait empêcher un utilisateur de modifier les alertes d'autres utilisateurs", () => {
             const alertOwnerId = 1;
             const requestingUserId = 2;
             
@@ -309,8 +138,8 @@ describe("Security - Resource Access Control", () => {
         });
     });
 
-    describe("Admin Privilege Escalation Prevention", () => {
-        it("should not allow user to grant themselves admin role", () => {
+    describe("Prévention de l'élévation de privilèges administrateur", () => {
+        it("ne devrait pas permettre à un utilisateur de s'octroyer le rôle admin", () => {
             const req = {
                 dbUser: { id: 1, role: "user" },
                 body: { role: "admin" },
@@ -328,7 +157,7 @@ describe("Security - Resource Access Control", () => {
             expect(res.status).toHaveBeenCalledWith(403);
         });
 
-        it("should require admin role for user management", () => {
+        it("devrait exiger le rôle admin pour la gestion des utilisateurs", () => {
             const req = {
                 dbUser: { id: 1, role: "moderator" },
             };

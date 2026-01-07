@@ -6,11 +6,14 @@ import { auth, isFirebaseConfigured } from "../../../lib/firebase";
 import { startTokenRefresh, stopTokenRefresh } from "../../../lib/tokenManager";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import { useNotification } from "@/hooks/useNotification";
+import Notification from "@/components/ui/Notification";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const { notification, showNotification, hideNotification } = useNotification();
 
     useEffect(() => {
         if (!isFirebaseConfigured || !auth) {
@@ -41,7 +44,7 @@ export default function LoginPage() {
         setLoading(true);
 
         if (!isFirebaseConfigured || !auth) {
-            alert("Firebase n'est pas configuré. Veuillez contacter l'administrateur.");
+            showNotification("Firebase n'est pas configuré. Veuillez contacter l'administrateur.", "error");
             setLoading(false);
             return;
         }
@@ -63,7 +66,7 @@ export default function LoginPage() {
             console.log("Firebase login backend response:", data);
 
             if (!res.ok) {
-                alert(data.error || "Login failed.");
+                showNotification(data.error || "Échec de la connexion.", "error");
                 setLoading(false);
                 return;
             }
@@ -73,7 +76,7 @@ export default function LoginPage() {
             window.location.href = "/dashboard";
         } catch (err) {
             console.error("LOGIN ERROR:", err);
-            alert(err.message || "Erreur serveur");
+            showNotification(err.message || "Erreur serveur", "error");
         }
 
         setLoading(false);
@@ -81,6 +84,15 @@ export default function LoginPage() {
 
     return (
         <div className="relative flex h-auto min-h-screen w-full flex-col items-center justify-center bg-[#0A0E23] overflow-x-hidden p-4 sm:p-6 lg:p-8">
+
+            {/* Notification */}
+            {notification && (
+                <Notification
+                    message={notification.message}
+                    type={notification.type}
+                    onClose={hideNotification}
+                />
+            )}
 
             {/* Background GIF */}
             <div

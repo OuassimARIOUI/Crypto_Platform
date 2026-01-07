@@ -36,6 +36,18 @@ export async function authSse(req, res, next) {
 
         return next();
     } catch (err) {
+        if (err.code === 'auth/id-token-expired') {
+            return res.status(401).json({ 
+                error: "Token expired", 
+                code: "TOKEN_EXPIRED" 
+            });
+        }
+        if (err.code === 'auth/id-token-revoked') {
+            return res.status(401).json({ 
+                error: "Token revoked", 
+                code: "TOKEN_REVOKED" 
+            });
+        }
         console.log("AUTH SSE ERROR:", err);
         return res.status(401).json({ error: "Token invalide" });
     }

@@ -117,6 +117,19 @@ export async function auth(req, res, next) {
 
         next();
     } catch (err) {
+        if (err.code === 'auth/id-token-expired') {
+            return res.status(401).json({ 
+                error: "Token expired", 
+                code: "TOKEN_EXPIRED",
+                message: "Firebase token has expired. Please refresh your token." 
+            });
+        }
+        if (err.code === 'auth/id-token-revoked') {
+            return res.status(401).json({ 
+                error: "Token revoked", 
+                code: "TOKEN_REVOKED" 
+            });
+        }
         console.log("AUTH ERROR:", err);
         return res.status(401).json({ error: "Token invalide" });
     }

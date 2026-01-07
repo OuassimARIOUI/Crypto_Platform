@@ -1,0 +1,11 @@
+# Rapports Snyk
+
+Les rapports de scan Snyk seront générés ici automatiquement.
+
+## Format des fichiers:
+- `snyk-dependencies-YYYYMMDD_HHMMSS.json` - Vulnérabilités des dépendances
+- `snyk-code-YYYYMMDD_HHMMSS.sarif` - Analyse du code source
+- `snyk-container-YYYYMMDD_HHMMSS.json` - Vulnérabilités Docker
+- `snyk-full-report-YYYYMMDD_HHMMSS.html` - Rapport consolidé
+
+**⚠️ IMPORTANT:** Ne commitez JAMAIS les rapports de sécurité dans Git!

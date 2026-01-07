@@ -1,0 +1,20 @@
+node_modules/
+.env
+.env.local
+.env.production
+coverage/
+*.log
+.DS_Store
+
+# Rapports de sécurité - NE JAMAIS COMMITER
+src/test/security/owasp-zap/reports/*.html
+src/test/security/owasp-zap/reports/*.json
+src/test/security/owasp-zap/reports/*.md
+src/test/security/owasp-zap/reports/*.xml
+src/test/security/snyk/reports/*.json
+src/test/security/snyk/reports/*.html
+src/test/security/snyk/reports/*.sarif
+
+# Garder les dossiers mais pas leur contenu
+!src/test/security/owasp-zap/reports/.gitkeep
+!src/test/security/snyk/reports/.gitkeep

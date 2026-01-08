@@ -1,0 +1,113 @@
+# Regles d'alerte Prometheus
+# Ces regles definissent quand Prometheus doit declencher des alertes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-rules
+  namespace: monitoring
+  labels:
+    app: prometheus
+data:
+  alert-rules.yml: |
+    groups:
+      # Alertes pour les pods et containers
+      - name: pod-alerts
+        rules:
+          # Alerte si un pod est down depuis plus de 5 minutes
+          - alert: PodDown
+            expr: up == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod {{ $labels.kubernetes_pod_name }} is down"
+              description: "Le pod {{ $labels.kubernetes_pod_name }} dans le namespace {{ $labels.kubernetes_namespace }} est down depuis plus de 5 minutes."
+
+          # Alerte si un pod redémarre trop souvent
+          - alert: PodRestartingTooMuch
+            expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod {{ $labels.pod }} is restarting too often"
+              description: "Le pod {{ $labels.pod }} a redémarre plus de 5 fois dans la derniere heure."
+
+      # Alertes pour les ressources systeme
+      - name: resource-alerts
+        rules:
+          # Alerte si CPU > 80%
+          - alert: HighCPUUsage
+            expr: (sum(rate(container_cpu_usage_seconds_total{container!=""}[5m])) by (pod, namespace) / sum(container_spec_cpu_quota{container!=""}/container_spec_cpu_period{container!=""}) by (pod, namespace)) * 100 > 80
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected"
+              description: "Le pod {{ $labels.pod }} utilise plus de 80% du CPU depuis 10 minutes."
+
+          # Alerte si memoire > 85%
+          - alert: HighMemoryUsage
+            expr: (container_memory_working_set_bytes{container!=""} / container_spec_memory_limit_bytes{container!=""}) * 100 > 85
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage detected"
+              description: "Le pod {{ $labels.pod }} utilise plus de 85% de la memoire depuis 10 minutes."
+
+      # Alertes pour l'application Crypto Platform
+      - name: crypto-platform-alerts
+        rules:
+          # Alerte si le backend ne repond pas
+          - alert: BackendNotResponding
+            expr: up{job="crypto-backend"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Backend is not responding"
+              description: "Le service backend de Crypto Platform ne repond pas depuis 2 minutes."
+
+          # Alerte si trop d'erreurs HTTP 5xx
+          - alert: HighErrorRate
+            expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) * 100 > 5
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High HTTP error rate"
+              description: "Plus de 5% des requetes HTTP retournent des erreurs 5xx."
+
+          # Alerte si temps de reponse trop long
+          - alert: SlowResponseTime
+            expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 2
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow response time detected"
+              description: "95% des requetes prennent plus de 2 secondes."
+
+      # Alertes pour la base de donnees
+      - name: database-alerts
+        rules:
+          # Alerte si PostgreSQL est down
+          - alert: PostgreSQLDown
+            expr: up{job="postgres"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "La base de donnees PostgreSQL est inaccessible."
+
+          # Alerte si Redis est down
+          - alert: RedisDown
+            expr: up{job="redis"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Redis is down"
+              description: "Le cache Redis est inaccessible."

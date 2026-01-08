@@ -1,0 +1,68 @@
+# Configuration d'Alertmanager
+# Les alertes sont groupees et envoyees selon les regles definies
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: monitoring
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |
+    global:
+      # Temps d'attente avant de resoudre une alerte
+      resolve_timeout: 5m
+
+    # Route principale des alertes
+    route:
+      # Grouper les alertes par nom et severite
+      group_by: ['alertname', 'severity']
+      # Attendre 30 secondes avant d'envoyer la premiere notification
+      group_wait: 30s
+      # Attendre 5 minutes entre chaque notification du meme groupe
+      group_interval: 5m
+      # Repeter les alertes toutes les 4 heures
+      repeat_interval: 4h
+      # Envoyer vers le receiver par defaut
+      receiver: 'default-receiver'
+      
+      # Routes specifiques selon la severite
+      routes:
+        - match:
+            severity: critical
+          receiver: 'critical-receiver'
+          group_wait: 10s
+          repeat_interval: 1h
+        - match:
+            severity: warning
+          receiver: 'warning-receiver'
+          repeat_interval: 2h
+
+    # Recepteurs des alertes
+    receivers:
+      # Receiver par defaut - affiche dans les logs
+      - name: 'default-receiver'
+        webhook_configs:
+          - url: 'http://localhost:9093/api/v1/alerts'
+            send_resolved: true
+
+      # Receiver pour alertes critiques
+      - name: 'critical-receiver'
+        webhook_configs:
+          - url: 'http://localhost:9093/api/v1/alerts'
+            send_resolved: true
+
+      # Receiver pour alertes warning
+      - name: 'warning-receiver'
+        webhook_configs:
+          - url: 'http://localhost:9093/api/v1/alerts'
+            send_resolved: true
+
+    # Regles d'inhibition
+    # Permet de supprimer certaines alertes quand d'autres sont actives
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'namespace']

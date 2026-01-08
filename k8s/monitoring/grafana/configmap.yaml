@@ -19,6 +19,22 @@ data:
         jsonData:
           timeInterval: "15s"
           httpMethod: POST
+      - name: Loki
+        type: loki
+        access: proxy
+        uid: loki
+        url: http://loki:3100
+        editable: false
+        jsonData:
+          maxLines: 1000
+      - name: Alertmanager
+        type: alertmanager
+        access: proxy
+        uid: alertmanager
+        url: http://alertmanager:9093
+        editable: false
+        jsonData:
+          implementation: prometheus
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -39,3 +55,4 @@ data:
         editable: true
         options:
           path: /var/lib/grafana/dashboards
+

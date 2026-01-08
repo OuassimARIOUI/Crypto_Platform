@@ -7,17 +7,31 @@ metadata:
 namespace: monitoring
 
 # Common labels
-commonLabels:
-  app.kubernetes.io/part-of: crypto-platform
-  app.kubernetes.io/managed-by: kustomize
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: crypto-platform
+      app.kubernetes.io/managed-by: kustomize
 
 # Resources to include
 resources:
   - namespace.yaml
+  # Prometheus
   - prometheus/rbac.yaml
   - prometheus/configmap.yaml
+  - prometheus/rules.yaml
   - prometheus/deployment.yaml
+  # Grafana
   - grafana/configmap.yaml
   - grafana/dashboards.yaml
   - grafana/deployment.yaml
+  # Loki (logs)
+  - loki/configmap.yaml
+  - loki/deployment.yaml
+  # Promtail (collecte des logs)
+  - promtail/configmap.yaml
+  - promtail/deployment.yaml
+  # Alertmanager (alertes)
+  - alertmanager/configmap.yaml
+  - alertmanager/deployment.yaml
+  # Ingress
   - ingress.yaml

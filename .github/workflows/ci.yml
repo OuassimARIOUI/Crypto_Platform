@@ -394,6 +394,45 @@ jobs:
           echo ""
           echo "=== Recent Events ==="
           kubectl get events -n crypto-platform --sort-by='.lastTimestamp' | tail -20
+
+      - name: Deploy Monitoring Stack (Prometheus + Grafana)
+        run: |
+          echo "=== Deploying Monitoring Stack ==="
+          kubectl apply -k k8s/monitoring
+          echo "Waiting for monitoring resources..."
+          sleep 10
+
+      - name: Wait for Monitoring deployments
+        run: |
+          echo "Waiting for Prometheus..."
+          kubectl wait --for=condition=ready pod -l app=prometheus -n monitoring --timeout=120s || true
+          
+          echo "Waiting for Grafana..."
+          kubectl wait --for=condition=ready pod -l app=grafana -n monitoring --timeout=120s || true
+
+      - name: Verify Monitoring deployment
+        run: |
+          echo "=== Monitoring Pods Status ==="
+          kubectl get pods -n monitoring
+          echo ""
+          echo "=== Monitoring Services Status ==="
+          kubectl get svc -n monitoring
+          echo ""
+          echo "=== Monitoring Ingress Status ==="
+          kubectl get ingress -n monitoring || true
+
+      - name: Show Monitoring URLs
+        if: success()
+        run: |
+          MINIKUBE_IP=$(minikube ip)
+          echo " Monitoring Stack deployed!"
+          echo " Prometheus: http://$MINIKUBE_IP:30090 (or via port-forward)"
+          echo " Grafana: http://$MINIKUBE_IP:30030 (or via port-forward)"
+          echo ""
+          echo "To access locally:"
+          echo "  kubectl port-forward svc/prometheus 9090:9090 -n monitoring"
+          echo "  kubectl port-forward svc/grafana 3001:3000 -n monitoring"
+
   # =============================================================================
   # Kubernetes Dry Run (for PRs)
   # =============================================================================

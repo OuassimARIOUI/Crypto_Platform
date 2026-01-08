@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import Notification from "@/components/ui/Notification";
 import MessagingDock from "@/components/messaging/MessagingDock";
 import ThemeToggleButton from "@/components/theme/ThemeToggleButton";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 // SidebarContent extracted outside of the main component to avoid recreating on each render
 function SidebarContent({ collapsed, onNavigate, showBrand = true, navItems, pathname, user, sidebarCollapsed, onToggleCollapse }) {
@@ -78,9 +80,27 @@ function SidebarContent({ collapsed, onNavigate, showBrand = true, navItems, pat
             {/* Logout */}
             <div className={`mt-auto ${collapsed ? "flex justify-center" : ""}`}>
                 <button
-                    onClick={() => {
-                        Cookies.remove("token");
-                        window.location.href = "/login";
+                    onClick={async () => {
+                        try {
+                            // Supprimer le cookie
+                            Cookies.remove("token");
+                            
+                            // Déconnecter Firebase
+                            if (isFirebaseConfigured && auth?.currentUser) {
+                                await signOut(auth);
+                            }
+                            
+                            // Nettoyer le localStorage
+                            if (typeof window !== 'undefined') {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                            }
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                        } finally {
+                            // Rediriger vers login
+                            window.location.href = "/login";
+                        }
                     }}
                     className={`flex items-center gap-3 px-3 py-2 text-gray-400 hover:bg-white/5 hover:text-white rounded-lg w-full
                         ${collapsed ? "justify-center" : ""}

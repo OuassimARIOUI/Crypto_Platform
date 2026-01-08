@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import Cookies from "js-cookie";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
+import { signOut } from "firebase/auth";
 
 const baseMenu = [
     { name: "Dashboard", icon: "dashboard", href: "/dashboard" },
@@ -69,9 +71,27 @@ export default function Sidebar() {
 
             <div className="mt-auto">
                 <button
-                    onClick={() => {
-                        Cookies.remove("token");
-                        window.location.href = "/login";
+                    onClick={async () => {
+                        try {
+                            // Supprimer le cookie
+                            Cookies.remove("token");
+                            
+                            // Déconnecter Firebase
+                            if (isFirebaseConfigured && auth?.currentUser) {
+                                await signOut(auth);
+                            }
+                            
+                            // Nettoyer le localStorage
+                            if (typeof window !== 'undefined') {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                            }
+                        } catch (error) {
+                            console.error('Logout error:', error);
+                        } finally {
+                            // Rediriger vers login
+                            window.location.href = "/login";
+                        }
                     }}
                     className="flex items-center gap-3 px-3 py-2 text-white/70 hover:bg-white/10 hover:text-white rounded-lg"
                 >

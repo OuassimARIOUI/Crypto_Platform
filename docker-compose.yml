@@ -87,6 +87,9 @@ services:
     command:
       - |
         echo "Backup service started..."
+        # Convertir les fins de ligne Windows vers Unix
+        dos2unix /backup.sh 2>/dev/null || sed -i 's/\r$//' /backup.sh
+        chmod +x /backup.sh
         while true; do
           /backup.sh
           echo "Next backup in 24 hours..."

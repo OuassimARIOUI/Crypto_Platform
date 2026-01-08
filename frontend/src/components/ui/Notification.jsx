@@ -1,5 +1,7 @@
 "use client";
 
+import React from 'react';
+
 export default function Notification({
     type = "info", // info | success | error | warning
     message,

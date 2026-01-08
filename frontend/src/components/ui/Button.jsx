@@ -1,3 +1,5 @@
+import React from 'react';
+
 export default function Button({ children, onClick, type = "button", className = "", disabled = false }) {
     return (
         <button

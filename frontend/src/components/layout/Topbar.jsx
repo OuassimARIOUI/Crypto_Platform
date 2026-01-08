@@ -1,3 +1,5 @@
+import React from 'react';
+
 export default function Topbar() {
     return (
         <header className="flex items-center justify-end w-full h-16 px-6 border-b border-white/10 bg-[#101c22]/80 backdrop-blur-md">

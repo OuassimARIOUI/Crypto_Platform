@@ -1,3 +1,4 @@
+import React from 'react';
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TradingBuyCard from "@/components/trading/TradingBuyCard";
 import TradingSellCard from "@/components/trading/TradingSellCard";

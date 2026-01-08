@@ -1,3 +1,4 @@
+import React from 'react';
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import IndicatorsPanel from "@/components/indicators/IndicatorsPanel";
 

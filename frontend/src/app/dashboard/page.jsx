@@ -1,3 +1,4 @@
+import React from 'react';
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import TopCryptosTable from "@/components/dashboard/TopCryptosTable";
 import DashboardStats from "@/components/dashboard/DashboardStats";

@@ -110,7 +110,7 @@ describe('Discord Service', () => {
 
             const alert = {
                 embeds: [{
-                    title: '🚀 Alerte Prix BTC',
+                    title: ' Alerte Prix BTC',
                     description: 'BTC a atteint 50000 USD',
                     color: 0x00FF00,
                     fields: [

@@ -1,3 +1,4 @@
+import React from 'react';
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import ProfileDetails from "@/components/profile/ProfileDetails";
 

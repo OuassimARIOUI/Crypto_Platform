@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import CryptoRow from "./CryptoRow";
 
 export default function TopCryptosTable() {

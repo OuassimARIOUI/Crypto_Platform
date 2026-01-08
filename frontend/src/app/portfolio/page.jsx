@@ -1,3 +1,4 @@
+import React from 'react';
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import PortfolioStats from "@/components/portfolio/PortfolioStats";
 import PortfolioAssets from "@/components/portfolio/PortfolioAssets";

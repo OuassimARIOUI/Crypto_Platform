@@ -1,3 +1,4 @@
+import React from 'react';
 import Link from "next/link";
 
 export default function ForbiddenPage({ searchParams }) {
@@ -16,14 +17,12 @@ export default function ForbiddenPage({ searchParams }) {
         </p>
 
         <div className="mt-8">
-          <t>
-            <a
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
-            >
-              Revenir au dashboard
-            </a>
-          </t>
+          <a
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-lg h-12 px-6 bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
+          >
+            Revenir au dashboard
+          </a>
         </div>
 
         <div className="mt-4 text-sm text-white/50">Code: {code}</div>

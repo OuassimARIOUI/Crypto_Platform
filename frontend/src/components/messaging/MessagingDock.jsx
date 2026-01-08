@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import Cookies from "js-cookie";
 
 const API_BASE = "http://localhost:3004";

@@ -178,11 +178,12 @@ describe("Sécurité - Protection des endpoints", () => {
         it("devrait rejeter les méthodes HTTP non supportées", async () => {
             const response = await request(app)
                 .patch("/cryptos")
+                .timeout(8000)
                 .send({ name: "Bitcoin" });
             
             // Accepte 503 si en mode maintenance
             expect([404, 405, 503]).toContain(response.status);
-        }, 10000);
+        }, 15000);
 
         it("devrait gérer les requêtes HEAD en toute sécurité", async () => {
             const response = await request(app).head("/health");

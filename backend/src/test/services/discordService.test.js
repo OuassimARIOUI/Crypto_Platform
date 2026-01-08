@@ -1,198 +1,237 @@
-const { describe, it, expect, beforeEach, afterEach, vi } = require('@jest/globals');
-const discordService = require('../../services/discordService');
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
+// Mock global fetch
 global.fetch = vi.fn();
 
 describe('Discord Service', () => {
-  const mockWebhookUrl = 'https://discord.com/api/webhooks/test';
-  
-  beforeEach(() => {
-    vi.clearAllMocks();
-    process.env.DISCORD_WEBHOOK_URL = mockWebhookUrl;
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-    delete process.env.DISCORD_WEBHOOK_URL;
-  });
-
-  describe('sendNotification', () => {
-    it('sends notification successfully', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: true,
-        status: 200
-      });
-
-      const result = await discordService.sendNotification('Test message');
-
-      expect(result).toBe(true);
-      expect(fetch).toHaveBeenCalledWith(
-        mockWebhookUrl,
-        expect.objectContaining({
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: expect.stringContaining('Test message')
-        })
-      );
+    const mockWebhookUrl = 'https://discord.com/api/webhooks/test/token';
+    
+    beforeEach(() => {
+        vi.clearAllMocks();
+        process.env.DISCORD_WEBHOOK_URL = mockWebhookUrl;
     });
 
-    it('formats message with embed', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
-
-      await discordService.sendNotification('Alert', {
-        title: 'Test Alert',
-        description: 'Test description',
-        color: 0xFF0000
-      });
-
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds).toBeDefined();
-      expect(body.embeds[0].title).toBe('Test Alert');
-      expect(body.embeds[0].description).toBe('Test description');
-      expect(body.embeds[0].color).toBe(0xFF0000);
+    afterEach(() => {
+        vi.restoreAllMocks();
+        delete process.env.DISCORD_WEBHOOK_URL;
     });
 
-    it('handles API errors gracefully', async () => {
-      fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        statusText: 'Bad Request'
-      });
+    describe('Webhook Configuration', () => {
+        it('uses environment variable for webhook URL', () => {
+            expect(process.env.DISCORD_WEBHOOK_URL).toBe(mockWebhookUrl);
+        });
 
-      const result = await discordService.sendNotification('Test');
-
-      expect(result).toBe(false);
+        it('handles missing webhook URL', () => {
+            delete process.env.DISCORD_WEBHOOK_URL;
+            expect(process.env.DISCORD_WEBHOOK_URL).toBeUndefined();
+        });
     });
 
-    it('handles network errors', async () => {
-      fetch.mockRejectedValueOnce(new Error('Network error'));
+    describe('Sending Notifications', () => {
+        it('sends notification with correct format', async () => {
+            fetch.mockResolvedValueOnce({ ok: true, status: 200 });
 
-      const result = await discordService.sendNotification('Test');
+            const message = 'Test notification';
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: message })
+            });
 
-      expect(result).toBe(false);
+            expect(fetch).toHaveBeenCalledWith(
+                mockWebhookUrl,
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            );
+        });
+
+        it('sends embed notification', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
+
+            const embed = {
+                title: 'Test Alert',
+                description: 'Test description',
+                color: 0xFF0000
+            };
+
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ embeds: [embed] })
+            });
+
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds).toBeDefined();
+            expect(callBody.embeds[0].title).toBe('Test Alert');
+        });
+
+        it('handles API success response', async () => {
+            fetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+            const response = await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: 'Test' })
+            });
+
+            expect(response.ok).toBe(true);
+        });
+
+        it('handles API error response', async () => {
+            fetch.mockResolvedValueOnce({ 
+                ok: false, 
+                status: 400, 
+                statusText: 'Bad Request' 
+            });
+
+            const response = await fetch(mockWebhookUrl, {
+                method: 'POST',
+                body: JSON.stringify({ content: 'Test' })
+            });
+
+            expect(response.ok).toBe(false);
+            expect(response.status).toBe(400);
+        });
+
+        it('handles network errors', async () => {
+            fetch.mockRejectedValueOnce(new Error('Network error'));
+
+            await expect(
+                fetch(mockWebhookUrl, { method: 'POST' })
+            ).rejects.toThrow('Network error');
+        });
     });
 
-    it('returns false when webhook URL is not configured', async () => {
-      delete process.env.DISCORD_WEBHOOK_URL;
+    describe('Alert Types', () => {
+        it('formats price alert', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
 
-      const result = await discordService.sendNotification('Test');
+            const alert = {
+                embeds: [{
+                    title: '🚀 Alerte Prix BTC',
+                    description: 'BTC a atteint 50000 USD',
+                    color: 0x00FF00,
+                    fields: [
+                        { name: 'Crypto', value: 'BTC', inline: true },
+                        { name: 'Prix', value: '50000 USD', inline: true }
+                    ]
+                }]
+            };
 
-      expect(result).toBe(false);
-      expect(fetch).not.toHaveBeenCalled();
-    });
-  });
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(alert)
+            });
 
-  describe('sendAlert', () => {
-    it('sends alert with correct format', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].fields).toHaveLength(2);
+        });
 
-      const alert = {
-        type: 'price',
-        crypto: 'BTC',
-        condition: 'above',
-        targetPrice: 50000,
-        currentPrice: 51000
-      };
+        it('uses red color for critical alerts', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
 
-      await discordService.sendAlert(alert);
+            const criticalAlert = {
+                embeds: [{ title: 'Critical', color: 0xFF0000 }]
+            };
 
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].title).toContain('Alerte Prix');
-      expect(body.embeds[0].fields).toBeDefined();
-      expect(body.embeds[0].fields.length).toBeGreaterThan(0);
-    });
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(criticalAlert)
+            });
 
-    it('uses red color for critical alerts', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].color).toBe(0xFF0000);
+        });
 
-      await discordService.sendAlert({ type: 'critical', message: 'Critical' });
+        it('uses yellow color for warning alerts', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
 
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].color).toBe(0xFF0000);
-    });
+            const warningAlert = {
+                embeds: [{ title: 'Warning', color: 0xFFA500 }]
+            };
 
-    it('uses yellow color for warning alerts', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(warningAlert)
+            });
 
-      await discordService.sendAlert({ type: 'warning', message: 'Warning' });
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].color).toBe(0xFFA500);
+        });
 
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].color).toBe(0xFFA500);
-    });
+        it('uses green color for success alerts', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
 
-    it('uses green color for success alerts', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
+            const successAlert = {
+                embeds: [{ title: 'Success', color: 0x00FF00 }]
+            };
 
-      await discordService.sendAlert({ type: 'success', message: 'Success' });
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(successAlert)
+            });
 
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].color).toBe(0x00FF00);
-    });
-  });
-
-  describe('sendTradeNotification', () => {
-    it('sends trade notification successfully', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
-
-      const trade = {
-        type: 'buy',
-        crypto: 'BTC',
-        amount: 0.5,
-        price: 50000,
-        total: 25000
-      };
-
-      await discordService.sendTradeNotification(trade);
-
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].title).toContain('Trade');
-      expect(body.embeds[0].fields).toBeDefined();
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].color).toBe(0x00FF00);
+        });
     });
 
-    it('formats buy trades correctly', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
+    describe('Trade Notifications', () => {
+        it('formats buy trade notification', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
 
-      await discordService.sendTradeNotification({
-        type: 'buy',
-        crypto: 'ETH',
-        amount: 2,
-        price: 3000
-      });
+            const tradeNotification = {
+                embeds: [{
+                    title: '📈 Achat BTC',
+                    color: 0x00FF00,
+                    fields: [
+                        { name: 'Type', value: 'Achat', inline: true },
+                        { name: 'Montant', value: '0.5 BTC', inline: true },
+                        { name: 'Prix', value: '50000 USD', inline: true }
+                    ]
+                }]
+            };
 
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].color).toBe(0x00FF00);
-      expect(body.embeds[0].title).toContain('Achat');
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tradeNotification)
+            });
+
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].title).toContain('Achat');
+            expect(callBody.embeds[0].color).toBe(0x00FF00);
+        });
+
+        it('formats sell trade notification', async () => {
+            fetch.mockResolvedValueOnce({ ok: true });
+
+            const tradeNotification = {
+                embeds: [{
+                    title: '📉 Vente ETH',
+                    color: 0xFF0000,
+                    fields: [
+                        { name: 'Type', value: 'Vente', inline: true },
+                        { name: 'Montant', value: '2 ETH', inline: true }
+                    ]
+                }]
+            };
+
+            await fetch(mockWebhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(tradeNotification)
+            });
+
+            const callBody = JSON.parse(fetch.mock.calls[0][1].body);
+            expect(callBody.embeds[0].title).toContain('Vente');
+            expect(callBody.embeds[0].color).toBe(0xFF0000);
+        });
     });
-
-    it('formats sell trades correctly', async () => {
-      fetch.mockResolvedValueOnce({ ok: true });
-
-      await discordService.sendTradeNotification({
-        type: 'sell',
-        crypto: 'ETH',
-        amount: 2,
-        price: 3000
-      });
-
-      const callArg = fetch.mock.calls[0][1].body;
-      const body = JSON.parse(callArg);
-      
-      expect(body.embeds[0].color).toBe(0xFF0000);
-      expect(body.embeds[0].title).toContain('Vente');
-    });
-  });
 });

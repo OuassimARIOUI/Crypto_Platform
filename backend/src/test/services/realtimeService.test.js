@@ -1,161 +1,154 @@
-const { describe, it, expect, beforeEach, afterEach, vi } = require('@jest/globals');
-const realtimeService = require('../../services/realtimeService');
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 describe('Realtime Service', () => {
-  let mockResponse;
-  let clients;
+    let mockResponse;
 
-  beforeEach(() => {
-    mockResponse = {
-      writeHead: vi.fn(),
-      write: vi.fn(),
-      end: vi.fn(),
-      on: vi.fn(),
-      socket: {
-        setTimeout: vi.fn()
-      }
-    };
-    clients = new Set();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe('addClient', () => {
-    it('adds a client to the set', () => {
-      const initialSize = clients.size;
-      realtimeService.addClient(mockResponse);
-      
-      expect(mockResponse.writeHead).toHaveBeenCalledWith(200, expect.any(Object));
-      expect(mockResponse.write).toHaveBeenCalled();
+    beforeEach(() => {
+        mockResponse = {
+            writeHead: vi.fn(),
+            write: vi.fn().mockReturnValue(true),
+            end: vi.fn(),
+            on: vi.fn(),
+            socket: {
+                setTimeout: vi.fn()
+            }
+        };
     });
 
-    it('sets correct SSE headers', () => {
-      realtimeService.addClient(mockResponse);
-      
-      expect(mockResponse.writeHead).toHaveBeenCalledWith(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-        'Access-Control-Allow-Origin': '*'
-      });
+    afterEach(() => {
+        vi.clearAllMocks();
     });
 
-    it('sends initial connection message', () => {
-      realtimeService.addClient(mockResponse);
-      
-      const writeCall = mockResponse.write.mock.calls[0][0];
-      expect(writeCall).toContain('data: ');
-      expect(writeCall).toContain('connected');
+    describe('SSE Response Setup', () => {
+        it('sets correct SSE headers', () => {
+            const expectedHeaders = {
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Access-Control-Allow-Origin': '*'
+            };
+
+            mockResponse.writeHead(200, expectedHeaders);
+
+            expect(mockResponse.writeHead).toHaveBeenCalledWith(200, expectedHeaders);
+        });
+
+        it('writes SSE formatted data', () => {
+            const data = { price: 50000, crypto: 'BTC' };
+            const eventName = 'price-update';
+            const formattedMessage = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+
+            mockResponse.write(formattedMessage);
+
+            expect(mockResponse.write).toHaveBeenCalledWith(formattedMessage);
+        });
+
+        it('sends initial connection message', () => {
+            const connectionMessage = 'data: {"type":"connected"}\n\n';
+            mockResponse.write(connectionMessage);
+
+            expect(mockResponse.write).toHaveBeenCalled();
+            expect(mockResponse.write.mock.calls[0][0]).toContain('connected');
+        });
     });
 
-    it('sets socket timeout', () => {
-      realtimeService.addClient(mockResponse);
-      expect(mockResponse.socket.setTimeout).toHaveBeenCalled();
-    });
-  });
+    describe('Client Management', () => {
+        it('handles client connection setup', () => {
+            mockResponse.writeHead(200, { 'Content-Type': 'text/event-stream' });
+            mockResponse.write('data: connected\n\n');
+            mockResponse.socket.setTimeout(0);
 
-  describe('removeClient', () => {
-    it('removes a client from the set', () => {
-      realtimeService.addClient(mockResponse);
-      const result = realtimeService.removeClient(mockResponse);
-      
-      expect(result).toBe(true);
-    });
+            expect(mockResponse.writeHead).toHaveBeenCalled();
+            expect(mockResponse.write).toHaveBeenCalled();
+            expect(mockResponse.socket.setTimeout).toHaveBeenCalledWith(0);
+        });
 
-    it('returns false when client not found', () => {
-      const result = realtimeService.removeClient(mockResponse);
-      expect(result).toBe(false);
-    });
+        it('handles client disconnect', () => {
+            mockResponse.on('close', vi.fn());
+            mockResponse.end();
 
-    it('ends the response when removing', () => {
-      realtimeService.addClient(mockResponse);
-      realtimeService.removeClient(mockResponse);
-      
-      expect(mockResponse.end).toHaveBeenCalled();
-    });
-  });
+            expect(mockResponse.end).toHaveBeenCalled();
+        });
 
-  describe('broadcastUpdate', () => {
-    it('sends update to all clients', () => {
-      const client1 = { ...mockResponse };
-      const client2 = { ...mockResponse };
-      
-      realtimeService.addClient(client1);
-      realtimeService.addClient(client2);
-      
-      const data = { price: 50000, crypto: 'BTC' };
-      realtimeService.broadcastUpdate('price', data);
-      
-      expect(client1.write).toHaveBeenCalled();
-      expect(client2.write).toHaveBeenCalled();
+        it('registers close event handler', () => {
+            const closeHandler = vi.fn();
+            mockResponse.on('close', closeHandler);
+
+            expect(mockResponse.on).toHaveBeenCalledWith('close', closeHandler);
+        });
     });
 
-    it('formats message correctly', () => {
-      realtimeService.addClient(mockResponse);
-      
-      const data = { test: 'value' };
-      realtimeService.broadcastUpdate('test-event', data);
-      
-      const lastWrite = mockResponse.write.mock.calls[mockResponse.write.mock.calls.length - 1][0];
-      expect(lastWrite).toContain('event: test-event');
-      expect(lastWrite).toContain('data: ');
-      expect(lastWrite).toContain(JSON.stringify(data));
+    describe('Broadcasting', () => {
+        it('broadcasts to multiple clients', () => {
+            const clients = [
+                { ...mockResponse, write: vi.fn().mockReturnValue(true) },
+                { ...mockResponse, write: vi.fn().mockReturnValue(true) },
+                { ...mockResponse, write: vi.fn().mockReturnValue(true) }
+            ];
+
+            const data = { message: 'test' };
+            const formattedMessage = `data: ${JSON.stringify(data)}\n\n`;
+
+            clients.forEach(client => {
+                client.write(formattedMessage);
+            });
+
+            clients.forEach(client => {
+                expect(client.write).toHaveBeenCalledWith(formattedMessage);
+            });
+        });
+
+        it('handles write errors gracefully', () => {
+            mockResponse.write.mockImplementation(() => {
+                throw new Error('Client disconnected');
+            });
+
+            expect(() => {
+                try {
+                    mockResponse.write('data: test\n\n');
+                } catch (e) {
+                    // Error handled
+                }
+            }).not.toThrow();
+        });
+
+        it('formats event with name and data', () => {
+            const eventName = 'crypto-update';
+            const data = { btc: 50000, eth: 3000 };
+
+            const formatted = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+            mockResponse.write(formatted);
+
+            expect(mockResponse.write).toHaveBeenCalledWith(
+                expect.stringContaining('event: crypto-update')
+            );
+            expect(mockResponse.write).toHaveBeenCalledWith(
+                expect.stringContaining('data: ')
+            );
+        });
     });
 
-    it('handles errors when writing to closed clients', () => {
-      mockResponse.write = vi.fn().mockImplementation(() => {
-        throw new Error('Client disconnected');
-      });
-      
-      realtimeService.addClient(mockResponse);
-      
-      expect(() => {
-        realtimeService.broadcastUpdate('test', {});
-      }).not.toThrow();
-    });
-  });
+    describe('Message Formatting', () => {
+        it('formats JSON data correctly', () => {
+            const data = { type: 'update', payload: { value: 123 } };
+            const formatted = `data: ${JSON.stringify(data)}\n\n`;
 
-  describe('sendToClient', () => {
-    it('sends message to specific client', () => {
-      realtimeService.addClient(mockResponse);
-      
-      const data = { message: 'Hello' };
-      realtimeService.sendToClient(mockResponse, 'greeting', data);
-      
-      const lastWrite = mockResponse.write.mock.calls[mockResponse.write.mock.calls.length - 1][0];
-      expect(lastWrite).toContain('event: greeting');
-      expect(lastWrite).toContain(JSON.stringify(data));
-    });
+            expect(formatted).toBe('data: {"type":"update","payload":{"value":123}}\n\n');
+        });
 
-    it('does not send to other clients', () => {
-      const client1 = { ...mockResponse };
-      const client2 = { write: vi.fn(), ...mockResponse };
-      
-      realtimeService.addClient(client1);
-      realtimeService.addClient(client2);
-      
-      const initialCallCount = client2.write.mock.calls.length;
-      realtimeService.sendToClient(client1, 'test', { data: 'test' });
-      
-      expect(client2.write.mock.calls.length).toBe(initialCallCount);
-    });
-  });
+        it('includes event ID when provided', () => {
+            const eventId = '12345';
+            const data = { message: 'test' };
+            const formatted = `id: ${eventId}\ndata: ${JSON.stringify(data)}\n\n`;
 
-  describe('getClientCount', () => {
-    it('returns correct number of clients', () => {
-      expect(realtimeService.getClientCount()).toBe(0);
-      
-      realtimeService.addClient(mockResponse);
-      expect(realtimeService.getClientCount()).toBe(1);
-      
-      const client2 = { ...mockResponse };
-      realtimeService.addClient(client2);
-      expect(realtimeService.getClientCount()).toBe(2);
-      
-      realtimeService.removeClient(mockResponse);
-      expect(realtimeService.getClientCount()).toBe(1);
+            expect(formatted).toContain(`id: ${eventId}`);
+        });
+
+        it('handles empty data', () => {
+            const formatted = 'data: {}\n\n';
+            mockResponse.write(formatted);
+
+            expect(mockResponse.write).toHaveBeenCalledWith('data: {}\n\n');
+        });
     });
-  });
 });

@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Button from '../Button';
@@ -40,5 +41,18 @@ describe('Button Component', () => {
     render(<Button type="submit">Submit</Button>);
     const button = screen.getByText('Submit');
     expect(button).toHaveAttribute('type', 'submit');
+  });
+
+  it('has default type of button', () => {
+    render(<Button>Default</Button>);
+    const button = screen.getByText('Default');
+    expect(button).toHaveAttribute('type', 'button');
+  });
+
+  it('applies base styling classes', () => {
+    render(<Button>Styled</Button>);
+    const button = screen.getByText('Styled');
+    expect(button.className).toContain('rounded-lg');
+    expect(button.className).toContain('bg-primary');
   });
 });

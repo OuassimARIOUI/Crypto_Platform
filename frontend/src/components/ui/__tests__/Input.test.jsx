@@ -1,44 +1,55 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import Input from '../Input';
 
 describe('Input Component', () => {
-  it('renders input with placeholder', () => {
+  it('renders input element', () => {
     render(<Input placeholder="Enter text" />);
     expect(screen.getByPlaceholderText('Enter text')).toBeInTheDocument();
   });
 
   it('handles value changes', () => {
     const handleChange = vi.fn();
-    render(<Input onChange={handleChange} />);
+    render(<Input onChange={handleChange} placeholder="Test" />);
     
-    const input = screen.getByRole('textbox');
+    const input = screen.getByPlaceholderText('Test');
     fireEvent.change(input, { target: { value: 'test' } });
     
     expect(handleChange).toHaveBeenCalled();
   });
 
-  it('applies custom className', () => {
-    render(<Input className="custom-input" />);
-    const input = screen.getByRole('textbox');
-    expect(input.className).toContain('custom-input');
+  it('renders with label', () => {
+    render(<Input label="Email" placeholder="test" />);
+    expect(screen.getByText('Email')).toBeInTheDocument();
   });
 
   it('renders with different types', () => {
-    const { rerender } = render(<Input type="email" data-testid="input" />);
-    expect(screen.getByTestId('input')).toHaveAttribute('type', 'email');
+    const { rerender } = render(<Input type="email" placeholder="email" />);
+    expect(screen.getByPlaceholderText('email')).toHaveAttribute('type', 'email');
     
-    rerender(<Input type="password" data-testid="input" />);
-    expect(screen.getByTestId('input')).toHaveAttribute('type', 'password');
+    rerender(<Input type="password" placeholder="password" />);
+    expect(screen.getByPlaceholderText('password')).toHaveAttribute('type', 'password');
   });
 
-  it('is disabled when disabled prop is true', () => {
-    render(<Input disabled />);
-    expect(screen.getByRole('textbox')).toBeDisabled();
+  it('has default type of text', () => {
+    render(<Input placeholder="default" />);
+    expect(screen.getByPlaceholderText('default')).toHaveAttribute('type', 'text');
   });
 
   it('displays value prop', () => {
-    render(<Input value="test value" onChange={() => {}} />);
-    expect(screen.getByRole('textbox')).toHaveValue('test value');
+    render(<Input value="test value" onChange={() => {}} placeholder="test" />);
+    expect(screen.getByPlaceholderText('test')).toHaveValue('test value');
+  });
+
+  it('applies styling classes', () => {
+    render(<Input placeholder="styled" />);
+    const input = screen.getByPlaceholderText('styled');
+    expect(input.className).toContain('rounded-lg');
+  });
+
+  it('renders without label when not provided', () => {
+    const { container } = render(<Input placeholder="no-label" />);
+    expect(container.querySelector('p')).toBeNull();
   });
 });

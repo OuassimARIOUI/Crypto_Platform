@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import useNotification from '../useNotification';
+import { useNotification } from '../useNotification';
 
 describe('useNotification Hook', () => {
   it('initializes with no notification', () => {
@@ -8,69 +8,51 @@ describe('useNotification Hook', () => {
     expect(result.current.notification).toBeNull();
   });
 
-  it('shows success notification', () => {
+  it('shows notification with showNotification', () => {
     const { result } = renderHook(() => useNotification());
     
     act(() => {
-      result.current.showSuccess('Success message');
+      result.current.showNotification('Test message', 'success');
     });
     
     expect(result.current.notification).toEqual({
-      message: 'Success message',
-      type: 'success'
+      message: 'Test message',
+      type: 'success',
+      duration: 5000
     });
   });
 
-  it('shows error notification', () => {
+  it('shows notification with default type info', () => {
     const { result } = renderHook(() => useNotification());
     
     act(() => {
-      result.current.showError('Error message');
+      result.current.showNotification('Info message');
     });
     
-    expect(result.current.notification).toEqual({
-      message: 'Error message',
-      type: 'error'
-    });
+    expect(result.current.notification.type).toBe('info');
   });
 
-  it('shows warning notification', () => {
+  it('shows notification with custom duration', () => {
     const { result } = renderHook(() => useNotification());
     
     act(() => {
-      result.current.showWarning('Warning message');
+      result.current.showNotification('Custom duration', 'warning', 10000);
     });
     
-    expect(result.current.notification).toEqual({
-      message: 'Warning message',
-      type: 'warning'
-    });
+    expect(result.current.notification.duration).toBe(10000);
   });
 
-  it('shows info notification', () => {
+  it('hides notification', () => {
     const { result } = renderHook(() => useNotification());
     
     act(() => {
-      result.current.showInfo('Info message');
-    });
-    
-    expect(result.current.notification).toEqual({
-      message: 'Info message',
-      type: 'info'
-    });
-  });
-
-  it('clears notification', () => {
-    const { result } = renderHook(() => useNotification());
-    
-    act(() => {
-      result.current.showSuccess('Success');
+      result.current.showNotification('Test');
     });
     
     expect(result.current.notification).not.toBeNull();
     
     act(() => {
-      result.current.clearNotification();
+      result.current.hideNotification();
     });
     
     expect(result.current.notification).toBeNull();
@@ -80,16 +62,41 @@ describe('useNotification Hook', () => {
     const { result } = renderHook(() => useNotification());
     
     act(() => {
-      result.current.showSuccess('First');
+      result.current.showNotification('First', 'info');
     });
     
     expect(result.current.notification.message).toBe('First');
     
     act(() => {
-      result.current.showError('Second');
+      result.current.showNotification('Second', 'error');
     });
     
     expect(result.current.notification.message).toBe('Second');
     expect(result.current.notification.type).toBe('error');
+  });
+
+  it('returns stable function references', () => {
+    const { result, rerender } = renderHook(() => useNotification());
+    
+    const showNotification1 = result.current.showNotification;
+    const hideNotification1 = result.current.hideNotification;
+    
+    rerender();
+    
+    expect(result.current.showNotification).toBe(showNotification1);
+    expect(result.current.hideNotification).toBe(hideNotification1);
+  });
+
+  it('handles different notification types', () => {
+    const { result } = renderHook(() => useNotification());
+    const types = ['info', 'success', 'error', 'warning'];
+    
+    types.forEach(type => {
+      act(() => {
+        result.current.showNotification(`${type} message`, type);
+      });
+      
+      expect(result.current.notification.type).toBe(type);
+    });
   });
 });

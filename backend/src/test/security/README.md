@@ -4,7 +4,7 @@
 
 Ce dossier contient tous les tests de sécurité pour l'application Crypto Platform, suivant les standards **OWASP Top 10** et utilisant les outils **OWASP ZAP** et **Snyk**.
 
-## 🛡️ Structure des Tests
+## Structure des Tests
 
 ### 1. Tests Unitaires de Sécurité (`*.security.test.js`)
 - **input.security.test.js** - Validation des entrées (XSS, SQL Injection)
@@ -45,16 +45,16 @@ npm run security:snyk
 
 | Catégorie OWASP | Fichier de Test | Couverture |
 |----------------|-----------------|------------|
-| A01 - Broken Access Control | authorization.security.test.js | ✅ |
-| A02 - Cryptographic Failures | data.security.test.js | ✅ |
-| A03 - Injection | input.security.test.js | ✅ |
-| A04 - Insecure Design | middleware.security.test.js | ✅ |
-| A05 - Security Misconfiguration | http.security.test.js | ✅ |
-| A06 - Vulnerable Components | Snyk scan | ✅ |
-| A07 - Authentication Failures | auth.security.test.js | ✅ |
-| A08 - Data Integrity Failures | data.security.test.js | ✅ |
-| A09 - Logging Failures | data.security.test.js | ✅ |
-| A10 - SSRF | http.security.test.js | ✅ |
+| A01 - Broken Access Control | authorization.security.test.js | Oui |
+| A02 - Cryptographic Failures | data.security.test.js | Oui |
+| A03 - Injection | input.security.test.js | Oui |
+| A04 - Insecure Design | middleware.security.test.js | Oui |
+| A05 - Security Misconfiguration | http.security.test.js | Oui |
+| A06 - Vulnerable Components | Snyk scan | Oui |
+| A07 - Authentication Failures | auth.security.test.js | Oui |
+| A08 - Data Integrity Failures | data.security.test.js | Oui |
+| A09 - Logging Failures | data.security.test.js | Oui |
+| A10 - SSRF | http.security.test.js | Oui |
 
 ##  Configuration
 

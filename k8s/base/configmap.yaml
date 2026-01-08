@@ -22,3 +22,5 @@ data:
   # Frontend configuration
   NEXT_PUBLIC_API_BASE: "http://backend-service:3004"
   API_BASE_URL: "http://backend-service:3004"
+
+# variables d'environnement pour la configuration de l'application Crypto Platform dans Kubernetes

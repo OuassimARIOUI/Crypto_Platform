@@ -6,13 +6,13 @@ metadata:
 
 namespace: crypto-platform
 
-# Common labels applied to all resources
+
 commonLabels:
   app.kubernetes.io/name: crypto-platform
   app.kubernetes.io/version: "1.0.0"
   app.kubernetes.io/managed-by: kustomize
 
-# Resources to include
+# Resources to include wich are sorted by order of application
 resources:
   - namespace.yaml
   - configmap.yaml
@@ -25,8 +25,8 @@ resources:
   - frontend.yaml
   - ingress.yaml
 
-# Images - Update these for your registry (ghcr.io, dockerhub, etc.)
-# For local development with minikube, use local image names
+# Images - Update  for  registry (ghcr.io, dockerhub, etc.)
+# For local development with minikube, using local image names
 images:
   - name: crypto_platform-backend
     newTag: latest

@@ -1,4 +1,4 @@
-# 🔐 Configuration des Secrets pour Kubernetes
+# Configuration des Secrets pour Kubernetes
 
 ## Prérequis GitHub Actions
 

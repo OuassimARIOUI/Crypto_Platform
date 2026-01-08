@@ -1,13 +1,13 @@
-# ✅ Configuration des Tests de Sécurité - Résumé
+# Configuration des Tests de Sécurité - Résumé
 
-## 🎯 Ce qui a été fait
+## Ce qui a été fait
 
-### 1. Structure créée ✅
+### 1. Structure créée
 
 ```
 backend/
 ├── .snyk                                    # Configuration Snyk
-├── SECURITY_TESTING_GUIDE.md              # 📚 Guide complet
+├── SECURITY_TESTING_GUIDE.md              # Guide complet
 ├── package.json                            # Scripts npm ajoutés
 └── src/test/security/
     ├── README.md                           # Documentation
@@ -20,15 +20,15 @@ backend/
     ├── owasp-zap/
     │   ├── README.md                       # Doc OWASP ZAP
     │   ├── zap-config.yaml                 # Configuration
-    │   ├── run-zap-scan.sh                 # ✅ Exécutable
+    │   ├── run-zap-scan.sh                 # Exécutable
     │   └── reports/                        # Dossier rapports (créé auto)
     └── snyk/
         ├── README.md                       # Doc Snyk
-        ├── run-snyk-scan.sh                # ✅ Exécutable
+        ├── run-snyk-scan.sh                # Exécutable
         └── reports/                        # Dossier rapports (créé auto)
 ```
 
-### 2. Scripts NPM ajoutés ✅
+### 2. Scripts NPM ajoutés
 
 ```bash
 # Tests unitaires de sécurité
@@ -36,24 +36,24 @@ npm run test:security
 npm run test:security:watch
 
 # OWASP ZAP (scan de pénétration)
-npm run security:zap:baseline    # ⚡ Rapide (5-10 min)
-npm run security:zap:api         # 🔌 API seulement
-npm run security:zap:full        # 🔥 Complet (30-60 min)
-npm run security:zap:all         # 🌟 Tous les scans
+npm run security:zap:baseline    # Rapide (5-10 min)
+npm run security:zap:api         # API seulement
+npm run security:zap:full        # Complet (30-60 min)
+npm run security:zap:all         # Tous les scans
 
 # Snyk (scan des dépendances)
-npm run security:snyk:test       # 📦 Test dépendances
-npm run security:snyk:monitor    # 👁️ Monitoring continu
-npm run security:snyk:fix        # 🔧 Correction auto
-npm run security:snyk:report     # 📊 Rapport complet
-npm run security:snyk:code       # 💻 Scan du code
-npm run security:snyk:container  # 🐳 Scan Docker
+npm run security:snyk:test       # Test dépendances
+npm run security:snyk:monitor    # Monitoring continu
+npm run security:snyk:fix        # Correction auto
+npm run security:snyk:report     # Rapport complet
+npm run security:snyk:code       # Scan du code
+npm run security:snyk:container  # Scan Docker
 
 # Tout en une fois
 npm run security:all
 ```
 
-### 3. Tests commentés ✅
+### 3. Tests commentés
 
 Le fichier `input.security.test.js` a été amélioré avec:
 - **Commentaires détaillés** sur chaque test
@@ -62,7 +62,7 @@ Le fichier `input.security.test.js` a été amélioré avec:
 - **Prévention et bonnes pratiques** expliquées
 - **Références OWASP** pour chaque catégorie
 
-## 🚀 Comment commencer
+## Comment commencer
 
 ### Étape 1: Installer Snyk
 ```bash
@@ -104,22 +104,22 @@ open src/test/security/owasp-zap/reports/*.html
 open src/test/security/snyk/reports/*.html
 ```
 
-## 📊 Coverage Sécurité - OWASP Top 10 2021
+## Coverage Sécurité - OWASP Top 10 2021
 
 | Rang | Vulnérabilité | Couverture | Outil(s) |
 |------|--------------|------------|----------|
-| A01 | Broken Access Control | ✅ | Tests unitaires + ZAP |
-| A02 | Cryptographic Failures | ✅ | Tests unitaires + Snyk |
-| A03 | Injection | ✅ | Tests unitaires + ZAP |
-| A04 | Insecure Design | ✅ | Tests unitaires |
-| A05 | Security Misconfiguration | ✅ | ZAP + Snyk |
-| A06 | Vulnerable Components | ✅ | Snyk |
-| A07 | Authentication Failures | ✅ | Tests unitaires + ZAP |
-| A08 | Data Integrity Failures | ✅ | Tests unitaires |
-| A09 | Logging Failures | ✅ | Tests unitaires |
-| A10 | SSRF | ✅ | ZAP |
+| A01 | Broken Access Control | Oui | Tests unitaires + ZAP |
+| A02 | Cryptographic Failures | Oui | Tests unitaires + Snyk |
+| A03 | Injection | Oui | Tests unitaires + ZAP |
+| A04 | Insecure Design | Oui | Tests unitaires |
+| A05 | Security Misconfiguration | Oui | ZAP + Snyk |
+| A06 | Vulnerable Components | Oui | Snyk |
+| A07 | Authentication Failures | Oui | Tests unitaires + ZAP |
+| A08 | Data Integrity Failures | Oui | Tests unitaires |
+| A09 | Logging Failures | Oui | Tests unitaires |
+| A10 | SSRF | Oui | ZAP |
 
-## 🔍 Types de tests disponibles
+## Types de tests disponibles
 
 ### 1. Tests Unitaires (Vitest)
 - **Rapides** (< 1 minute)
@@ -139,7 +139,7 @@ open src/test/security/snyk/reports/*.html
 - **Coverage:** CVE dans les dépendances npm
 - **Exécution:** `npm run security:snyk:test`
 
-## 🎯 Workflow Recommandé
+## Workflow Recommandé
 
 ### Développement Local
 ```bash
@@ -173,29 +173,29 @@ npm run security:zap:full
 npm run security:snyk:monitor
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **Guide complet:** [SECURITY_TESTING_GUIDE.md](./SECURITY_TESTING_GUIDE.md)
 - **Tests de sécurité:** [src/test/security/README.md](./src/test/security/README.md)
 - **OWASP ZAP:** [src/test/security/owasp-zap/README.md](./src/test/security/owasp-zap/README.md)
 - **Snyk:** [src/test/security/snyk/README.md](./src/test/security/snyk/README.md)
 
-## ⚠️ Important
+## Important
 
 ### À NE PAS faire
-- ❌ Ignorer les vulnérabilités Critical/High
-- ❌ Désactiver les tests de sécurité en CI/CD
-- ❌ Commiter le fichier `.snyk` avec des secrets
-- ❌ Exposer les rapports de sécurité publiquement
+- Ignorer les vulnérabilités Critical/High
+- Désactiver les tests de sécurité en CI/CD
+- Commiter le fichier `.snyk` avec des secrets
+- Exposer les rapports de sécurité publiquement
 
 ### À FAIRE
-- ✅ Exécuter les tests avant chaque commit
-- ✅ Corriger les vulnérabilités rapidement
-- ✅ Documenter les exceptions de sécurité
-- ✅ Maintenir les dépendances à jour
-- ✅ Revoir les rapports hebdomadairement
+- Exécuter les tests avant chaque commit
+- Corriger les vulnérabilités rapidement
+- Documenter les exceptions de sécurité
+- Maintenir les dépendances à jour
+- Revoir les rapports hebdomadairement
 
-## 🎉 Prochaines Étapes
+## Prochaines Étapes
 
 1. **Installer les outils** (Snyk + OWASP ZAP)
 2. **Lancer un premier scan** pour établir une baseline

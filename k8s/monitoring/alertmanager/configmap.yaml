@@ -42,20 +42,50 @@ data:
     receivers:
       # Receiver par defaut - affiche dans les logs
       - name: 'default-receiver'
-        webhook_configs:
-          - url: 'http://localhost:9093/api/v1/alerts'
+        email_configs:
+          - to: 'u4820065201@gmail.com'
+            from: 'crypto-platform-alerts@gmail.com'
+            smarthost: 'smtp.gmail.com:587'
+            auth_username: 'crypto-platform-alerts@gmail.com'
+            auth_identity: 'crypto-platform-alerts@gmail.com'
+            auth_password: 'ldnu kxmf njxb jixf'
+            headers:
+              Subject: '[Crypto Platform] Alerte'
             send_resolved: true
 
-      # Receiver pour alertes critiques
+      # Receiver pour alertes critiques - URGENT
       - name: 'critical-receiver'
-        webhook_configs:
-          - url: 'http://localhost:9093/api/v1/alerts'
+        email_configs:
+          - to: 'u4820065201@gmail.com'
+            from: 'crypto-platform-alerts@gmail.com'
+            smarthost: 'smtp.gmail.com:587'
+            auth_username: 'crypto-platform-alerts@gmail.com'
+            auth_identity: 'crypto-platform-alerts@gmail.com'
+            auth_password: 'ldnu kxmf njxb jixf'
+            headers:
+              Subject: '[CRITIQUE] Crypto Platform - Alerte Urgente'
+            text: |
+              ALERTE CRITIQUE!
+              
+              {{ range .Alerts }}
+              Alerte: {{ .Labels.alertname }}
+              Severite: {{ .Labels.severity }}
+              Description: {{ .Annotations.description }}
+              Debut: {{ .StartsAt }}
+              {{ end }}
             send_resolved: true
 
       # Receiver pour alertes warning
       - name: 'warning-receiver'
-        webhook_configs:
-          - url: 'http://localhost:9093/api/v1/alerts'
+        email_configs:
+          - to: 'u4820065201@gmail.com'
+            from: 'crypto-platform-alerts@gmail.com'
+            smarthost: 'smtp.gmail.com:587'
+            auth_username: 'crypto-platform-alerts@gmail.com'
+            auth_identity: 'crypto-platform-alerts@gmail.com'
+            auth_password: 'YOUR_APP_PASSWORD_HERE'
+            headers:
+              Subject: '[WARNING] Crypto Platform - Alerte'
             send_resolved: true
 
     # Regles d'inhibition

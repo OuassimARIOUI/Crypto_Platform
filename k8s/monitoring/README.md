@@ -1,8 +1,8 @@
-# 📊 Monitoring Stack - Prometheus & Grafana
+# Monitoring Stack - Prometheus & Grafana
 
 Configuration de monitoring pour Crypto Platform avec Prometheus et Grafana.
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -25,7 +25,7 @@ Configuration de monitoring pour Crypto Platform avec Prometheus et Grafana.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Déploiement
+## Déploiement
 
 ### Prérequis
 - Cluster Kubernetes fonctionnel
@@ -59,15 +59,15 @@ kubectl port-forward svc/prometheus-service -n monitoring 9090:9090
 echo "$(minikube ip) grafana.crypto.local prometheus.crypto.local" | sudo tee -a /etc/hosts
 ```
 
-## 🔐 Credentials par défaut
+## Credentials par défaut
 
 | Service | Username | Password |
 |---------|----------|----------|
 | Grafana | admin | CryptoAdmin123! |
 
-> ⚠️ **Changez le mot de passe en production !**
+> **Changez le mot de passe en production !**
 
-## 📈 Métriques disponibles
+## Métriques disponibles
 
 ### HTTP Metrics
 | Métrique | Type | Description |
@@ -90,7 +90,7 @@ echo "$(minikube ip) grafana.crypto.local prometheus.crypto.local" | sudo tee -a
 | `alerts_triggered_total` | Counter | Alertes déclenchées |
 | `portfolio_value_total_usd` | Gauge | Valeur totale des portfolios |
 
-## 📊 Dashboards Grafana
+## Dashboards Grafana
 
 ### Dashboard principal
 Le dashboard "Crypto Platform Dashboard" inclut :
@@ -109,7 +109,7 @@ Le dashboard "Crypto Platform Dashboard" inclut :
    - Memory par pod
    - CPU par pod
 
-## 🚨 Alertes configurées
+## Alertes configurées
 
 | Alerte | Seuil | Sévérité |
 |--------|-------|----------|
@@ -119,7 +119,7 @@ Le dashboard "Crypto Platform Dashboard" inclut :
 | HighErrorRate | > 5% erreurs 5xx | Critical |
 | BackendDown | down > 1min | Critical |
 
-## 🔧 Configuration
+## Configuration
 
 ### Ajouter un nouveau scrape target
 
@@ -149,7 +149,7 @@ metadata:
     prometheus.io/path: "/metrics"
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Prometheus ne scrape pas les métriques
 
@@ -185,7 +185,7 @@ kubectl get cm -n monitoring
 kubectl rollout restart deployment/grafana -n monitoring
 ```
 
-## 📁 Structure des fichiers
+## Structure des fichiers
 
 ```
 k8s/monitoring/
@@ -202,7 +202,7 @@ k8s/monitoring/
     └── deployment.yaml        # Deployment + PVC + Service
 ```
 
-## 🔗 Liens utiles
+## Liens utiles
 
 - [Prometheus Documentation](https://prometheus.io/docs/)
 - [Grafana Documentation](https://grafana.com/docs/)

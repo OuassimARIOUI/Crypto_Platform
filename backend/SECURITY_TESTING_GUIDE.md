@@ -12,27 +12,27 @@ backend/src/test/security/
 ├── http.security.test.js              #  Tests sécurité HTTP
 ├── data.security.test.js              #  Tests protection données
 ├── middleware.security.test.js        #  Tests middleware sécurité
-├── owasp-zap/                         # 🕷️ OWASP ZAP
+├── owasp-zap/                         # OWASP ZAP
 │   ├── README.md
 │   ├── zap-config.yaml
 │   ├── run-zap-scan.sh               # Script d'exécution
 │   └── reports/                       # Rapports générés
-└── snyk/                              # 🔍 Snyk
+└── snyk/                              # Snyk
     ├── README.md
     ├── run-snyk-scan.sh              # Script d'exécution
     └── reports/                       # Rapports générés
 ```
 
 ### 2. Configuration Snyk
-- ✅ Fichier `.snyk` créé à la racine du backend
-- ✅ Scripts npm ajoutés pour l'exécution
-- ✅ Documentation complète dans `snyk/README.md`
+- Fichier `.snyk` créé à la racine du backend
+- Scripts npm ajoutés pour l'exécution
+- Documentation complète dans `snyk/README.md`
 
 ### 3. Configuration OWASP ZAP
-- ✅ Fichier de configuration `zap-config.yaml`
-- ✅ Scripts bash pour automatiser les scans
-- ✅ Support des scans: baseline, full, API
-- ✅ Documentation complète dans `owasp-zap/README.md`
+- Fichier de configuration `zap-config.yaml`
+- Scripts bash pour automatiser les scans
+- Support des scans: baseline, full, API
+- Documentation complète dans `owasp-zap/README.md`
 
 ### 4. Scripts NPM Ajoutés
 
@@ -50,7 +50,7 @@ backend/src/test/security/
 }
 ```
 
-## 🚀 Comment Utiliser
+## Comment Utiliser
 
 ### Tests de Sécurité Unitaires
 ```bash
@@ -146,10 +146,10 @@ npm run security:zap:baseline  # OWASP ZAP
 
 | Niveau | OWASP ZAP | Snyk | Action |
 |--------|-----------|------|--------|
-| 🔴 Critical/High | High | Critical/High | ⛔ **BLOQUE LE DEPLOYMENT** |
-| 🟠 Medium | Medium | Medium | ⚠️ À corriger avant release |
-| 🟡 Low | Low | Low | 📝 À planifier |
-| 🔵 Info | Informational | Info | ℹ️ À documenter |
+| Critical/High | High | Critical/High | **BLOQUE LE DEPLOYMENT** |
+| Medium | Medium | Medium | À corriger avant release |
+| Low | Low | Low | À planifier |
+| Info | Informational | Info | À documenter |
 
 ### Que faire en cas de vulnérabilité ?
 
@@ -183,7 +183,7 @@ open src/test/security/owasp-zap/reports/zap-baseline-*.html
 npm run security:zap:baseline
 ```
 
-## 🔐 Bonnes Pratiques
+## Bonnes Pratiques
 
 ### Développement
 1. **Avant chaque commit:**
@@ -248,10 +248,7 @@ npm run security:zap:baseline
    npm run security:snyk:monitor
    ```
 
-## 📚 Ressources
-
-### Documentation
-- [OWASP Top 10 2021](https://owasp.org/Top10/)
+## Ressources
 - [OWASP ZAP Documentation](https://www.zaproxy.org/docs/)
 - [Snyk Documentation](https://docs.snyk.io/)
 - [Vitest Documentation](https://vitest.dev/)
@@ -261,7 +258,7 @@ npm run security:zap:baseline
 - [Snyk Tutorial](https://learn.snyk.io/)
 - [Security Testing Best Practices](https://cheatsheetseries.owasp.org/cheatsheets/Web_Application_Security_Testing_Cheat_Sheet.html)
 
-## ❓ FAQ
+## FAQ
 
 **Q: Dois-je exécuter tous les tests à chaque commit?**
 A: Les tests unitaires oui, OWASP ZAP baseline avant chaque PR, full scan avant chaque release.
@@ -275,15 +272,15 @@ A: Utilisez `baseline` en local, `full` en CI/CD uniquement.
 **Q: Comment gérer les faux positifs?**
 A: Ajoutez des exclusions dans `zap-config.yaml` avec commentaires expliquant pourquoi.
 
-## 🎉 Prochaines Étapes
+## Prochaines Étapes
 
-1. ✅ **Installez Snyk:** `npm install -g snyk && snyk auth`
-2. ✅ **Testez les scans:** `npm run test:security`
-3. ✅ **Lancez un scan Snyk:** `npm run security:snyk:test`
-4. ✅ **Lancez OWASP ZAP:** `npm run security:zap:baseline`
-5. ✅ **Configurez votre CI/CD** avec les tests de sécurité
-6. ✅ **Consultez les rapports** et corrigez les vulnérabilités
+1. **Installez Snyk:** `npm install -g snyk && snyk auth`
+2. **Testez les scans:** `npm run test:security`
+3. **Lancez un scan Snyk:** `npm run security:snyk:test`
+4. **Lancez OWASP ZAP:** `npm run security:zap:baseline`
+5. **Configurez votre CI/CD** avec les tests de sécurité
+6. **Consultez les rapports** et corrigez les vulnérabilités
 
 ---
 
-**🔒 La sécurité n'est jamais terminée, c'est un processus continu!**
+**La sécurité n'est jamais terminée, c'est un processus continu!**

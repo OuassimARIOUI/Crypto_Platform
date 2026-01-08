@@ -103,4 +103,4 @@ spec:
             timeoutSeconds: 5
             failureThreshold: 3
       imagePullSecrets:
-        - name: ghcr-secret  # Create this secret for private registry
+        - name: ghcr-secret  

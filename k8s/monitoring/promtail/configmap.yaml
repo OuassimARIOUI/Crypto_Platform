@@ -1,5 +1,5 @@
 # Configuration de Promtail
-# Promtail collecte les logs de tous les pods Kubernetes
+# Promtail collecte les logs de tous les pods Kubernetes et ensuite les envoie a Loki
 apiVersion: v1
 kind: ConfigMap
 metadata:

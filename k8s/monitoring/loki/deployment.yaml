@@ -60,7 +60,24 @@ spec:
           configMap:
             name: loki-config
         - name: loki-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: loki-pvc
+---
+# PersistentVolumeClaim pour Loki - sauvegarde permanente des logs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: loki-pvc
+  namespace: monitoring
+  labels:
+    app: loki
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # Les logs seront stockes dans /loki_saves sur le volume persistant
 ---
 apiVersion: v1
 kind: Service

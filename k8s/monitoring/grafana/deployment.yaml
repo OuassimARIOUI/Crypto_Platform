@@ -115,7 +115,7 @@ metadata:
   namespace: monitoring
 type: Opaque
 data:
-  # admin / CryptoAdmin123! (change in production!)
+  # admin / CryptoAdmin123! (changed in production!)
   admin-user: YWRtaW4=
   admin-password: Q3J5cHRvQWRtaW4xMjMh
 ---

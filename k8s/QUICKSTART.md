@@ -1,4 +1,4 @@
-# 🚀 Guide Rapide - Lancer le Monitoring
+# Guide Rapide - Lancer le Monitoring
 
 ## Prérequis
 - Minikube installé et démarré

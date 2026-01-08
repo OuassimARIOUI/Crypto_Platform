@@ -45,3 +45,5 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: standard  
+#espaces de stockage persistants pour PostgreSQL et  Redis afin que les données 
+#ne soient pas perdues lors du redémarrage des pods 

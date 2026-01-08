@@ -49,16 +49,16 @@ Les rapports sont générés dans `src/test/security/owasp-zap/reports/`:
 ##  Tests Couverts
 
 ### Vulnérabilités détectées:
-- ✅ SQL Injection
-- ✅ Cross-Site Scripting (XSS)
-- ✅ Cross-Site Request Forgery (CSRF)
-- ✅ Insecure Headers
-- ✅ Cookie Security
-- ✅ SSL/TLS Issues
-- ✅ Information Disclosure
-- ✅ Authentication Bypass
-- ✅ Authorization Flaws
-- ✅ Directory Traversal
+- SQL Injection
+- Cross-Site Scripting (XSS)
+- Cross-Site Request Forgery (CSRF)
+- Insecure Headers
+- Cookie Security
+- SSL/TLS Issues
+- Information Disclosure
+- Authentication Bypass
+- Authorization Flaws
+- Directory Traversal
 
 ##  Niveaux de Risque
 
@@ -67,7 +67,7 @@ Les rapports sont générés dans `src/test/security/owasp-zap/reports/`:
 | High |  Bloque le deployment |
 | Medium |  Avertissement à corriger |
 | Low |  Information |
-| Informational | 📝 À documenter |
+| Informational | À documenter |
 
 ##  Exemple d'Utilisation en CI/CD
 

@@ -205,6 +205,6 @@ npm run security:snyk:monitor
 
 ---
 
-**🔒 La sécurité est un processus continu, pas un état!**
+**La sécurité est un processus continu, pas un état!**
 
 Pour toute question, consultez [SECURITY_TESTING_GUIDE.md](./SECURITY_TESTING_GUIDE.md)

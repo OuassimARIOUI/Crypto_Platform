@@ -37,7 +37,7 @@ if (!header) return res.status(401).json({ error: "Token manquant" });
 ```
 
 Si aucun token :
-➡️ **HTTP 401 — Token manquant**
+**HTTP 401 — Token manquant**
 
 ---
 
@@ -61,7 +61,7 @@ const decoded = jwt.verify(token, process.env.JWT_SECRET);
 ```
 
 Si le token est invalide ou expiré :
-➡️ **HTTP 401 — Token invalide**
+**HTTP 401 — Token invalide**
 
 ---
 
@@ -115,7 +115,7 @@ if (req.user.role !== "admin")
 ```
 
 Si l’utilisateur n’est pas admin :
-➡️ **HTTP 403 — Accès refusé**
+**HTTP 403 — Accès refusé**
 
 Sinon :
 ```js

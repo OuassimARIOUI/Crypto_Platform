@@ -23,7 +23,6 @@ resources:
   - backend.yaml
   - worker.yaml
   - frontend.yaml
-  - ingress.yaml
 
 # Images - Update  for  registry (ghcr.io, dockerhub, etc.)
 # For local development with minikube, using local image names

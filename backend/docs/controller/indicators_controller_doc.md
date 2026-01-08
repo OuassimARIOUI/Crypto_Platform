@@ -86,7 +86,7 @@ catch(err){
 }
 ```
 
-⚠️ Remarque :  
+Remarque :  
 Ce contrôleur ne renvoie **pas de status HTTP** ni de message d’erreur dans le catch.  
 Le client reçoit donc **aucune réponse** en cas d’erreur.  
 (Il serait conseillé de renvoyer au minimum un `res.status(500).json(...)`)

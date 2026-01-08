@@ -140,7 +140,7 @@ npm run security:snyk:test     # Snyk dépendances
 npm run security:zap:baseline  # OWASP ZAP
 ```
 
-## 📊 Interprétation des Résultats
+## Interprétation des Résultats
 
 ### Niveaux de Risque
 

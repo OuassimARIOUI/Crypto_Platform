@@ -63,7 +63,7 @@ catch(error) {
 }
 ```
 
-⚠️ **Attention :**  
+**Attention :**  
 Dans ce contrôleur, aucune réponse (status ou json) n’est renvoyée en cas d’erreur.  
 Le client ne recevra donc **aucune réponse** si une exception se produit.  
 Pour un comportement REST correct, il serait préférable de faire :

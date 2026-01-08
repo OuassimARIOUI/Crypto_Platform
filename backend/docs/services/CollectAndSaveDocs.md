@@ -14,7 +14,7 @@ Ce module gère toutes les interactions entre l’application et la base de donn
 - Connexion sécurisée via les variables d’environnement (`.env`)
 - Insertion des données de cryptomonnaies
 
-### ️ Détails techniques
+### Détails techniques
 
 ####  Fonction `connectDB()`
 - Établit la connexion avec la base PostgreSQL en utilisant le package **pg**.
@@ -159,10 +159,10 @@ Pour chaque crypto `c` :
 ###  En résumé
 | Étape | Action | Fonctionnalité |
 |----|---------|----------------|
-| 1️ | Connexion à PostgreSQL | `connectDB()` |
-| 2️ | Récupération API | `fetchCryptoData()` |
-| 3️ | Insertion sécurisée | `INSERT INTO cryptos / crypto_prices` |
-| 4️ | Logging | `logInfo` / `logError` |
+| 1. | Connexion à PostgreSQL | `connectDB()` |
+| 2. | Récupération API | `fetchCryptoData()` |
+| 3. | Insertion sécurisée | `INSERT INTO cryptos / crypto_prices` |
+| 4. | Logging | `logInfo` / `logError` |
 
 ---
 

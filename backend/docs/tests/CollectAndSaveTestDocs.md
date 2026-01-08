@@ -27,11 +27,11 @@ Chaque fichier correspond à un module métier et vérifie :
 
 ##  Tests réalisés
 
-### ️ Test : Connexion réussie à la DB
+### Test : Connexion réussie à la DB
 Simule une connexion PostgreSQL valide et vérifie que :
 - `logInfo("Connexion ...")` est appelé
 
-### ️ Test : Échec connexion → gestion d’erreur
+### Test : Échec connexion → gestion d'erreur
 Simule :
 ```js
 connect()-> rejected
@@ -45,10 +45,10 @@ client.query() -> success
 ```
 On vérifie que `logInfo()` est bien appelé.
 
-### ️ Test : Échec insertion SQL
+### Test : Échec insertion SQL
 Force `query()` à échouer pour tester la robustesse du code.
 
-### ️ Test Sécurité : aucune donnée sensible dans les logs
+### Test Sécurité : aucune donnée sensible dans les logs
 Vérifie qu’aucun mot de passe n’est affiché :
 ```js
 expect(message).not.toContain("mySuperSecret")
@@ -68,13 +68,13 @@ expect(message).not.toContain("mySuperSecret")
 ###  Test Sécurité : retourne un tableau de cryptos
 Simule une vraie réponse API.
 
-### ️ Test : API échoue → retourne undefined
+### Test : API échoue → retourne undefined
 Simule une erreur réseau :
 ```js
 axios.get.mockRejectedValueOnce(...)
 ```
 
-### ️ Test Performance : temps < 2s
+### Test Performance : temps < 2s
 Mesure :
 ```js
 start = performance.now()
@@ -94,33 +94,33 @@ duration < 2000
 
 ##  Tests réalisés
 
-### ️ Test : Insertion réussie
+### Test : Insertion réussie
 Simule :
 - connexion DB ok
 - API retourne une crypto
 - insertion dans `cryptos` + `crypto_prices`
   On vérifie que `logInfo()` est appelé.
 
-### ️ Test : Aucune donnée → erreur
+### Test : Aucune donnée → erreur
 L’API retourne `[]` → on vérifie :
 ```
 logError("Aucune donnée récupérée")
 ```
 
-### ️ Test Sécurité : prévention injection SQL
+### Test Sécurité : prévention injection SQL
 Injecte :
 ```
 "BTC; DROP TABLE users; --"
 ```
 et vérifie qu’aucune erreur SQL n’apparaît dans les logs.
 
-### ️ Test Performance : insertion < 3 secondes
+### Test Performance : insertion < 3 secondes
 Simule 5 cryptos
 ```js
 duration < 3000
 ```
 
-### ️ Test Résilience : 50 insertions simultanées
+### Test Résilience : 50 insertions simultanées
 Exécute :
 ```
 Promise.all(50 insertions)

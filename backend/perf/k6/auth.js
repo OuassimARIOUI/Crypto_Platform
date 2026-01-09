@@ -5,6 +5,11 @@ import { BASE_URL, getRandomPublicSymbol } from './helpers.js';
 // Authenticated perf scenario (portfolio + alerts) using a PERF-ONLY auth bypass.
 // Requires backend started with PERF_TEST=true (see docs).
 
+/**
+ * Génère les headers d'authentification pour les tests de performance.
+ * Utilise le token PERF_TEST_TOKEN (bypass d'auth pour tests uniquement).
+ *  NE JAMAIS utiliser en production !
+ */
 function authHeaders() {
   const token = __ENV.PERF_TEST_TOKEN || 'perf_test_token';
   return {
@@ -29,6 +34,15 @@ export const options = {
   },
 };
 
+/**
+ * Test de Parcours Authentifié : simule un utilisateur connecté.
+ * Teste les endpoints nécessitant une authentification :
+ * - GET /portfolio/me : récupération du portefeuille
+ * - POST /portfolio/add-funds : ajout de fonds
+ * - POST /alerts : création d'alerte
+ * - DELETE /alerts/:id : suppression d'alerte
+ * Nécessite le backend démarré avec PERF_TEST=true.
+ */
 export default function () {
   const h = authHeaders();
 

@@ -3,8 +3,6 @@ import { hitPublicEndpoints, BASE_URL } from './helpers.js';
 import http from 'k6/http';
 import { check } from 'k6';
 
-// "Pro" traffic mix using arrival-rate (RPS-like) instead of pure VUs.
-// Goal: evaluate latency + error rate under a realistic read-heavy mix.
 
 export const options = {
   scenarios: {
@@ -29,6 +27,12 @@ export const options = {
   },
 };
 
+/**
+ * Test de Mix de Trafic : simule un mélange réaliste de requêtes.
+ * Utilise arrival-rate (RPS) plutôt que des VUs fixes.
+ * 80% des requêtes sur /prices (endpoint le plus utilisé), 20% sur le reste.
+ * Évalue les performances sous un pattern de trafic réaliste.
+ */
 export default function () {
   // 80%: /prices, 20%: broader public mix
   const roll = Math.random();

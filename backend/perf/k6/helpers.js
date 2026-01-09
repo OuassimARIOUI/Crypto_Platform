@@ -3,9 +3,12 @@ import { check } from 'k6';
 
 export const BASE_URL = __ENV.BASE_URL || 'http://host.docker.internal:3004';
 
+/**
+ * Récupère un symbol de crypto aléatoire depuis l'API /cryptos.
+ * Utilisé pour rendre les tests plus réalistes avec des données réelles.
+ * Retourne 'btc' par défaut si la base de données est vide.
+ */
 export function getRandomPublicSymbol() {
-  // Try to pick a real symbol from /cryptos to make /alerts/check more realistic.
-  // If the DB is empty, fall back to a common symbol.
   const res = http.get(`${BASE_URL}/cryptos`);
   check(res, { 'cryptos list status 200': (r) => r.status === 200 });
 
@@ -23,6 +26,13 @@ export function getRandomPublicSymbol() {
   return 'btc';
 }
 
+/**
+ * Effectue des requêtes sur les endpoints publics de l'API :
+ * - GET /cryptos : liste des cryptomonnaies
+ * - GET /prices : prix actuels
+ * - GET /alerts/check : vérification d'alerte avec un symbol aléatoire
+ * Retourne le symbol utilisé pour les tests suivants.
+ */
 export function hitPublicEndpoints() {
   const rCryptos = http.get(`${BASE_URL}/cryptos`);
   check(rCryptos, { 'GET /cryptos 200': (r) => r.status === 200 });

@@ -10,6 +10,11 @@ export const options = {
   },
 };
 
+/**
+ * Test Smoke : vérification rapide de santé de l'API.
+ * Charge minimale (1 VU) pour valider que tous les endpoints répondent correctement.
+ * Seuils stricts : p95 < 500ms, taux d'erreur < 1%
+ */
 export default function () {
   // Public endpoints only (no auth)
   hitPublicEndpoints();

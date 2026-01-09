@@ -16,6 +16,11 @@ export const options = {
   },
 };
 
+/**
+ * Test de Stabilité (Soak) : charge stable sur une longue durée.
+ * Détecte les fuites mémoire, dégradations progressives et problèmes de stabilité.
+ * Maintient SOAK_VUS utilisateurs constants pendant SOAK_DURATION.
+ */
 export default function () {
   hitPublicEndpoints();
   sleep(0.3);

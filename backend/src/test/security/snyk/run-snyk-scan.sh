@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# 🔍 Script Snyk - Scan Complet des Vulnérabilités
+#  Script Snyk - Scan Complet des Vulnérabilités
 
 set -e
 
-echo "🔐 Démarrage du scan de sécurité Snyk..."
+echo " Démarrage du scan de sécurité Snyk..."
 echo "=========================================="
 
 # Couleurs pour l'affichage
@@ -22,22 +22,22 @@ DATE=$(date +%Y%m%d_%H%M%S)
 
 # 1. Test des dépendances npm
 echo ""
-echo "${YELLOW}📦 Scan des dépendances npm...${NC}"
+echo "${YELLOW} Scan des dépendances npm...${NC}"
 snyk test \
   --json \
   --severity-threshold=medium \
   > "$REPORT_DIR/snyk-dependencies-$DATE.json" 2>&1 || {
-    echo "${RED}❌ Vulnérabilités détectées dans les dépendances!${NC}"
+    echo "${RED} Vulnérabilités détectées dans les dépendances!${NC}"
     cat "$REPORT_DIR/snyk-dependencies-$DATE.json" | jq -r '.vulnerabilities[] | "\(.title) - \(.severity)"'
   }
 
 # 2. Test du code source (SAST)
 echo ""
-echo "${YELLOW}🔍 Scan du code source...${NC}"
+echo "${YELLOW} Scan du code source...${NC}"
 snyk code test \
   --sarif \
   --sarif-file-output="$REPORT_DIR/snyk-code-$DATE.sarif" || {
-    echo "${RED}⚠️  Problèmes de sécurité détectés dans le code!${NC}"
+    echo "${RED}  Problèmes de sécurité détectés dans le code!${NC}"
   }
 
 # 3. Test de l'image Docker (si elle existe)

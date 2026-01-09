@@ -21,6 +21,11 @@ export const options = {
   },
 };
 
+/**
+ * Test de Stress : pousse le système jusqu'à son point de rupture.
+ * Montée agressive jusqu'à MAX_VUS pour identifier les limites de capacité.
+ * Permet d'observer la dégradation des performances sous charge élevée.
+ */
 export default function () {
   hitPublicEndpoints();
   sleep(0.1);

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { requireCanTrade, requireRole } from "../../middleware/accessControl.js";
 
 describe("Sécurité - Vérifications du statut de compte", () => {
     describe("Protection des comptes bannis", () => {
@@ -16,7 +17,6 @@ describe("Sécurité - Vérifications du statut de compte", () => {
             };
             const next = vi.fn();
             
-            const { requireCanTrade } = require("../../middleware/accessControl.js");
             requireCanTrade(req, res, next);
             
             expect(res.status).toHaveBeenCalledWith(403);
@@ -36,7 +36,6 @@ describe("Sécurité - Vérifications du statut de compte", () => {
             };
             const next = vi.fn();
             
-            const { requireCanTrade } = require("../../middleware/accessControl.js");
             requireCanTrade(req, res, next);
             
             expect(res.status).toHaveBeenCalledWith(403);
@@ -61,7 +60,6 @@ describe("Sécurité - Vérifications du statut de compte", () => {
             };
             const next = vi.fn();
             
-            const { requireCanTrade } = require("../../middleware/accessControl.js");
             requireCanTrade(req, res, next);
             
             expect(res.status).toHaveBeenCalledWith(403);
@@ -82,7 +80,6 @@ describe("Sécurité - Gestion des sessions", () => {
             };
             const next = vi.fn();
             
-            const { requireCanTrade } = require("../../middleware/accessControl.js");
             requireCanTrade(req, res, next);
             
             expect(res.status).toHaveBeenCalledWith(401);
@@ -99,7 +96,6 @@ describe("Sécurité - Gestion des sessions", () => {
             };
             const next = vi.fn();
             
-            const { requireRole } = require("../../middleware/accessControl.js");
             const middleware = requireRole("user");
             middleware(req, res, next);
             
@@ -150,7 +146,6 @@ describe("Sécurité - Contrôle d'accès aux ressources", () => {
             };
             const next = vi.fn();
             
-            const { requireRole } = require("../../middleware/accessControl.js");
             const middleware = requireRole("admin");
             middleware(req, res, next);
             
@@ -167,7 +162,6 @@ describe("Sécurité - Contrôle d'accès aux ressources", () => {
             };
             const next = vi.fn();
             
-            const { requireRole } = require("../../middleware/accessControl.js");
             const middleware = requireRole("admin");
             middleware(req, res, next);
             

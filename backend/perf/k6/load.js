@@ -20,6 +20,11 @@ export const options = {
   },
 };
 
+/**
+ * Test de Charge (Load Test) : montée progressive des utilisateurs virtuels.
+ * Simule une augmentation réaliste du trafic pour évaluer la scalabilité.
+ * Rampe jusqu'à MAX_VUS utilisateurs, maintient la charge, puis redescend.
+ */
 export default function () {
   hitPublicEndpoints();
 

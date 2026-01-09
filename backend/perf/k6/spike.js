@@ -21,6 +21,11 @@ export const options = {
   },
 };
 
+/**
+ * Test de Pic (Spike) : augmentation brutale et soudaine de la charge.
+ * Simule un pic de trafic inattendu (ex: viral, promotion).
+ * Vérifie la capacité du système à absorber des montées soudaines.
+ */
 export default function () {
   hitPublicEndpoints();
   sleep(0.1);

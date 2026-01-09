@@ -1,0 +1,120 @@
+RAPPORT DE COVERAGE - TESTS FRONTEND
+=====================================
+Date: 9 janvier 2026
+Framework: Vitest v2.1.9
+
+RESULTATS DES TESTS
+-------------------
+Test Files:  25 passed (25)
+Tests:       202 passed (202)
+Duration:    20.62s (transform 2.79s, setup 10.58s, collect 20.05s, tests 9.28s, environment 59.72s, prepare 10.31s)
+
+COVERAGE GLOBAL
+---------------
+Statements   : 26.79% (1803/6728)
+Branches     : 74.21% (282/380)
+Functions    : 54.71% (58/106)
+Lines        : 26.79% (1803/6728)
+
+DÉTAIL DU COVERAGE PAR FICHIER
+-------------------------------
+
+APP PAGES (Pages principales)
+------------------------------
+File                        | Stmts   | Branch | Funcs | Lines | Uncovered
+app/layout.js               | 0%      | 0%     | 0%    | 0%    | 1-44
+app/page.jsx                | 0%      | 0%     | 0%    | 0%    | 1-439
+app/auth/action/page.jsx    | 0%      | 0%     | 0%    | 0%    | 1-139
+app/dashboard/page.jsx      | 100%    | 100%   | 100%  | 100%  | 
+app/discord/callback/page   | 0%      | 0%     | 0%    | 0%    | 1-85
+app/forbidden/page.jsx      | 100%    | 100%   | 100%  | 100%  | 
+app/forgot-password/page    | 100%    | 100%   | 100%  | 100%  | 
+app/indicators/page.jsx     | 100%    | 100%   | 100%  | 100%  | 
+app/login/page.jsx          | 0%      | 0%     | 0%    | 0%    | 1-179
+app/portfolio/page.jsx      | 100%    | 100%   | 100%  | 100%  | 
+app/profile/page.jsx        | 100%    | 100%   | 100%  | 100%  | 
+app/register/page.jsx       | 0%      | 0%     | 0%    | 0%    | 1-182
+app/reports/page.jsx        | 0%      | 0%     | 0%    | 0%    | 1-240
+app/reset-password/page     | 0%      | 0%     | 0%    | 0%    | 1-182
+app/trading/page.jsx        | 100%    | 100%   | 100%  | 100%  | 
+app/users/page.jsx          | 0%      | 0%     | 0%    | 0%    | 1-681
+app/verify-email/page.jsx   | 0%      | 0%     | 0%    | 0%    | 1-84
+
+COMPOSANTS (Components)
+-----------------------
+components/dashboard/       | 36.57%  | 90.66% | 62.5% | 36.57%
+  CryptoRow.jsx             | 99.04%  | 95.83% | 75%   | 99.04% | Line 15
+  DashboardLayout.jsx       | 0%      | 0%     | 0%    | 0%     | 1-305
+  DashboardStats.jsx        | 99.34%  | 91.83% | 100%  | 99.34% | Line 31
+  TopCryptosTable.jsx       | 0%      | 0%     | 0%    | 0%     | 1-255
+
+components/forms/           | 100%    | 92.3%  | 100%  | 100%
+  ForgotPasswordForm.jsx    | 100%    | 92.3%  | 100%  | 100%   | Line 27
+
+components/indicators/      | 75%     | 65.78% | 33.33%| 75%
+  IndicatorsPanel.jsx       | 75%     | 65.78% | 33.33%| 75%    | Multiple lines uncovered
+
+components/layout/          | 99%     | 95.23% | 100%  | 99%
+  Sidebar.jsx               | 98.7%   | 95%    | 100%  | 98.7%  | Line 90
+  Topbar.jsx                | 100%    | 100%   | 100%  | 100%
+
+components/messaging/       | 0%      | 0%     | 0%    | 0%
+  MessagingDock.jsx         | 0%      | 0%     | 0%    | 0%     | 1-885
+
+components/portfolio/       | 19.84%  | 77.58% | 69.23%| 19.84%
+  PortfolioAssets.jsx       | 0%      | 0%     | 0%    | 0%     | 1-386
+  PortfolioStats.jsx        | 0%      | 0%     | 0%    | 0%     | 1-241
+  PortfolioTransactions.jsx | 87.62%  | 81.81% | 90%   | 87.62% | Lines 108,176-179,190-192,233-252
+  TransferFunds.jsx         | 0%      | 0%     | 0%    | 0%     | 1-227
+
+components/profile/         | 9.13%   | 80%    | 60%   | 9.13%
+  AddFunds.jsx              | 100%    | 100%   | 100%  | 100%
+  ProfileActivity.jsx       | 0%      | 0%     | 0%    | 0%     | 1-75
+  ProfileDetails.jsx        | 0%      | 0%     | 0%    | 0%     | 1-459
+
+components/theme/           | 96.36%  | 88.46% | 100%  | 96.36%
+  ThemeProvider.jsx         | 92.85%  | 85.71% | 100%  | 92.85% | Lines 14,28
+  ThemeToggleButton.jsx     | 100%    | 91.66% | 100%  | 100%   | Line 7
+
+components/trading/         | 41.22%  | 53.84% | 45%   | 41.22%
+  TradingBuyCard.jsx        | 70.4%   | 54.54% | 50%   | 70.4%  | Multiple lines uncovered
+  TradingHeaderChart.jsx    | 0%      | 0%     | 0%    | 0%     | 1-457
+  TradingSellCard.jsx       | 68.59%  | 54.83% | 44.44%| 68.59% | Multiple lines uncovered
+
+components/ui/              | 100%    | 90%    | 100%  | 100%
+  Button.jsx                | 100%    | 100%   | 100%  | 100%
+  Input.jsx                 | 100%    | 100%   | 100%  | 100%
+  Notification.jsx          | 100%    | 80%    | 100%  | 100%   | Line 19
+
+HOOKS
+-----
+hooks/useNotification.js    | 100%    | 100%   | 100%  | 100%
+
+BIBLIOTHÈQUES (Lib)
+-------------------
+lib/firebase.js             | 0%      | 0%     | 0%    | 0%     | 1-25
+lib/firebaseActionLink.js   | 0%      | 0%     | 0%    | 0%     | 1-39
+lib/tokenManager.js         | 0%      | 0%     | 0%    | 0%     | 1-92
+
+ANALYSE
+-------
+Points forts:
+- Excellent coverage des composants UI (100%)
+- Bon coverage des composants layout (99%)
+- Tous les hooks testés (100%)
+- Composants de formulaires bien couverts (100%)
+
+Points à améliorer:
+- Pages non testées (login, register, users, etc.)
+- Bibliothèques Firebase non testées
+- Composants de messaging non testés
+- TradingHeaderChart non testé
+- Plusieurs composants portfolio non testés
+
+RECOMMANDATIONS
+---------------
+1. Ajouter des tests pour les pages d'authentification (login, register)
+2. Tester les composants de messaging
+3. Améliorer la couverture des bibliothèques Firebase
+4. Tester TradingHeaderChart et les autres composants portfolio
+5. Objectif: atteindre au moins 70% de coverage global

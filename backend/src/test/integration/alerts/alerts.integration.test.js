@@ -52,7 +52,7 @@ describe("Integration: alerts routes (real DB)", () => {
       },
     });
 
-    verifyIdTokenMock.mockResolvedValue({ uid: "uid_alert_1", email: user.email });
+    verifyIdTokenMock.mockImplementation(async () => ({ uid: "uid_alert_1", email: user.email }));
 
     const createRes = await request(app)
       .post("/alerts")

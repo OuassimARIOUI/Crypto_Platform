@@ -11,7 +11,7 @@ on:
   #schedule:
     # Backup automatique tous les jours à 2h du matin UTC
    # - cron: '0 2 * * *'
-workflow_dispatch:  # Permet le lancement manuel UNIQUEMENT
+  workflow_dispatch:  # Permet le lancement manuel UNIQUEMENT
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -42,34 +42,34 @@ snyk code test \
 
 # 3. Test de l'image Docker (si elle existe)
 echo ""
-echo "${YELLOW}🐳 Scan de l'image Docker...${NC}"
+echo "${YELLOW} Scan de l'image Docker...${NC}"
 if docker images | grep -q "crypto_platform-backend"; then
   snyk container test crypto_platform-backend:latest \
     --json \
     --file=Dockerfile \
     > "$REPORT_DIR/snyk-container-$DATE.json" 2>&1 || {
-      echo "${RED}⚠️  Vulnérabilités détectées dans l'image Docker!${NC}"
+      echo "${RED}  Vulnérabilités détectées dans l'image Docker!${NC}"
     }
 else
-  echo "${YELLOW}⏭️  Image Docker non trouvée, scan ignoré${NC}"
+  echo "${YELLOW}⏭ Image Docker non trouvée, scan ignoré${NC}"
 fi
 
 # 4. Générer un rapport HTML consolidé
 echo ""
-echo "${YELLOW}📊 Génération du rapport HTML...${NC}"
+echo "${YELLOW}Génération du rapport HTML...${NC}"
 snyk-to-html \
   -i "$REPORT_DIR/snyk-dependencies-$DATE.json" \
   -o "$REPORT_DIR/snyk-full-report-$DATE.html" 2>/dev/null || {
-    echo "${YELLOW}⚠️  snyk-to-html non installé. Installez avec: npm install -g snyk-to-html${NC}"
+    echo "${YELLOW} snyk-to-html non installé. Installez avec: npm install -g snyk-to-html${NC}"
   }
 
 # 5. Afficher le résumé
 echo ""
 echo "${GREEN}========================================${NC}"
-echo "${GREEN}✅ Scan Snyk terminé!${NC}"
+echo "${GREEN}Scan Snyk terminé!${NC}"
 echo "${GREEN}========================================${NC}"
 echo ""
-echo "📁 Rapports générés dans: $REPORT_DIR/"
+echo "Rapports générés dans: $REPORT_DIR/"
 echo "   - snyk-dependencies-$DATE.json"
 echo "   - snyk-code-$DATE.sarif"
 echo "   - snyk-container-$DATE.json"
@@ -80,10 +80,10 @@ echo ""
 CRITICAL_COUNT=$(cat "$REPORT_DIR/snyk-dependencies-$DATE.json" | jq -r '[.vulnerabilities[] | select(.severity=="critical")] | length')
 
 if [ "$CRITICAL_COUNT" -gt 0 ]; then
-  echo "${RED}🚨 ATTENTION: $CRITICAL_COUNT vulnérabilité(s) CRITIQUE(S) détectée(s)!${NC}"
+  echo "${RED} ATTENTION: $CRITICAL_COUNT vulnérabilité(s) CRITIQUE(S) détectée(s)!${NC}"
   echo "${RED}   Action requise immédiate!${NC}"
   exit 1
 else
-  echo "${GREEN}✅ Aucune vulnérabilité critique détectée${NC}"
+  echo "${GREEN} Aucune vulnérabilité critique détectée${NC}"
   exit 0
 fi

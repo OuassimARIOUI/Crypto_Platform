@@ -1,17 +1,17 @@
-name: CI
+name: CI (DISABLED - Manual only)
 
 on:
-  push:
-    branches:
-      - '**'  # Tous les push sur toutes les branches
-  pull_request:
-    branches:
-      - main
-      - DEV
-  schedule:
+   push:
+     branches:
+       - '**'  # Tous les push sur toutes les branches
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - DEV
+  #schedule:
     # Backup automatique tous les jours à 2h du matin UTC
-    - cron: '0 2 * * *'
-  workflow_dispatch:  # Permet le lancement manuel
+   # - cron: '0 2 * * *'
+workflow_dispatch:  # Permet le lancement manuel UNIQUEMENT
 
 concurrency:
   group: ci-${{ github.ref }}

@@ -374,8 +374,6 @@ Couverture actuelle : 26.79%
 
 Pour toute question ou problème :
 - Email : support@crypto-platform.com
-- Discord : [Serveur Discord]
-- GitHub Issues : [Lien repository]
 
 ---
 

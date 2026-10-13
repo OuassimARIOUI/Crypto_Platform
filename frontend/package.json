@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "dev": "CHOKIDAR_USEPOLLING=true CHOKIDAR_INTERVAL=500 WATCHPACK_POLLING=true next dev",

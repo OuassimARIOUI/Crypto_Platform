@@ -1,34 +1,32 @@
-name: CI 
+name: CI
 
+# Push (toutes les branches) : tests + SonarQube
+# Push sur main / DEV       : + images Docker (GHCR) + déploiement de test sur Minikube
+# Lancement manuel sur main  : tests + versioning (tag + GitHub Release)
 on:
-   push:
-     branches:
-       - '**'  # Tous les push sur toutes les branches
-   # Lancement manuel (onglet Actions > Run workflow) : déclenche le job "versioning"
-   workflow_dispatch:
-     inputs:
-       bump:
-         description: "Type de version (semver)"
-         required: true
-         default: patch
-         type: choice
-         options:
-           - patch
-           - minor
-           - major
-  # pull_request:
-  #   branches:
-  #     - main
-  #     - DEV
-  #schedule:
-    # Backup automatique tous les jours à 2h du matin UTC
-   # - cron: '0 2 * * *'
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Type de version (semver)"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
+  # =============================================================================
+  # 1. Tests
+  # =============================================================================
   backend:
     name: Backend (tests + coverage)
     runs-on: ubuntu-latest
@@ -58,6 +56,11 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/crypto_test?schema=public
       JWT_SECRET: test_jwt_secret
       REDIS_URL: redis://localhost:6379
+      FIREBASE_DISABLED: "true"
+
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout
@@ -70,27 +73,18 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      - name: Install (backend)
-        working-directory: backend
+      - name: Install
         run: npm ci
 
-      - name: Unit tests + coverage (backend)
-        working-directory: backend
-        env:
-          FIREBASE_DISABLED: "true"
+      - name: Unit tests + coverage
         run: npm run test:coverage
 
-      - name: Prepare integration DB schema (backend)
-        working-directory: backend
-        run: npm run test:integration:prepare
+      - name: Integration tests + coverage
+        run: |
+          npm run test:integration:prepare
+          npm run test:integration:coverage
 
-      - name: Integration tests + coverage (backend)
-        working-directory: backend
-        env:
-          FIREBASE_DISABLED: "true"
-        run: npm run test:integration:coverage
-
-      - name: Upload backend coverage artifacts
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -100,8 +94,12 @@ jobs:
             backend/coverage-integration/**
 
   frontend:
-    name: Frontend (tests + coverage)
+    name: Frontend (lint + tests + coverage)
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
 
     steps:
       - name: Checkout
@@ -114,31 +112,27 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install (frontend)
-        working-directory: frontend
+      - name: Install
         run: npm ci
 
-      - name: Lint (frontend)
-        working-directory: frontend
+      - name: Lint
         run: npm run lint
 
-      - name: Unit tests + coverage (frontend)
-        working-directory: frontend
+      - name: Unit tests + coverage
         run: npm run test:coverage
 
-      - name: Upload frontend coverage artifacts
+      - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: |
-            frontend/coverage/**
+          path: frontend/coverage/**
 
   # =============================================================================
-  # SonarQube Cloud analysis 
+  # 2. SonarQube Cloud analysis (non-blocking)
   # =============================================================================
   sonarqube:
-    name: SonarQube analysis 
+    name: SonarQube analysis
     runs-on: ubuntu-latest
     needs: [backend, frontend]
     # Never fails the pipeline: scan errors are tolerated, and the Quality Gate is not
@@ -197,7 +191,161 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   # =============================================================================
-  # Versioning (manual only): bump version, tag, GitHub Release
+  # 3. Docker images -> GitHub Container Registry (main / DEV only)
+  # =============================================================================
+  docker-build:
+    name: Docker image (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/DEV')
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      matrix:
+        image: [backend, frontend]  # one parallel job per image, built from ./<image>
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image name (registry paths must be lowercase)
+        id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.image }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./${{ matrix.image }}
+          push: true
+          tags: |
+            ${{ steps.image.outputs.name }}:latest
+            ${{ steps.image.outputs.name }}:${{ github.sha }}
+          # Only the frontend image needs the Firebase key at build time
+          build-args: ${{ matrix.image == 'frontend' && format('NEXT_PUBLIC_FIREBASE_API_KEY={0}', secrets.NEXT_PUBLIC_FIREBASE_API_KEY) || '' }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  # =============================================================================
+  # 4. Deployment test on a temporary Kubernetes cluster (Minikube)
+  #    Runs only after docker-build, so only on main / DEV.
+  #    The cluster lives inside the runner and is destroyed when the job ends.
+  # =============================================================================
+  deploy-kubernetes:
+    name: Deploy to Kubernetes (Minikube)
+    runs-on: ubuntu-latest
+    needs: [docker-build]
+
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      NAMESPACE: crypto-platform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Minikube
+        uses: medyagh/setup-minikube@latest
+        with:
+          minikube-version: latest
+          kubernetes-version: v1.28.0
+          driver: docker
+          cpus: 2
+          memory: 4096
+
+      - name: Enable Minikube addons
+        run: |
+          minikube addons enable ingress
+          minikube addons enable metrics-server
+
+      - name: Install kustomize
+        uses: imranismail/setup-kustomize@v2
+        with:
+          kustomize-version: '5.3.0'
+
+      # Build once, deploy the same artifact: the cluster pulls the images that
+      # docker-build just pushed to GHCR instead of rebuilding them here.
+      - name: Point the manifests to the images of this commit
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REGISTRY="ghcr.io/${GITHUB_REPOSITORY,,}"
+
+          kubectl apply -f k8s/base/namespace.yaml
+          kubectl create secret docker-registry ghcr-secret -n "$NAMESPACE" \
+            --docker-server=ghcr.io \
+            --docker-username="$GHCR_USER" \
+            --docker-password="$GHCR_TOKEN"
+
+          # The worker runs the backend image with another command (see docker-compose.yml)
+          cd k8s/base
+          kustomize edit set image \
+            "crypto_platform-backend=$REGISTRY/backend:$GITHUB_SHA" \
+            "crypto_platform-worker=$REGISTRY/backend:$GITHUB_SHA" \
+            "crypto_platform-frontend=$REGISTRY/frontend:$GITHUB_SHA"
+
+      - name: Deploy application
+        run: |
+          kubectl apply -k k8s/base
+          # All deployments start in parallel and share a single timeout
+          if ! kubectl wait deployment --all -n "$NAMESPACE" --for=condition=Available --timeout=300s; then
+            echo "::warning::Some deployments are not ready after 5 minutes (see the diagnostics step)"
+          fi
+          kubectl get pods,svc -n "$NAMESPACE"
+
+      - name: Smoke tests
+        run: |
+          check() {  # check <service> <port> <path>
+            kubectl port-forward "svc/$1" "$2:$2" -n "$NAMESPACE" > /dev/null 2>&1 &
+            local pid=$!
+            sleep 5
+            if curl -fsS -o /dev/null "http://localhost:$2$3"; then
+              echo "OK: $1 answers on $3"
+            else
+              echo "::warning::Smoke test failed: $1 does not answer on $3"
+            fi
+            kill "$pid" 2> /dev/null || true
+          }
+          check backend-service 3004 /health
+          check frontend-service 3000 /
+
+      - name: Deploy monitoring stack (Prometheus, Grafana, Loki, Alertmanager)
+        run: |
+          kubectl apply -k k8s/monitoring
+          if ! kubectl wait deployment/prometheus deployment/grafana -n monitoring --for=condition=Available --timeout=120s; then
+            echo "::warning::Prometheus / Grafana are not ready after 2 minutes"
+          fi
+          kubectl get pods,svc -n monitoring
+
+      - name: Diagnostics
+        if: always()
+        run: |
+          kubectl get all -n "$NAMESPACE"
+          echo "=== Recent events ==="
+          kubectl get events -n "$NAMESPACE" --sort-by='.lastTimestamp' | tail -30
+          for deployment in backend crypto-worker frontend; do
+            echo "=== Logs: $deployment ==="
+            kubectl logs "deployment/$deployment" -n "$NAMESPACE" --all-containers --tail=20 || true
+          done
+
+  # =============================================================================
+  # 5. Versioning (manual only): bump version, tag, GitHub Release
   # =============================================================================
   versioning:
     name: Versioning (manual)
@@ -246,10 +394,9 @@ jobs:
             exit 1
           fi
 
-          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
           echo "next=$NEXT" >> "$GITHUB_OUTPUT"
           echo "tag=v$NEXT" >> "$GITHUB_OUTPUT"
-          echo "Version: $CURRENT -> $NEXT ($BUMP)"
+          echo "Version: $CURRENT -> $NEXT ($BUMP)" | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Bump package versions (backend + frontend)
         env:
@@ -275,305 +422,3 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.tag }}
         run: gh release create "$TAG" --title "$TAG" --generate-notes
-
-      - name: Summary
-        run: |
-          echo "### Release ${{ steps.version.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Version: ${{ steps.version.outputs.current }} -> ${{ steps.version.outputs.next }} (${{ inputs.bump }})" >> "$GITHUB_STEP_SUMMARY"
-
-  # =============================================================================
-  # Build Docker images
-  # =============================================================================
-  docker-build:
-    name: Build Docker Images
-    runs-on: ubuntu-latest
-    needs: [backend, frontend]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/DEV') || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Convert repository name to lowercase
-        id: repo
-        run: echo "name=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Backend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./backend
-          push: true
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/backend:latest
-            ghcr.io/${{ steps.repo.outputs.name }}/backend:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Build and push Frontend
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          push: true
-          tags: |
-            ghcr.io/${{ steps.repo.outputs.name }}/frontend:latest
-            ghcr.io/${{ steps.repo.outputs.name }}/frontend:${{ github.sha }}
-          build-args: |
-            NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-  # =============================================================================
-  # Database Backup Job (runs on schedule or manually)
-  # =============================================================================
-  database-backup:
-    name: Database Backup
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/DEV'))
-
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: crypto
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d crypto"
-          --health-interval 2s
-          --health-timeout 3s
-          --health-retries 30
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Create backup directory
-        run: mkdir -p backups
-
-      - name: Create database backup
-        env:
-          PGHOST: localhost
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          PGDATABASE: crypto
-        run: |
-          DATE=$(date +%Y-%m-%d_%H-%M-%S)
-          pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE | gzip > backups/crypto_backup_${DATE}.sql.gz
-          echo "Backup created: backups/crypto_backup_${DATE}.sql.gz"
-          ls -lh backups/
-
-      - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: database-backup-${{ github.run_id }}
-          path: backups/*.sql.gz
-          retention-days: 30
-
-  # =============================================================================
-  # Kubernetes Deployment (CD) - Using Minikube on GitHub Actions
-  # =============================================================================
-  deploy-kubernetes:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest
-    needs: [docker-build]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/DEV')
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Minikube
-        uses: medyagh/setup-minikube@latest
-        with:
-          minikube-version: latest
-          kubernetes-version: v1.28.0
-          driver: docker
-          cpus: 2
-          memory: 4096
-
-      - name: Enable Minikube addons
-        run: |
-          minikube addons enable ingress
-          minikube addons enable metrics-server
-
-      # Images are built on the runner then loaded into the cluster: this works with any
-      # container runtime. `minikube docker-env` broke when minikube 1.39 made containerd the default.
-      - name: Build Docker images
-        run: |
-          docker build -t crypto_platform-backend:latest ./backend
-          docker build -t crypto_platform-frontend:latest ./frontend
-          # The worker runs the backend image with another command (see docker-compose.yml)
-          docker tag crypto_platform-backend:latest crypto_platform-worker:latest
-
-      - name: Load Docker images into Minikube
-        run: |
-          for image in backend worker frontend; do
-            minikube image load "crypto_platform-$image:latest"
-          done
-          minikube image ls | grep crypto_platform
-
-      - name: Install kustomize
-        uses: imranismail/setup-kustomize@v2
-        with:
-          kustomize-version: '5.3.0'
-
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -k k8s/base
-          echo "Waiting for resources to be created..."
-          sleep 10
-
-      - name: Wait for deployments
-        run: |
-          echo "Waiting for PostgreSQL..."
-          kubectl wait --for=condition=ready pod -l app=postgres -n crypto-platform --timeout=120s || true
-          
-          echo "Waiting for Redis..."
-          kubectl wait --for=condition=ready pod -l app=redis -n crypto-platform --timeout=120s || true
-          
-          echo "Waiting for Backend..."
-          kubectl wait --for=condition=ready pod -l app=backend -n crypto-platform --timeout=180s || true
-          
-          echo "Waiting for Frontend..."
-          kubectl wait --for=condition=ready pod -l app=frontend -n crypto-platform --timeout=180s || true
-          
-          echo "Waiting for Worker..."
-          kubectl wait --for=condition=ready pod -l app=crypto-worker -n crypto-platform --timeout=180s || true
-
-      - name: Verify deployment
-        run: |
-          echo "=== Pods Status ==="
-          kubectl get pods -n crypto-platform
-          echo ""
-          echo "=== Services Status ==="
-          kubectl get svc -n crypto-platform
-          echo ""
-          echo "=== Ingress Status ==="
-          kubectl get ingress -n crypto-platform
-          echo ""
-          echo "=== Deployment Details ==="
-          kubectl describe deployment backend -n crypto-platform | grep -A 5 "Replicas:" || true
-          kubectl describe deployment frontend -n crypto-platform | grep -A 5 "Replicas:" || true
-
-      - name: Run smoke tests
-        run: |
-          echo "Testing backend health..."
-          kubectl port-forward svc/backend 3004:3004 -n crypto-platform &
-          sleep 5
-          curl -f http://localhost:3004/health || echo "Backend health check failed (endpoint may not exist)"
-          
-          echo "Testing frontend availability..."
-          kubectl port-forward svc/frontend 3000:3000 -n crypto-platform &
-          sleep 5
-          curl -f http://localhost:3000 || echo "Frontend health check failed"
-
-      - name: Show application URL
-        if: success()
-        run: |
-          MINIKUBE_IP=$(minikube ip)
-          echo "✅ Deployment successful!"
-          echo "📍 Application accessible at: http://$MINIKUBE_IP"
-          echo "📝 Add to /etc/hosts: $MINIKUBE_IP crypto-platform.local"
-
-      - name: Deployment summary
-        if: always()
-        run: |
-          echo "=== Final Deployment Status ==="
-          kubectl get all -n crypto-platform
-          echo ""
-          echo "=== Recent Events ==="
-          kubectl get events -n crypto-platform --sort-by='.lastTimestamp' | tail -20
-
-      - name: Deploy Monitoring Stack (Prometheus + Grafana)
-        run: |
-          echo "=== Deploying Monitoring Stack ==="
-          kubectl apply -k k8s/monitoring
-          echo "Waiting for monitoring resources..."
-          sleep 10
-
-      - name: Wait for Monitoring deployments
-        run: |
-          echo "Waiting for Prometheus..."
-          kubectl wait --for=condition=ready pod -l app=prometheus -n monitoring --timeout=120s || true
-          
-          echo "Waiting for Grafana..."
-          kubectl wait --for=condition=ready pod -l app=grafana -n monitoring --timeout=120s || true
-
-      - name: Verify Monitoring deployment
-        run: |
-          echo "=== Monitoring Pods Status ==="
-          kubectl get pods -n monitoring
-          echo ""
-          echo "=== Monitoring Services Status ==="
-          kubectl get svc -n monitoring
-          echo ""
-          echo "=== Monitoring Ingress Status ==="
-          kubectl get ingress -n monitoring || true
-
-      - name: Show Monitoring URLs
-        if: success()
-        run: |
-          MINIKUBE_IP=$(minikube ip)
-          echo " Monitoring Stack deployed!"
-          echo " Prometheus: http://$MINIKUBE_IP:30090 (or via port-forward)"
-          echo " Grafana: http://$MINIKUBE_IP:30030 (or via port-forward)"
-          echo ""
-          echo "To access locally:"
-          echo "  kubectl port-forward svc/prometheus 9090:9090 -n monitoring"
-          echo "  kubectl port-forward svc/grafana 3001:3000 -n monitoring"
-
-  # =============================================================================
-  # Kubernetes Dry Run (for PRs)
-  # =============================================================================
-  k8s-dry-run:
-    name: Kubernetes Dry Run
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install kustomize
-        uses: imranismail/setup-kustomize@v2
-        with:
-          kustomize-version: '5.3.0'
-
-      - name: Validate Kubernetes manifests
-        run: |
-          echo "=== Validating Kubernetes manifests ==="
-          kustomize build k8s/base > /tmp/k8s-manifests.yaml
-          
-          # Basic YAML validation
-          cat /tmp/k8s-manifests.yaml | head -100
-          echo ""
-          echo "=== Manifest validation successful ==="
-
-      - name: Check for common issues
-        run: |
-          echo "=== Checking for common issues ==="
-          
-          # Check if all required files exist
-          for file in namespace configmap secrets persistent-volumes postgres redis backend worker frontend ingress kustomization; do
-            if [ -f "k8s/base/${file}.yaml" ]; then
-              echo "✓ k8s/base/${file}.yaml exists"
-            else
-              echo "✗ k8s/base/${file}.yaml missing"
-              exit 1
-            fi
-          done
-          
-          echo ""
-          echo "=== All checks passed ==="

@@ -70,8 +70,8 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 3
-      # imagePullSecrets:
-      #   - name: ghcr-secret  # Uncomment for private registry
+      imagePullSecrets:
+        - name: ghcr-secret
 ---
 apiVersion: v1
 kind: Service

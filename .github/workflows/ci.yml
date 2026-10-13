@@ -135,6 +135,68 @@ jobs:
             frontend/coverage/**
 
   # =============================================================================
+  # SonarQube Cloud analysis 
+  # =============================================================================
+  sonarqube:
+    name: SonarQube analysis 
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    # Never fails the pipeline: scan errors are tolerated, and the Quality Gate is not
+    # awaited (no sonar.qualitygate.wait) - its result is only shown in SonarQube Cloud.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history: needed for blame and new code detection
+
+      - name: Check SonarQube token
+        id: sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "::warning::SONAR_TOKEN secret is not set - SonarQube analysis skipped"
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download backend coverage
+        if: steps.sonar.outputs.enabled == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend
+
+      - name: Download frontend coverage
+        if: steps.sonar.outputs.enabled == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+
+      - name: Make lcov paths relative to the repository root
+        if: steps.sonar.outputs.enabled == 'true'
+        run: |
+          for dir in backend frontend; do
+            for report in "$dir"/coverage*/lcov.info; do
+              [ -f "$report" ] || continue
+              sed -i -E "s#^SF:([^/])#SF:$dir/\1#" "$report"
+              echo "$report: $(grep -c '^SF:' "$report") files"
+            done
+          done
+
+      - name: SonarQube scan
+        if: steps.sonar.outputs.enabled == 'true'
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # =============================================================================
   # Versioning (manual only): bump version, tag, GitHub Release
   # =============================================================================
   versioning:
@@ -346,15 +408,21 @@ jobs:
           minikube addons enable ingress
           minikube addons enable metrics-server
 
-      - name: Configure Docker to use Minikube
-        run: eval $(minikube docker-env)
-
-      - name: Build Docker images in Minikube
+      # Images are built on the runner then loaded into the cluster: this works with any
+      # container runtime. `minikube docker-env` broke when minikube 1.39 made containerd the default.
+      - name: Build Docker images
         run: |
-          eval $(minikube docker-env)
           docker build -t crypto_platform-backend:latest ./backend
           docker build -t crypto_platform-frontend:latest ./frontend
-          docker images | grep crypto_platform
+          # The worker runs the backend image with another command (see docker-compose.yml)
+          docker tag crypto_platform-backend:latest crypto_platform-worker:latest
+
+      - name: Load Docker images into Minikube
+        run: |
+          for image in backend worker frontend; do
+            minikube image load "crypto_platform-$image:latest"
+          done
+          minikube image ls | grep crypto_platform
 
       - name: Install kustomize
         uses: imranismail/setup-kustomize@v2

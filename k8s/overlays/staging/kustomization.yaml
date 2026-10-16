@@ -96,10 +96,10 @@ configMapGenerator:
 images:
   - name: crypto_platform-backend
     newName: ghcr.io/ouassimarioui/crypto_platform/backend
-    newTag: latest
+    newTag: b664409dcfafda255790899937097e6309e27f48
   - name: crypto_platform-frontend
     newName: ghcr.io/ouassimarioui/crypto_platform/frontend
-    newTag: latest
+    newTag: b664409dcfafda255790899937097e6309e27f48
   - name: crypto_platform-worker
     newName: ghcr.io/ouassimarioui/crypto_platform/backend
-    newTag: latest
+    newTag: b664409dcfafda255790899937097e6309e27f48

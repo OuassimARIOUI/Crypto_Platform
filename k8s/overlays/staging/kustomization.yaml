@@ -84,16 +84,22 @@ patches:
 # ConfigMap pour staging
 configMapGenerator:
   - name: crypto-config
+    namespace: crypto-platform  # must match the base ConfigMap, or the merge fails
     behavior: merge
     literals:
       - NODE_ENV=staging
       - LOG_LEVEL=debug
 
-# Images avec tag staging
+# Images publiées sur GHCR par la CI. À chaque push sur main, le job "gitops"
+# remplace le tag par le SHA du commit ; Argo CD voit ce changement et déploie.
+# Le worker utilise l'image backend (voir docker-compose.yml).
 images:
   - name: crypto_platform-backend
-    newTag: staging
+    newName: ghcr.io/ouassimarioui/crypto_platform/backend
+    newTag: latest
   - name: crypto_platform-frontend
-    newTag: staging
+    newName: ghcr.io/ouassimarioui/crypto_platform/frontend
+    newTag: latest
   - name: crypto_platform-worker
-    newTag: staging
+    newName: ghcr.io/ouassimarioui/crypto_platform/backend
+    newTag: latest

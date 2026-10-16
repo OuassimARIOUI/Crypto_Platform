@@ -155,6 +155,7 @@ patches:
 # ConfigMap pour production
 configMapGenerator:
   - name: crypto-config
+    namespace: crypto-platform  # must match the base ConfigMap, or the merge fails
     behavior: merge
     literals:
       - NODE_ENV=production

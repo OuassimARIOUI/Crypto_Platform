@@ -1,0 +1,34 @@
+# Argo CD Application: keeps the cluster in sync with k8s/overlays/staging on main.
+# Install once with: kubectl apply -f k8s/argocd/application.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crypto-platform
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/OuassimARIOUI/Crypto_Platform.git
+    targetRevision: main
+    path: k8s/overlays/staging
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crypto-platform
+
+  syncPolicy:
+    automated:
+      prune: true     # delete from the cluster what was deleted from Git
+      selfHeal: true  # undo manual changes made with kubectl
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+
+  # The HPAs change the number of replicas: without this, Argo CD would keep
+  # resetting it to the value written in Git.
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
